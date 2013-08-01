@@ -1,5 +1,4 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
-#
 # Copyright 2013 PLUMgrid, Inc. All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -15,17 +14,3 @@
 #    under the License.
 #
 # @author: Edgar Magana, emagana@plumgrid.com, PLUMgrid, Inc.
-
-
-"""Neutron PLUMgrid Plugin exceptions"""
-
-from neutron.common import exceptions as base_exec
-
-
-class PLUMgridException(base_exec.NeutronException):
-    message = _("An unexpected error occurred in the PLUMgrid Plugin: "
-                "%(err_msg)s")
-
-
-class PLUMgridConnectionFailed(PLUMgridException):
-    message = _("Connection failed with PLUMgrid Director: %(err_msg)s")
