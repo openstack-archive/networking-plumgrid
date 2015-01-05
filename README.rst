@@ -11,19 +11,19 @@ PLUMgrid Open Networking Suite drivers for Neutron
 
 Requirements
 ------------
-PLUMgrid IOVisor
-PLUMgridLibrary
+* PLUMgrid IOVisor
+* PLUMgridLibrary
 
 Supported APIs and API Extensions
 ---------------------------------
-Networks
-Subnets
-Ports
-External Networks
-Routers
-Security Groups
-Floating IPs
-Quotas
-Port Binding
-Provider Networks
-Extra Route
+* Networks
+* Subnets
+* Ports
+* External Networks
+* Routers
+* Security Groups
+* Floating IPs
+* Quotas
+* Port Binding
+* Provider Networks
+* Extra Route
