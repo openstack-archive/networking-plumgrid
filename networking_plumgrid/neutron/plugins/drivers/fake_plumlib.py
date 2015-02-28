@@ -12,18 +12,18 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_log import log as logging
 from neutron.extensions import providernet as provider
 from neutron.i18n import _LI
-from neutron.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
 
 
 class Plumlib():
-    """
-    Class PLUMgrid Fake Library. This library is a by-pass implementation
-    for the PLUMgrid Library. This class is being used by the unit test
-    integration in Neutron.
+    """Class PLUMgrid Fake Library.
+
+    This library is a by-pass implementation for the PLUMgrid Library.
+    This class is being used by the unit test integration in Neutron.
     """
 
     def __init__(self):
