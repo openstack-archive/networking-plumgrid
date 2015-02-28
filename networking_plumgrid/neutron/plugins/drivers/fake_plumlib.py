@@ -20,10 +20,10 @@ LOG = logging.getLogger(__name__)
 
 
 class Plumlib():
-    """
-    Class PLUMgrid Fake Library. This library is a by-pass implementation
-    for the PLUMgrid Library. This class is being used by the unit test
-    integration in Neutron.
+    """Class PLUMgrid Fake Library.
+
+    This library is a by-pass implementation for the PLUMgrid Library.
+    This class is being used by the unit test integration in Neutron.
     """
 
     def __init__(self):

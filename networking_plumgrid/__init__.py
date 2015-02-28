@@ -16,4 +16,4 @@ import pbr.version
 
 
 __version__ = pbr.version.VersionInfo(
-    'networking-plumgrid').version_string()
+    'networking_plumgrid').version_string()
