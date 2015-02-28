@@ -19,16 +19,17 @@ Test cases for  Neutron PLUMgrid Plug-in
 import mock
 from oslo.utils import importutils
 
+from networking_plumgrid.neutron.plugins import plugin as plumgrid_plugin
 from neutron import context
 from neutron.extensions import portbindings
 from neutron.extensions import providernet as provider
 from neutron import manager
-from neutron.plugins.plumgrid.plumgrid_plugin import plumgrid_plugin
 from neutron.tests.unit import _test_extension_portbindings as test_bindings
 from neutron.tests.unit import test_db_plugin as test_plugin
 
 
-PLUM_DRIVER = ('neutron.plugins.plumgrid.drivers.fake_plumlib.Plumlib')
+PLUM_DRIVER = ('networking_plumgrid.neutron.plugins.drivers.'
+               'fake_plumlib.Plumlib')
 FAKE_DIRECTOR = '1.1.1.1'
 FAKE_PORT = '1234'
 FAKE_USERNAME = 'fake_admin'

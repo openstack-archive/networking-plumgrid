@@ -1,0 +1,1 @@
+git://git.openstack.org/openstack/neutron.git@master#egg=neutron

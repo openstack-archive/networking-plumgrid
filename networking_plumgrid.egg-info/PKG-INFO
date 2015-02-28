@@ -1,0 +1,52 @@
+Metadata-Version: 1.1
+Name: networking-plumgrid
+Version: 2015.1.0b1.post22
+Summary: PLUMgrid Open Networking Suite drivers for Neutron
+Home-page: http://www.openstack.org/
+Author: OpenStack
+Author-email: openstack-dev@lists.openstack.org
+License: UNKNOWN
+Description: ===============================
+        networking-plumgrid
+        ===============================
+        
+        PLUMgrid Open Networking Suite drivers for Neutron
+        
+        * Free software: Apache license
+        * Documentation: http://docs.openstack.org/developer/networking-plumgrid
+        * Source: http://git.openstack.org/cgit/openstack/networking-plumgrid
+        * Bugs: http://bugs.launchpad.net/networking-plumgrid
+        
+        Requirements
+        ------------
+        * PLUMgrid IOVisor
+        * PLUMgridLibrary
+        
+        Supported APIs and API Extensions
+        ---------------------------------
+        * Networks
+        * Subnets
+        * Ports
+        * External Networks
+        * Routers
+        * Security Groups
+        * Floating IPs
+        * Quotas
+        * Port Binding
+        * Provider Networks
+        * Extra Route
+        
+        
+Platform: UNKNOWN
+Classifier: Environment :: OpenStack
+Classifier: Intended Audience :: Information Technology
+Classifier: Intended Audience :: System Administrators
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Operating System :: POSIX :: Linux
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 2
+Classifier: Programming Language :: Python :: 2.7
+Classifier: Programming Language :: Python :: 2.6
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.3
+Classifier: Programming Language :: Python :: 3.4

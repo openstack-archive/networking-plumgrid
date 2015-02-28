@@ -13,9 +13,7 @@
 #    under the License.
 
 """
-Neutron Plug-in for PLUMgrid Virtual Networking Infrastructure (VNI)
-This plugin will forward authenticated REST API calls
-to the PLUMgrid Network Management System called Director
+Neutron Plug-in for PLUMgrid Open Networking Suite
 """
 
 import netaddr
@@ -23,6 +21,8 @@ from oslo.config import cfg
 from oslo.utils import importutils
 from sqlalchemy.orm import exc as sa_exc
 
+from networking_plumgrid.neutron.plugins.common import exceptions as plum_excep
+from networking_plumgrid.neutron.plugins import plugin_ver
 from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron.db import db_base_plugin_v2
@@ -35,8 +35,6 @@ from neutron.extensions import portbindings
 from neutron.extensions import securitygroup as sec_grp
 from neutron.i18n import _LI, _LW
 from neutron.openstack.common import log as logging
-from neutron.plugins.plumgrid.common import exceptions as plum_excep
-from neutron.plugins.plumgrid.plumgrid_plugin import plugin_ver
 
 LOG = logging.getLogger(__name__)
 
@@ -52,7 +50,8 @@ director_server_opts = [
     cfg.IntOpt('servertimeout', default=5,
                help=_("PLUMgrid Director server timeout")),
     cfg.StrOpt('driver',
-               default="neutron.plugins.plumgrid.drivers.plumlib.Plumlib",
+               default="networking_plumgrid.neutron.plugins.drivers.plumlib."
+                       "Plumlib",
                help=_("PLUMgrid Driver")), ]
 
 cfg.CONF.register_opts(director_server_opts, "plumgriddirector")
@@ -63,9 +62,6 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
                               l3_db.L3_NAT_db_mixin,
                               portbindings_db.PortBindingMixin,
                               securitygroups_db.SecurityGroupDbMixin):
-
-    supported_extension_aliases = ["binding", "external-net", "provider",
-                                   "quotas", "router", "security-group"]
 
     binding_view = "extension:port_binding:view"
     binding_set = "extension:port_binding:set"
@@ -394,9 +390,6 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
         return new_sub_db
 
     def create_router(self, context, router):
-        """
-        Create router extension Neutron API
-        """
         LOG.debug("Neutron PLUMgrid Director: create_router() called")
 
         tenant_id = self._get_tenant_id_for_create(context, router["router"])
@@ -585,9 +578,9 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
         except Exception as err_message:
             raise plum_excep.PLUMgridException(err_msg=err_message)
 
-        return super(NeutronPluginPLUMgridV2,
-                     self).disassociate_floatingips(
-                             context, port_id, do_notify=do_notify)
+        return (super(NeutronPluginPLUMgridV2,
+                self).disassociate_floatingips(
+                context, port_id, do_notify=do_notify))
 
     def create_security_group(self, context, security_group, default_sg=False):
         """Create a security group
@@ -630,7 +623,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
                                                        sg_id,
                                                        security_group))
             if ('name' in security_group['security_group'] and
-                sg_db['name'] != 'default'):
+                    sg_db['name'] != 'default'):
                 try:
                     LOG.debug("PLUMgrid Library: update_security_group()"
                               " called")
@@ -696,9 +689,9 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
         sg_rules = security_group_rule.get('security_group_rules')
 
         with context.session.begin(subtransactions=True):
-            sg_id = super(NeutronPluginPLUMgridV2,
-                          self)._validate_security_group_rules(
-                          context, security_group_rule)
+            sg_id = (super(NeutronPluginPLUMgridV2,
+                     self)._validate_security_group_rules(
+                     context, security_group_rule))
 
             # Check to make sure security group exists
             security_group = super(NeutronPluginPLUMgridV2,
@@ -713,7 +706,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
 
             sec_db = (super(NeutronPluginPLUMgridV2,
                             self).create_security_group_rule_bulk_native(
-                            context, security_group_rule))
+                      context, security_group_rule))
             try:
                 LOG.debug("PLUMgrid Library: create_security_"
                           "group_rule_bulk() called")
@@ -760,8 +753,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
         port[portbindings.VIF_TYPE] = portbindings.VIF_TYPE_IOVISOR
         port[portbindings.VIF_DETAILS] = {
             # TODO(rkukura): Replace with new VIF security details
-            portbindings.CAP_PORT_FILTER:
-            'security-group' in self.supported_extension_aliases}
+            portbindings.CAP_PORT_FILTER: True}
         return port
 
     def _network_admin_state(self, network):
