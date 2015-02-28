@@ -13,22 +13,22 @@
 #    under the License.
 
 """
-Neutron Plug-in for PLUMgrid Virtual Networking Infrastructure (VNI)
-This plugin will forward authenticated REST API calls
-to the PLUMgrid Network Management System called Director
+ Neutron Plug-in for PLUMgrid Virtual Networking Infrastructure (VNI)
+ This plugin will forward authenticated REST API calls
+ to the PLUMgrid Network Management System called Director
 """
 
-from plumgridlib import plumlib
-
 from neutron.i18n import _LI
-from neutron.openstack.common import log as logging
+from oslo_log import log as logging
+from plumgridlib import plumlib
 
 LOG = logging.getLogger(__name__)
 
 
 class Plumlib(object):
-    """
-    Class PLUMgrid Python Library. This library is a third-party tool
+    """Class PLUMgrid Python Library.
+
+    This library is a third-party tool
     needed by PLUMgrid plugin to implement all core API in Neutron.
     """
 
