@@ -20,11 +20,12 @@ PLUMgrid plugin security group extension unit tests
 import mock
 from oslo.utils import importutils
 
-from neutron.plugins.plumgrid.plumgrid_plugin import plumgrid_plugin
+from networking_plumgrid.neutron.plugins import plugin as plumgrid_plugin
 from neutron.tests.unit import test_extension_security_group as ext_sg
 
 
-PLUM_DRIVER = ('neutron.plugins.plumgrid.drivers.fake_plumlib.Plumlib')
+PLUM_DRIVER = ('networking_plumgrid.neutron.plugins.drivers.'
+               'fake_plumlib.Plumlib')
 FAKE_DIRECTOR = '1.1.1.1'
 FAKE_PORT = '1234'
 FAKE_USERNAME = 'fake_admin'
@@ -35,6 +36,8 @@ FAKE_TIMEOUT = '0'
 class SecurityGroupsTestCase(ext_sg.SecurityGroupDBTestCase):
     _plugin_name = ('neutron.plugins.plumgrid.plumgrid_plugin.'
                     'plumgrid_plugin.NeutronPluginPLUMgridV2')
+
+    _unsupported = ('test_skip_duplicate_default_sg_error')
 
     def setUp(self):
         def mocked_plumlib_init(self):
