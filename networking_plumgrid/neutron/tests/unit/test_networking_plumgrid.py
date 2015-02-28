@@ -19,16 +19,17 @@ Test cases for  Neutron PLUMgrid Plug-in
 import mock
 from oslo.utils import importutils
 
+from networking_plumgrid.neutron.plugins import plugin as plumgrid_plugin
 from neutron import context
 from neutron.extensions import portbindings
 from neutron.extensions import providernet as provider
 from neutron import manager
-from neutron.plugins.plumgrid.plumgrid_plugin import plumgrid_plugin
 from neutron.tests.unit import _test_extension_portbindings as test_bindings
 from neutron.tests.unit import test_db_plugin as test_plugin
 
 
-PLUM_DRIVER = ('neutron.plugins.plumgrid.drivers.fake_plumlib.Plumlib')
+PLUM_DRIVER = ('networking_plumgrid.neutron.plugins.drivers.'
+               'fake_plumlib.Plumlib')
 FAKE_DIRECTOR = '1.1.1.1'
 FAKE_PORT = '1234'
 FAKE_USERNAME = 'fake_admin'
@@ -73,8 +74,12 @@ class TestPlumgridV2HTTPResponse(test_plugin.TestV2HTTPResponse,
 
 class TestPlumgridPluginPortsV2(test_plugin.TestPortsV2,
                                 PLUMgridPluginV2TestCase):
+
     def test_range_allocation(self):
         self.skipTest("Plugin does not support Neutron allocation process")
+
+    def test_create_port_with_ipv6_dhcp_stateful_subnet_in_fixed_ips(self):
+        self.skipTest("Plugin does not support IPv6")
 
 
 class TestPlumgridPluginSubnetsV2(test_plugin.TestSubnetsV2,
