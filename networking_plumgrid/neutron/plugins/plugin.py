@@ -26,6 +26,7 @@ from networking_plumgrid.neutron.plugins.common import exceptions as plum_excep
 from networking_plumgrid.neutron.plugins import plugin_ver
 from neutron.api.v2 import attributes
 from neutron.common import constants
+from neutron.common import utils
 from neutron.db import db_base_plugin_v2
 from neutron.db import external_net_db
 from neutron.db import l3_db
@@ -170,6 +171,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
             except Exception as err_message:
                 raise plum_excep.PLUMgridException(err_msg=err_message)
 
+    @utils.synchronized('plumlib', external=True)
     def create_port(self, context, port):
         """Create Neutron port.
 
@@ -219,6 +221,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
         # Plugin DB - Port Create and Return port
         return self._port_viftype_binding(context, port_db)
 
+    @utils.synchronized('plumlib', external=True)
     def update_port(self, context, port_id, port):
         """Update Neutron port.
 
@@ -260,6 +263,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
         # Plugin DB - Port Update
         return self._port_viftype_binding(context, port_db)
 
+    @utils.synchronized('plumlib', external=True)
     def delete_port(self, context, port_id, l3_port_check=True):
         """Delete Neutron port.
 
