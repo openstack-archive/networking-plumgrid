@@ -316,29 +316,38 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
         """
 
         LOG.debug("Neutron PLUMgrid Director: create_subnet() called")
-
         with context.session.begin(subtransactions=True):
             # Plugin DB - Subnet Create
             net_db = super(NeutronPluginPLUMgridV2, self).get_network(
                 context, subnet['subnet']['network_id'], fields=None)
             s = subnet['subnet']
-            ipnet = netaddr.IPNetwork(s['cidr'])
-
-            # PLUMgrid Director reserves the last IP address for GW
-            # when is not defined
-            if s['gateway_ip'] is attributes.ATTR_NOT_SPECIFIED:
-                gw_ip = str(netaddr.IPAddress(ipnet.last - 1))
-                subnet['subnet']['gateway_ip'] = gw_ip
-
-            # PLUMgrid reserves the first IP
-            if s['allocation_pools'] == attributes.ATTR_NOT_SPECIFIED:
-                allocation_pool = self._allocate_pools_for_subnet(context, s)
-                subnet['subnet']['allocation_pools'] = allocation_pool
+            if self._validate_network(s['cidr']):
+                ipnet = netaddr.IPNetwork(s['cidr'])
+                # PLUMgrid Director reserves the last IP address for GW
+                # when is not defined
+                if (s['gateway_ip'] is attributes.ATTR_NOT_SPECIFIED and
+                    s['allocation_pools'] != attributes.ATTR_NOT_SPECIFIED):
+                    if (subnet['subnet']['allocation_pools'][0]['start'] !=
+                        subnet['subnet']['allocation_pools'][0]['end']):
+                        gw_ip = str(netaddr.IPAddress(ipnet.last - 1))
+                        ip = netaddr.IPAddress(gw_ip)
+                        if (ip.version == 4 or
+                           (ip.version == 6 and not ip.is_link_local())):
+                            if (ip != ipnet.network and
+                                ip != ipnet.broadcast and
+                                ipnet.netmask & ip == ipnet.network):
+                                subnet['subnet']['gateway_ip'] = gw_ip
+                # PLUMgrid reserves the first IP
+                if s['allocation_pools'] == attributes.ATTR_NOT_SPECIFIED:
+                    allocation_pool = self._allocate_pools_for_subnet(context,
+                                                                      s)
+                    subnet['subnet']['allocation_pools'] = allocation_pool
 
             sub_db = super(NeutronPluginPLUMgridV2, self).create_subnet(
                 context, subnet)
-
             try:
+                if not self._validate_network(s['cidr']):
+                    ipnet = netaddr.IPNetwork(sub_db['cidr'])
                 LOG.debug("PLUMgrid Library: create_subnet() called")
                 self._plumlib.create_subnet(sub_db, net_db, ipnet)
             except Exception as err_message:
@@ -775,7 +784,10 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
         pools = []
         # Auto allocate the pool around gateway_ip
         net = netaddr.IPNetwork(subnet['cidr'])
-        boundary = int(netaddr.IPAddress(subnet['gateway_ip'] or net.last))
+        if self._validate_ip(subnet['gateway_ip']):
+            boundary = int(netaddr.IPAddress(subnet['gateway_ip']))
+        else:
+            boundary = net.last
         potential_dhcp_ip = int(net.first + 1)
         if boundary == potential_dhcp_ip:
             first_ip = net.first + 3
@@ -795,3 +807,19 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
             # return auto-generated pools
         # no need to check for their validity
         return pools
+
+    def _validate_ip(self, ip):
+        try:
+            if netaddr.IPAddress(ip):
+                return True
+            return True
+        except Exception:
+            return False
+
+    def _validate_network(self, cidr):
+        try:
+            if netaddr.IPNetwork(cidr):
+                return True
+            return True
+        except Exception:
+            return False
