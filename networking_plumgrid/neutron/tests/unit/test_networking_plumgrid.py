@@ -25,8 +25,7 @@ from neutron.extensions import portbindings
 from neutron.extensions import providernet as provider
 from neutron import manager
 from neutron.tests.unit import _test_extension_portbindings as test_bindings
-from neutron.tests.unit import test_db_plugin as test_plugin
-
+from neutron.tests.unit.db import test_db_base_plugin_v2 as test_plugin
 
 PLUM_DRIVER = ('networking_plumgrid.neutron.plugins.drivers.'
                'fake_plumlib.Plumlib')

@@ -21,8 +21,7 @@ import mock
 from oslo.utils import importutils
 
 from networking_plumgrid.neutron.plugins import plugin as plumgrid_plugin
-from neutron.tests.unit import test_extension_security_group as ext_sg
-
+from neutron.tests.unit.extensions import test_securitygroup as ext_sg
 
 PLUM_DRIVER = ('networking_plumgrid.neutron.plugins.drivers.'
                'fake_plumlib.Plumlib')
