@@ -140,7 +140,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
 
             try:
                 LOG.debug("PLUMgrid Library: update_network() called")
-                self._plumlib.update_network(tenant_id, net_id)
+                self._plumlib.update_network(tenant_id, net_id, network)
 
             except Exception as err_message:
                 raise plum_excep.PLUMgridException(err_msg=err_message)
