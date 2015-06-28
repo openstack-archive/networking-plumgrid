@@ -46,8 +46,8 @@ class Plumlib(object):
     def create_network(self, tenant_id, net_db, network):
         self.plumlib.create_network(tenant_id, net_db, network)
 
-    def update_network(self, tenant_id, net_id):
-        self.plumlib.update_network(tenant_id, net_id)
+    def update_network(self, tenant_id, net_id, network):
+        self.plumlib.update_network(tenant_id, net_id, network)
 
     def delete_network(self, net_db, net_id):
         self.plumlib.delete_network(net_db, net_id)
