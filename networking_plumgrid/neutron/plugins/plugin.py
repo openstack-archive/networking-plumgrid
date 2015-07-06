@@ -603,24 +603,24 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
         LOG.debug("Neutron PLUMgrid Director: create_security_group()"
                   " called")
 
-        with context.session.begin(subtransactions=True):
-
+        try:
             sg = security_group.get('security_group')
 
             tenant_id = self._get_tenant_id_for_create(context, sg)
-            if not default_sg:
-                self._ensure_default_security_group(context, tenant_id)
 
             sg_db = super(NeutronPluginPLUMgridV2,
                           self).create_security_group(context, security_group,
                                                       default_sg)
-            try:
-                LOG.debug("PLUMgrid Library: create_security_group()"
-                          " called")
-                self._plumlib.create_security_group(sg_db)
+            LOG.debug("PLUMgrid Library: create_security_group()"
+                      " called")
+            self._plumlib.create_security_group(sg_db)
 
-            except Exception as err_message:
-                raise plum_excep.PLUMgridException(err_msg=err_message)
+        except Exception as err_message:
+            if sg_db is not None:
+                if sg_db['name'] is 'default':
+                    context.is_admin = True
+                self.delete_security_group(context, sg_db['id'])
+            raise plum_excep.PLUMgridException(err_msg=err_message)
 
         return sg_db
 
