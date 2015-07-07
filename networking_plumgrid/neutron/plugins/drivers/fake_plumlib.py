@@ -19,7 +19,7 @@ from oslo_log import log as logging
 LOG = logging.getLogger(__name__)
 
 
-class Plumlib():
+class Plumlib(object):
     """Class PLUMgrid Fake Library.
 
     This library is a by-pass implementation for the PLUMgrid Library.
