@@ -335,12 +335,17 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
                         subnet['subnet']['allocation_pools'][0]['end']):
                         gw_ip = str(netaddr.IPAddress(ipnet.last - 1))
                         ip = netaddr.IPAddress(gw_ip)
+                        pool_start = s['allocation_pools'][0]['start']
+                        pool_end = s['allocation_pools'][0]['end']
+                        allocation_range = netaddr.IPRange(pool_start,
+                                                           pool_end)
                         if (ip.version == 4 or
                            (ip.version == 6 and not ip.is_link_local())):
                             if (ip != ipnet.network and
                                 ip != ipnet.broadcast and
                                 ipnet.netmask & ip == ipnet.network):
-                                subnet['subnet']['gateway_ip'] = gw_ip
+                                if gw_ip not in allocation_range:
+                                    subnet['subnet']['gateway_ip'] = gw_ip
                 # PLUMgrid reserves the first IP
                 if s['allocation_pools'] == attributes.ATTR_NOT_SPECIFIED:
                     allocation_pool = self._allocate_pools_for_subnet(context,
