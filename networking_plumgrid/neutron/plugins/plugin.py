@@ -68,12 +68,12 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
     binding_set = "extension:port_binding:set"
 
     def __init__(self):
-        LOG.info(_LI('Neutron PLUMgrid Director: Starting Plugin'))
+        LOG.info(_LI('networking-plumgrid: Starting Plugin'))
 
         super(NeutronPluginPLUMgridV2, self).__init__()
         self.plumgrid_init()
 
-        LOG.debug('Neutron PLUMgrid Director: Neutron server with '
+        LOG.debug('networking-plumgrid: Neutron server with '
                   'PLUMgrid Plugin has started')
 
     def plumgrid_init(self):
@@ -85,19 +85,17 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
         timeout = cfg.CONF.plumgriddirector.servertimeout
         plum_driver = cfg.CONF.plumgriddirector.driver
 
-        # PLUMgrid Director info validation
-        LOG.info(_LI('Neutron PLUMgrid Director: %s'), director_plumgrid)
+        # PLUMgrid Director(s) info validation
+        LOG.info(_LI('networking-plumgrid: %s'), director_plumgrid)
         self._plumlib = importutils.import_object(plum_driver)
         self._plumlib.director_conn(director_plumgrid, director_port, timeout,
                                     director_admin, director_password)
 
     def create_network(self, context, network):
-        """Create Neutron network.
-
-        Creates a PLUMgrid-based bridge.
+        """Create Neutron network
         """
 
-        LOG.debug('Neutron PLUMgrid Director: create_network() called')
+        LOG.debug('networking-plumgrid: create_network() called')
 
         # Plugin DB - Network Create and validation
         tenant_id = self._get_tenant_id_for_create(context,
@@ -123,11 +121,9 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
 
     def update_network(self, context, net_id, network):
         """Update Neutron network.
-
-        Updates a PLUMgrid-based bridge.
         """
 
-        LOG.debug("Neutron PLUMgrid Director: update_network() called")
+        LOG.debug("networking-plumgrid: update_network() called")
         self._network_admin_state(network)
         tenant_id = self._get_tenant_id_for_create(context, network["network"])
 
@@ -154,7 +150,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
         Deletes a PLUMgrid-based bridge.
         """
 
-        LOG.debug("Neutron PLUMgrid Director: delete_network() called")
+        LOG.debug("networking-plumgrid: delete_network() called")
         net_db = super(NeutronPluginPLUMgridV2,
                        self).get_network(context, net_id)
 
@@ -178,9 +174,9 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
         Creates a PLUMgrid-based port on the specific Virtual Network
         Function (VNF).
         """
-        LOG.debug("Neutron PLUMgrid Director: create_port() called")
+        LOG.debug("networking-plumgrid: create_port() called")
 
-        # Port operations on PLUMgrid Director is an automatic operation
+        # Port operations on PLUMgrid Director(s) is an automatic operation
         # from the VIF driver operations in Nova.
         # It requires admin_state_up to be True
 
@@ -228,7 +224,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
         Updates a PLUMgrid-based port on the specific Virtual Network
         Function (VNF).
         """
-        LOG.debug("Neutron PLUMgrid Director: update_port() called")
+        LOG.debug("networking-plumgrid: update_port() called")
 
         with context.session.begin(subtransactions=True):
             # Plugin DB - Port Create and Return port
@@ -271,7 +267,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
         Function (VNF).
         """
 
-        LOG.debug("Neutron PLUMgrid Director: delete_port() called")
+        LOG.debug("networking-plumgrid: delete_port() called")
 
         with context.session.begin(subtransactions=True):
             # Plugin DB - Port Create and Return port
@@ -319,7 +315,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
         Functions (VNFs).
         """
 
-        LOG.debug("Neutron PLUMgrid Director: create_subnet() called")
+        LOG.debug("networking-plumgrid: create_subnet() called")
         with context.session.begin(subtransactions=True):
             # Plugin DB - Subnet Create
             net_db = super(NeutronPluginPLUMgridV2, self).get_network(
@@ -327,7 +323,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
             s = subnet['subnet']
             if self._validate_network(s['cidr']):
                 ipnet = netaddr.IPNetwork(s['cidr'])
-                # PLUMgrid Director reserves the last IP address for GW
+                # PLUMgrid Director(s) reserves the last IP address for GW
                 # when is not defined
                 if (s['gateway_ip'] is attributes.ATTR_NOT_SPECIFIED and
                     s['allocation_pools'] is attributes.ATTR_NOT_SPECIFIED):
@@ -379,7 +375,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
     def delete_subnet(self, context, subnet_id):
         """Delete subnet core Neutron API."""
 
-        LOG.debug("Neutron PLUMgrid Director: delete_subnet() called")
+        LOG.debug("networking-plumgrid: delete_subnet() called")
         # Collecting subnet info
         sub_db = self._get_subnet(context, subnet_id)
         net_id = sub_db["network_id"]
@@ -420,7 +416,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
         return new_sub_db
 
     def create_router(self, context, router):
-        LOG.debug("Neutron PLUMgrid Director: create_router() called")
+        LOG.debug("networking-plumgrid: create_router() called")
 
         tenant_id = self._get_tenant_id_for_create(context, router["router"])
 
@@ -442,7 +438,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
 
     def update_router(self, context, router_id, router):
 
-        LOG.debug("Neutron PLUMgrid Director: update_router() called")
+        LOG.debug("networking-plumgrid: update_router() called")
 
         with context.session.begin(subtransactions=True):
             router_db = super(NeutronPluginPLUMgridV2,
@@ -457,7 +453,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
         return router_db
 
     def delete_router(self, context, router_id):
-        LOG.debug("Neutron PLUMgrid Director: delete_router() called")
+        LOG.debug("networking-plumgrid: delete_router() called")
 
         with context.session.begin(subtransactions=True):
             orig_router = self._get_router(context, router_id)
@@ -475,7 +471,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
 
     def add_router_interface(self, context, router_id, interface_info):
 
-        LOG.debug("Neutron PLUMgrid Director: "
+        LOG.debug("networking-plumgrid: "
                   "add_router_interface() called")
         with context.session.begin(subtransactions=True):
             # Validate args
@@ -506,7 +502,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
 
     def remove_router_interface(self, context, router_id, int_info):
 
-        LOG.debug("Neutron PLUMgrid Director: remove_router_interface()"
+        LOG.debug("networking-plumgrid: remove_router_interface()"
                   " called")
         with context.session.begin(subtransactions=True):
             # Validate args
@@ -539,7 +535,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
         return del_int_router
 
     def create_floatingip(self, context, floatingip):
-        LOG.debug("Neutron PLUMgrid Director: create_floatingip() called")
+        LOG.debug("networking-plumgrid: create_floatingip() called")
 
         with context.session.begin(subtransactions=True):
 
@@ -555,7 +551,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
         return floating_ip
 
     def update_floatingip(self, context, id, floatingip):
-        LOG.debug("Neutron PLUMgrid Director: update_floatingip() called")
+        LOG.debug("networking-plumgrid: update_floatingip() called")
 
         with context.session.begin(subtransactions=True):
             floating_ip_orig = super(NeutronPluginPLUMgridV2,
@@ -574,7 +570,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
         return floating_ip
 
     def delete_floatingip(self, context, id):
-        LOG.debug("Neutron PLUMgrid Director: delete_floatingip() called")
+        LOG.debug("networking-plumgrid: delete_floatingip() called")
 
         with context.session.begin(subtransactions=True):
 
@@ -591,7 +587,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
                 raise plum_excep.PLUMgridException(err_msg=err_message)
 
     def disassociate_floatingips(self, context, port_id, do_notify=True):
-        LOG.debug("Neutron PLUMgrid Director: disassociate_floatingips() "
+        LOG.debug("networking-plumgrid: disassociate_floatingips() "
                   "called")
 
         try:
@@ -617,7 +613,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         Create a new security group, including the default security group
         """
-        LOG.debug("Neutron PLUMgrid Director: create_security_group()"
+        LOG.debug("networking-plumgrid: create_security_group()"
                   " called")
 
         try:
@@ -700,7 +696,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         Create a security group rule in Neutron and PLUMgrid Platform
         """
-        LOG.debug("Neutron PLUMgrid Director: create_security_group_rule()"
+        LOG.debug("networking-plumgrid: create_security_group_rule()"
                   " called")
         bulk_rule = {'security_group_rules': [security_group_rule]}
         return self.create_security_group_rule_bulk(context, bulk_rule)[0]
@@ -749,7 +745,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
         Delete a security group rule in Neutron and PLUMgrid Platform
         """
 
-        LOG.debug("Neutron PLUMgrid Director: delete_security_group_rule()"
+        LOG.debug("networking-plumgrid: delete_security_group_rule()"
                   " called")
 
         sgr = (super(NeutronPluginPLUMgridV2,
