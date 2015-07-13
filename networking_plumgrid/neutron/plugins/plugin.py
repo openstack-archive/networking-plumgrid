@@ -535,20 +535,20 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
         return del_int_router
 
     def create_floatingip(self, context, floatingip):
-        LOG.debug("networking-plumgrid: create_floatingip() called")
+        LOG.debug(_("Neutron PLUMgrid Director: create_floatingip() called"))
 
-        with context.session.begin(subtransactions=True):
-
+        try:
+            floating_ip = None
             floating_ip = super(NeutronPluginPLUMgridV2,
                                 self).create_floatingip(context, floatingip)
-            try:
-                LOG.debug("PLUMgrid Library: create_floatingip() called")
-                self._plumlib.create_floatingip(floating_ip)
+            LOG.debug(_("PLUMgrid Library: create_floatingip() called"))
+            self._plumlib.create_floatingip(floating_ip)
 
-            except Exception as err_message:
-                raise plum_excep.PLUMgridException(err_msg=err_message)
-
-        return floating_ip
+            return floating_ip
+        except Exception as err_message:
+            if floating_ip is not None:
+                self.delete_floatingip(context, floating_ip["id"])
+            raise plum_excep.PLUMgridException(err_msg=err_message)
 
     def update_floatingip(self, context, id, floatingip):
         LOG.debug("networking-plumgrid: update_floatingip() called")
