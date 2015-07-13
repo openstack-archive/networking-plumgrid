@@ -559,6 +559,12 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
             floating_ip = super(NeutronPluginPLUMgridV2,
                                 self).update_floatingip(context, id,
                                                         floatingip)
+            # Update status based on association
+            if floating_ip.get('port_id') is None:
+                floating_ip['status'] = constants.FLOATINGIP_STATUS_DOWN
+            else:
+                floating_ip['status'] = constants.FLOATINGIP_STATUS_ACTIVE
+            self.update_floatingip_status(context, id, floating_ip['status'])
             try:
                 LOG.debug("PLUMgrid Library: update_floatingip() called")
                 self._plumlib.update_floatingip(floating_ip_orig, floating_ip,
