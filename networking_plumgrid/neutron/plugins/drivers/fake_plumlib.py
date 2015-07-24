@@ -33,7 +33,7 @@ class Plumlib(object):
     def director_conn(self, director_plumgrid, director_port, timeout,
                       director_admin, director_password):
         LOG.info(_LI('Fake Director: %s'),
-                 director_plumgrid + ':' + director_port)
+                 director_plumgrid + ':' + str(director_port))
         pass
 
     def create_network(self, tenant_id, net_db, network):
