@@ -17,7 +17,7 @@ Test cases for  Neutron PLUMgrid Plug-in
 """
 
 import mock
-from oslo.utils import importutils
+from oslo_utils import importutils
 
 from networking_plumgrid.neutron.plugins import plugin as plumgrid_plugin
 from neutron import context
