@@ -22,6 +22,10 @@ from oslo_log import log as logging
 from oslo_utils import importutils
 from sqlalchemy.orm import exc as sa_exc
 
+from networking_plumgrid.neutron.plugins.common.locking import lock as pg_lock
+from networking_plumgrid.neutron.plugins.db.sqlalchemy import api as db_api
+
+from functools import wraps
 from networking_plumgrid.neutron.plugins.common import exceptions as plum_excep
 from networking_plumgrid.neutron.plugins import plugin_ver
 from neutron.api.v2 import attributes
@@ -58,6 +62,21 @@ director_server_opts = [
 cfg.CONF.register_opts(director_server_opts, "plumgriddirector")
 
 
+def pgl(fn):
+    """ pg_lock decorator"""
+
+    @wraps(fn)
+    def locker(*args, **kwargs):
+        if args[-1] is not None:
+            lock = pg_lock.PGLock(args[1], args[-1])
+            with lock.thread_lock(args[-1]):
+                try:
+                    return fn(*args, **kwargs)
+                finally:
+                    lock.release(args[-1])
+    return locker
+
+
 class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
                               external_net_db.External_net_db_mixin,
                               l3_db.L3_NAT_db_mixin,
@@ -72,6 +91,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         super(NeutronPluginPLUMgridV2, self).__init__()
         self.plumgrid_init()
+        db_api.create_table_pg_lock()
 
         LOG.debug('networking-plumgrid: Neutron server with '
                   'PLUMgrid Plugin has started')
@@ -101,17 +121,21 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
         tenant_id = self._get_tenant_id_for_create(context,
                                                    network["network"])
         self._network_admin_state(network)
+        self._ensure_default_security_group(context, tenant_id)
+        return self._create_network_pg(context, network, tenant_id)
+
+    @pgl
+    def _create_network_pg(self, context, network, tenant_id):
 
         with context.session.begin(subtransactions=True):
             net_db = super(NeutronPluginPLUMgridV2,
                            self).create_network(context, network)
             # Propagate all L3 data into DB
             self._process_l3_create(context, net_db, network['network'])
-            self._ensure_default_security_group(context, tenant_id)
 
             try:
                 LOG.debug('PLUMgrid Library: create_network() called')
-                self._plumlib.create_network(tenant_id, net_db, network)
+                #self._plumlib.create_network(tenant_id, net_db, network)
 
             except Exception as err_message:
                 raise plum_excep.PLUMgridException(err_msg=err_message)
@@ -125,8 +149,13 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         LOG.debug("networking-plumgrid: update_network() called")
         self._network_admin_state(network)
-        tenant_id = self._get_tenant_id_for_create(context, network["network"])
+        net_db = super(NeutronPluginPLUMgridV2,
+                       self).get_network(context, net_id)
+        tenant_id = net_db["tenant_id"]
+        return self._update_network_pg(context, net_id, network, tenant_id)
 
+    @pgl
+    def _update_network_pg(self, context, net_id, network, tenant_id):
         with context.session.begin(subtransactions=True):
             # Plugin DB - Network Update
             net_db = super(
@@ -153,16 +182,20 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
         LOG.debug("networking-plumgrid: delete_network() called")
         net_db = super(NeutronPluginPLUMgridV2,
                        self).get_network(context, net_id)
+        tenant_id = net_db["tenant_id"]
+        self._delete_network_pg(context, net_id, net_db, tenant_id)
+
+    @pgl
+    def _delete_network_pg(self, context, net_id, net_db, tenant_id):
 
         with context.session.begin(subtransactions=True):
             self._process_l3_delete(context, net_id)
             # Plugin DB - Network Delete
             super(NeutronPluginPLUMgridV2, self).delete_network(context,
                                                                 net_id)
-
             try:
                 LOG.debug("PLUMgrid Library: update_network() called")
-                self._plumlib.delete_network(net_db, net_id)
+                #self._plumlib.delete_network(net_db, net_id)
 
             except Exception as err_message:
                 raise plum_excep.PLUMgridException(err_msg=err_message)
@@ -182,6 +215,12 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         port["port"]["admin_state_up"] = True
         port_data = port["port"]
+        tenant_id = port_data["tenant_id"]
+        self._ensure_default_security_group_on_port(context, port)
+        return self._create_port_pg(context, port, port_data, tenant_id)
+
+    @pgl
+    def _create_port_pg(self, context, port, port_data, tenant_id):
 
         with context.session.begin(subtransactions=True):
             # Plugin DB - Port Create and Return port
@@ -189,8 +228,6 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
                                                                        port)
             # Update port security
             port_data.update(port_db)
-
-            self._ensure_default_security_group_on_port(context, port)
 
             port_data[sec_grp.SECURITYGROUPS] = (
                 self._get_security_groups_on_port(context, port))
@@ -225,6 +262,13 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
         Function (VNF).
         """
         LOG.debug("networking-plumgrid: update_port() called")
+        port_get = super(NeutronPluginPLUMgridV2,
+                         self).get_port(context, port_id)
+        tenant_id = port_get["tenant_id"]
+        return self._update_port_pg(context, port_id, port, tenant_id)
+
+    @pgl
+    def _update_port_pg(self, context, port_id, port, tenant_id):
 
         with context.session.begin(subtransactions=True):
             # Plugin DB - Port Create and Return port
@@ -269,10 +313,17 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         LOG.debug("networking-plumgrid: delete_port() called")
 
+        port_db = super(NeutronPluginPLUMgridV2,
+                        self).get_port(context, port_id)
+        tenant_id = port_db["tenant_id"]
+        self._delete_port_pg(context, port_id, port_db, l3_port_check,
+                             tenant_id)
+
+    @pgl
+    def _delete_port_pg(self, context, port_id, port_db, l3_port_check,
+                        tenant_id):
+
         with context.session.begin(subtransactions=True):
-            # Plugin DB - Port Create and Return port
-            port_db = super(NeutronPluginPLUMgridV2,
-                            self).get_port(context, port_id)
             router_ids = self.disassociate_floatingips(
                 context, port_id, do_notify=False)
             super(NeutronPluginPLUMgridV2, self).delete_port(context, port_id)
@@ -316,10 +367,15 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
         """
 
         LOG.debug("networking-plumgrid: create_subnet() called")
+        net_db = super(NeutronPluginPLUMgridV2, self).get_network(
+                       context, subnet['subnet']['network_id'], fields=None)
+        tenant_id = net_db["tenant_id"]
+        return self._create_subnet_pg(context, subnet, net_db, tenant_id)
+
+    @pgl
+    def _create_subnet_pg(self, context, subnet, net_db, tenant_id):
         with context.session.begin(subtransactions=True):
             # Plugin DB - Subnet Create
-            net_db = super(NeutronPluginPLUMgridV2, self).get_network(
-                context, subnet['subnet']['network_id'], fields=None)
             s = subnet['subnet']
             if self._validate_network(s['cidr']):
                 ipnet = netaddr.IPNetwork(s['cidr'])
@@ -381,6 +437,12 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
         net_id = sub_db["network_id"]
         net_db = self.get_network(context, net_id)
         tenant_id = net_db["tenant_id"]
+        self._delete_subnet_pg(context, subnet_id, net_db, net_id, sub_db,
+                               tenant_id)
+
+    @pgl
+    def _delete_subnet_pg(self, context, subnet_id, net_db, net_id, sub_db,
+                          tenant_id):
 
         with context.session.begin(subtransactions=True):
             # Plugin DB - Subnet Delete
@@ -398,7 +460,13 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
         LOG.debug("update_subnet() called")
         # Collecting subnet info
         orig_sub_db = self._get_subnet(context, subnet_id)
+        tenant_id = orig_sub_db["tenant_id"]
+        return self._update_subnet_pg(context, subnet_id, subnet, orig_sub_db,
+                                      tenant_id)
 
+    @pgl
+    def _update_subnet_pg(self, context, subnet_id, subnet, orig_sub_db,
+                          tenant_id):
         with context.session.begin(subtransactions=True):
             # Plugin DB - Subnet Update
             new_sub_db = super(NeutronPluginPLUMgridV2,
@@ -419,6 +487,10 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
         LOG.debug("networking-plumgrid: create_router() called")
 
         tenant_id = self._get_tenant_id_for_create(context, router["router"])
+        return self._create_router_pg(context, router, tenant_id)
+
+    @pgl
+    def _create_router_pg(self, context, router, tenant_id):
 
         with context.session.begin(subtransactions=True):
 
@@ -439,7 +511,11 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
     def update_router(self, context, router_id, router):
 
         LOG.debug("networking-plumgrid: update_router() called")
+        tenant_id = router["router"]["tenant_id"]
+        return self._update_router_pg(context, router_id, router, tenant_id)
 
+    @pgl
+    def _update_router_pg(self, context, router_id, router, tenant_id):
         with context.session.begin(subtransactions=True):
             router_db = super(NeutronPluginPLUMgridV2,
                               self).update_router(context, router_id, router)
@@ -455,10 +531,13 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
     def delete_router(self, context, router_id):
         LOG.debug("networking-plumgrid: delete_router() called")
 
-        with context.session.begin(subtransactions=True):
-            orig_router = self._get_router(context, router_id)
-            tenant_id = orig_router["tenant_id"]
+        orig_router = self._get_router(context, router_id)
+        tenant_id = orig_router["tenant_id"]
+        self._delete_router_pg(context, router_id, tenant_id)
 
+    @pgl
+    def _delete_router_pg(self, context, router_id, tenant_id):
+        with context.session.begin(subtransactions=True):
             super(NeutronPluginPLUMgridV2, self).delete_router(context,
                                                                router_id)
 
@@ -473,11 +552,16 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         LOG.debug("networking-plumgrid: "
                   "add_router_interface() called")
-        with context.session.begin(subtransactions=True):
-            # Validate args
-            router_db = self._get_router(context, router_id)
-            tenant_id = router_db['tenant_id']
+        router_db = self._get_router(context, router_id)
+        tenant_id = router_db['tenant_id']
+        return self._update_router_interface_pg(context, router_id,
+                                                interface_info, router_db,
+                                                tenant_id)
 
+    @pgl
+    def _update_router_interface_pg(self, context, router_id, interface_info,
+                                    router_db, tenant_id):
+        with context.session.begin(subtransactions=True):
             # Create interface in DB
             int_router = super(NeutronPluginPLUMgridV2,
                                self).add_router_interface(context,
@@ -504,10 +588,16 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         LOG.debug("networking-plumgrid: remove_router_interface()"
                   " called")
+        router_db = self._get_router(context, router_id)
+        tenant_id = router_db['tenant_id']
+        return self._remove_router_interface_pg(context, router_id, int_info,
+                                                router_db, tenant_id)
+
+    @pgl
+    def _remove_router_interface_pg(self, context, router_id, int_info,
+                                    router_db, tenant_id):
+
         with context.session.begin(subtransactions=True):
-            # Validate args
-            router_db = self._get_router(context, router_id)
-            tenant_id = router_db['tenant_id']
             if 'port_id' in int_info:
                 port = self._get_port(context, int_info['port_id'])
                 net_id = port['network_id']
@@ -615,21 +705,28 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
         """
         LOG.debug("networking-plumgrid: create_security_group()"
                   " called")
+        sg = security_group.get('security_group')
 
-        try:
+        tenant_id = self._get_tenant_id_for_create(context, sg)
+        if not default_sg:
+            self._ensure_default_security_group(context, tenant_id)
+        return self._create_security_group_pg(context, security_group, sg,
+                                              default_sg, tenant_id)
+
+    @pgl
+    def _create_security_group_pg(self, context, security_group, sg,
+                                  default_sg, tenant_id):
+        with context.session.begin(subtransactions=True):
             sg_db = super(NeutronPluginPLUMgridV2,
                           self).create_security_group(context, security_group,
                                                       default_sg)
-            LOG.debug("PLUMgrid Library: create_security_group()"
-                      " called")
-            self._plumlib.create_security_group(sg_db)
+            try:
+                LOG.debug("PLUMgrid Library: create_security_group()"
+                          " called")
+                self._plumlib.create_security_group(sg_db)
 
-        except Exception as err_message:
-            if sg_db is not None:
-                if sg_db['name'] is 'default':
-                    context.is_admin = True
-                self.delete_security_group(context, sg_db['id'])
-            raise plum_excep.PLUMgridException(err_msg=err_message)
+            except Exception as err_message:
+                raise plum_excep.PLUMgridException(err_msg=err_message)
 
         return sg_db
 
@@ -639,6 +736,15 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
         Update security group name/description in Neutron and PLUMgrid
         platform
         """
+        sg = super(NeutronPluginPLUMgridV2, self).get_security_group(context,
+                                                                     sg_id)
+        tenant_id = sg["tenant_id"]
+        return self._update_security_group_pg(context, sg_id, security_group,
+                                              tenant_id)
+
+    @pgl
+    def _update_security_group_pg(self, context, sg_id, security_group,
+                                  tenant_id):
         with context.session.begin(subtransactions=True):
             sg_db = (super(NeutronPluginPLUMgridV2,
                            self).update_security_group(context,
@@ -662,15 +768,20 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         :param sg_id: security group ID of the rule to be removed
         """
+        sg = super(NeutronPluginPLUMgridV2, self).get_security_group(
+             context, sg_id)
+        if not sg:
+            raise sec_grp.SecurityGroupNotFound(id=sg_id)
+
+        if sg['name'] == 'default' and not context.is_admin:
+            raise sec_grp.SecurityGroupCannotRemoveDefault()
+
+        tenant_id = sg["tenant_id"]
+        self._delete_security_group_pg(context, sg_id, sg, tenant_id)
+
+    @pgl
+    def _delete_security_group_pg(self, context, sg_id, sg, tenant_id):
         with context.session.begin(subtransactions=True):
-
-            sg = super(NeutronPluginPLUMgridV2, self).get_security_group(
-                context, sg_id)
-            if not sg:
-                raise sec_grp.SecurityGroupNotFound(id=sg_id)
-
-            if sg['name'] == 'default' and not context.is_admin:
-                raise sec_grp.SecurityGroupCannotRemoveDefault()
 
             sec_grp_ip = sg['id']
             filters = {'security_group_id': [sec_grp_ip]}
@@ -709,23 +820,30 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
         :param security_group_rule: list of rules to create
         """
         sg_rules = security_group_rule.get('security_group_rules')
+        sg_id = (super(NeutronPluginPLUMgridV2,
+                 self)._validate_security_group_rules(
+                 context, security_group_rule))
 
+        # Check to make sure security group exists
+        security_group = super(NeutronPluginPLUMgridV2,
+                               self).get_security_group(context,
+                                                        sg_id)
+
+        if not security_group:
+            raise sec_grp.SecurityGroupNotFound(id=sg_id)
+
+        # Check for duplicate rules
+        self._check_for_duplicate_rules(context, sg_rules)
+        tenant_id = security_group["tenant_id"]
+        return self._create_security_group_rule_bulk_pg(context,
+                                                        security_group_rule,
+                                                        sg_rules,
+                                                        tenant_id)
+
+    @pgl
+    def _create_security_group_rule_bulk_pg(self, context, security_group_rule,
+                                            sg_rules, tenant_id):
         with context.session.begin(subtransactions=True):
-            sg_id = (super(NeutronPluginPLUMgridV2,
-                     self)._validate_security_group_rules(
-                     context, security_group_rule))
-
-            # Check to make sure security group exists
-            security_group = super(NeutronPluginPLUMgridV2,
-                                   self).get_security_group(context,
-                                                            sg_id)
-
-            if not security_group:
-                raise sec_grp.SecurityGroupNotFound(id=sg_id)
-
-            # Check for duplicate rules
-            self._check_for_duplicate_rules(context, sg_rules)
-
             sec_db = (super(NeutronPluginPLUMgridV2,
                             self).create_security_group_rule_bulk_native(
                       context, security_group_rule))
@@ -753,6 +871,11 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         if not sgr:
             raise sec_grp.SecurityGroupRuleNotFound(id=sgr_id)
+        tenant_id = sgr["tenant_id"]
+        self._delete_security_group_rule_pg(context, sgr_id, sgr, tenant_id)
+
+    @pgl
+    def _delete_security_group_rule_pg(self, context, sgr_id, sgr, tenant_id):
 
         super(NeutronPluginPLUMgridV2,
               self).delete_security_group_rule(context, sgr_id)

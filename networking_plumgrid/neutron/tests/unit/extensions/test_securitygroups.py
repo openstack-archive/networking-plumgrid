@@ -18,7 +18,7 @@ PLUMgrid plugin security group extension unit tests
 """
 
 import mock
-from oslo.utils import importutils
+from oslo_utils import importutils
 
 from networking_plumgrid.neutron.plugins import plugin as plumgrid_plugin
 from neutron.tests.unit.extensions import test_securitygroup as ext_sg
