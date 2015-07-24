@@ -24,3 +24,7 @@ class PLUMgridException(base_exec.NeutronException):
 
 class PLUMgridConnectionFailed(PLUMgridException):
     message = _("Connection failed with PLUMgrid Director: %(err_msg)s")
+
+
+class TenantResourcesInUse(base_exec.NeutronException):
+    message = _("TenantResourcesInUse: %(err_msg)s")
