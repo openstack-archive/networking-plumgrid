@@ -91,6 +91,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
 
     binding_view = "extension:port_binding:view"
     binding_set = "extension:port_binding:set"
+    supported_extension_aliases = ["pg_exemplar"]
 
     def __init__(self):
         LOG.info(_LI('networking-plumgrid: Starting Plugin'))
@@ -1024,3 +1025,24 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
                 return True
         except Exception:
             return False
+
+    def create_pg_exemplar(self, context, pg_exemplar):
+        """
+        """
+        LOG.info("PG Exemplar Create")
+    def update_pg_exemplar(self, context, id, pg_exemplar):
+        """
+        """
+        LOG.info("PG Exemplar Update")
+    def delete_pg_exemplar(self, context, id):
+        """
+        """
+        LOG.info("PG Exemplar Delete")
+    def get_pg_exemplar(self, context, id, fields):
+        """
+        """
+        LOG.info("PG Exemplar Show")
+    def get_pg_exemplars(self, context, filters, fields):
+        """
+        """
+        LOG.info("PG Exemplar List")
