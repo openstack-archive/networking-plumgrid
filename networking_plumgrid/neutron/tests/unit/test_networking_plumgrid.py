@@ -142,6 +142,9 @@ class TestPlumgridPluginSubnetsV2(test_plugin.TestSubnetsV2,
     def test_subnet_update_enable_dhcp_no_ip_available_returns_409_ipv6(self):
         self.skipTest("Plugin does not support IPv6")
 
+    def test_create_subnet_ipv6_pd_gw_values(self):
+        self.skipTest("Plugin does not support IPv6")
+
 
 class TestPlumgridPluginPortBinding(PLUMgridPluginV2TestCase,
                                     test_bindings.PortBindingsTestCase):
