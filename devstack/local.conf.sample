@@ -29,6 +29,7 @@ PLUMGRID_ADMIN=ADMIN
 PLUMGRID_PASSWORD=ADMIN
 PLUMGRID_TIMEOUT=TIMEOUT
 PLUMGRID_DRIVER=networking_plumgrid.neutron.plugins.drivers.plumlib.Plumlib
+enable_plugin networking-plumgrid https://github.com/openstack/networking-plumgrid.git
 
 # Minimal Contents
 # ----------------
