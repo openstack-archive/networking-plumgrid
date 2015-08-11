@@ -91,6 +91,10 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
                               portbindings_db.PortBindingMixin,
                               securitygroups_db.SecurityGroupDbMixin):
 
+    supported_extension_aliases = ["binding", "external-net", "extraroute",
+                                   "provider", "quotas", "router",
+                                   "security-group"]
+
     binding_view = "extension:port_binding:view"
     binding_set = "extension:port_binding:set"
 
@@ -418,6 +422,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
         with context.session.begin(subtransactions=True):
             # Plugin DB - Subnet Create
             s = subnet['subnet']
+            ipnet = None
             if self._validate_network(s['cidr']):
                 ipnet = netaddr.IPNetwork(s['cidr'])
                 # PLUMgrid Director(s) reserves the last IP address for GW
@@ -460,7 +465,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
             sub_db = super(NeutronPluginPLUMgridV2, self).create_subnet(
                 context, subnet)
             try:
-                if not self._validate_network(s['cidr']):
+                if not ipnet:
                     ipnet = netaddr.IPNetwork(sub_db['cidr'])
                 LOG.debug("PLUMgrid Library: create_subnet() called")
                 self._plumlib.create_subnet(sub_db, net_db, ipnet)

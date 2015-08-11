@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# PLUMgrid Director(s) configuration
+PLUMGRID_DIRECTOR_IP=${PLUMGRID_DIRECTOR_IP:-localhost}
+PLUMGRID_DIRECTOR_PORT=${PLUMGRID_DIRECTOR_PORT:-8080}
+PLUMGRID_ADMIN=${PLUMGRID_ADMIN:-username}
+PLUMGRID_PASSWORD=${PLUMGRID_PASSWORD:-password}
+PLUMGRID_TIMEOUT=${PLUMGRID_TIMEOUT:-70}
+PLUMGRID_DRIVER=${PLUMGRID_DRIVER:-networking_plumgrid.neutron.plugins.drivers.plumlib.Plumlib}
+PLUMGRID_DIR=${PLUMGRID_DIR:-$DEST/networking-plumgrid}

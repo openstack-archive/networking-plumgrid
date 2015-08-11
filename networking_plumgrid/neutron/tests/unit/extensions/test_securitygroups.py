@@ -33,8 +33,8 @@ FAKE_TIMEOUT = '0'
 
 
 class SecurityGroupsTestCase(ext_sg.SecurityGroupDBTestCase):
-    _plugin_name = ('neutron.plugins.plumgrid.plumgrid_plugin.'
-                    'plumgrid_plugin.NeutronPluginPLUMgridV2')
+    _plugin_name = ('networking_plumgrid.neutron.plugins.'
+                    'plugin.NeutronPluginPLUMgridV2')
 
     def setUp(self):
         def mocked_plumlib_init(self):
