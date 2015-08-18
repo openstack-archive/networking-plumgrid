@@ -13,4 +13,4 @@ os-testr>=0.1.0
 testrepository>=0.0.18
 testtools>=1.4.0
 WebTest>=2.0
-
+-e git://git.openstack.org/openstack/neutron.git@master#egg=neutron
