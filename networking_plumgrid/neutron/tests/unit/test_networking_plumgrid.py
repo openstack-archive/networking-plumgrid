@@ -20,8 +20,8 @@ import mock
 from oslo_utils import importutils
 
 from networking_plumgrid.neutron.plugins import plugin as plumgrid_plugin
+from networking_plumgrid.neutron.extensions import portbindings
 from neutron import context
-from neutron.extensions import portbindings
 from neutron.extensions import providernet as provider
 from neutron import manager
 from neutron.tests.unit import _test_extension_portbindings as test_bindings

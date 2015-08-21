@@ -26,6 +26,8 @@ from networking_plumgrid.neutron.plugins.common.locking import lock as pg_lock
 from networking_plumgrid.neutron.plugins.db.sqlalchemy import api as db_api
 
 from functools import wraps
+from networking_plumgrid.neutron.extensions import portbindings\
+    as h_portbindings
 from networking_plumgrid.neutron.plugins.common import exceptions as plum_excep
 from networking_plumgrid.neutron.plugins import plugin_ver
 from neutron.api.v2 import attributes
@@ -962,7 +964,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
         return plugin_ver.VERSION
 
     def _port_viftype_binding(self, context, port):
-        port[portbindings.VIF_TYPE] = portbindings.VIF_TYPE_IOVISOR
+        port[portbindings.VIF_TYPE] = p_portbindings.VIF_TYPE_IOVISOR
         port[portbindings.VIF_DETAILS] = {
             # TODO(rkukura): Replace with new VIF security details
             portbindings.CAP_PORT_FILTER: True}
