@@ -26,6 +26,8 @@ from networking_plumgrid.neutron.plugins.common.locking import lock as pg_lock
 from networking_plumgrid.neutron.plugins.db.sqlalchemy import api as db_api
 
 from functools import wraps
+from networking_plumgrid.neutron.extensions import portbindings\
+    as p_portbindings
 from networking_plumgrid.neutron.plugins.common import exceptions as plum_excep
 from networking_plumgrid.neutron.plugins import plugin_ver
 from neutron.api.v2 import attributes
@@ -400,19 +402,13 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
 
     def create_subnet(self, context, subnet):
         """Create Neutron subnet.
-
         Creates a PLUMgrid-based DHCP and NAT Virtual Network
         Functions (VNFs).
         """
-
         LOG.debug("networking-plumgrid: create_subnet() called")
         net_db = super(NeutronPluginPLUMgridV2, self).get_network(
                        context, subnet['subnet']['network_id'], fields=None)
         tenant_id = net_db["tenant_id"]
-        return self._create_subnet_pg(context, subnet, net_db, tenant_id)
-
-    @pgl
-    def _create_subnet_pg(self, context, subnet, net_db, tenant_id):
         with context.session.begin(subtransactions=True):
             # Plugin DB - Subnet Create
             s = subnet['subnet']
@@ -455,16 +451,20 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
                                                                       s)
                     subnet['subnet']['allocation_pools'] = allocation_pool
 
-            sub_db = super(NeutronPluginPLUMgridV2, self).create_subnet(
-                context, subnet)
-            try:
-                if not self._validate_network(s['cidr']):
-                    ipnet = netaddr.IPNetwork(sub_db['cidr'])
+            sub_db = super(NeutronPluginPLUMgridV2, self).create_subnet(context, subnet)
+        return self._create_subnet_pg(context, subnet, net_db, sub_db, ipnet, tenant_id)
+
+    @pgl
+    def _create_subnet_pg(self, context, subnet, net_db, sub_db, ipnet, tenant_id):
+        s = subnet['subnet']
+        try:
+            if not self._validate_network(s['cidr']):
+                ipnet = netaddr.IPNetwork(sub_db['cidr'])
                 LOG.debug("PLUMgrid Library: create_subnet() called")
                 self._plumlib.create_subnet(sub_db, net_db, ipnet)
-            except Exception as err_message:
-                raise plum_excep.PLUMgridException(err_msg=err_message)
-
+        except Exception as err_message:
+            self.delete_subnet(context, sub_db['id'])
+            raise plum_excep.PLUMgridException(err_msg=err_message)
         return sub_db
 
     def delete_subnet(self, context, subnet_id):
@@ -482,16 +482,14 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
     @pgl
     def _delete_subnet_pg(self, context, subnet_id, net_db, net_id, sub_db,
                           tenant_id):
-
+        try:
+            LOG.debug("PLUMgrid Library: delete_subnet() called")
+            self._plumlib.delete_subnet(tenant_id, net_db, net_id)
+        except Exception as err_message:
+            raise plum_excep.PLUMgridException(err_msg=err_message)
         with context.session.begin(subtransactions=True):
             # Plugin DB - Subnet Delete
-            super(NeutronPluginPLUMgridV2, self).delete_subnet(
-                context, subnet_id)
-            try:
-                LOG.debug("PLUMgrid Library: delete_subnet() called")
-                self._plumlib.delete_subnet(tenant_id, net_db, net_id)
-            except Exception as err_message:
-                raise plum_excep.PLUMgridException(err_msg=err_message)
+            super(NeutronPluginPLUMgridV2, self).delete_subnet(context, subnet_id)
 
     def update_subnet(self, context, subnet_id, subnet):
         """Update subnet core Neutron API."""
@@ -526,23 +524,23 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
         LOG.debug("networking-plumgrid: create_router() called")
 
         tenant_id = self._get_tenant_id_for_create(context, router["router"])
-        return self._create_router_pg(context, router, tenant_id)
-
-    @pgl
-    def _create_router_pg(self, context, router, tenant_id):
-
         with context.session.begin(subtransactions=True):
-
             # Create router in DB
             router_db = super(NeutronPluginPLUMgridV2,
                               self).create_router(context, router)
-            # Create router on the network controller
-            try:
-                # Add Router to VND
-                LOG.debug("PLUMgrid Library: create_router() called")
-                self._plumlib.create_router(tenant_id, router_db)
-            except Exception as err_message:
-                raise plum_excep.PLUMgridException(err_msg=err_message)
+        return self._create_router_pg(context, router, router_db, tenant_id)
+
+    @pgl
+    def _create_router_pg(self, context, router, router_db, tenant_id):
+
+        # Create router on the network controller
+        try:
+            # Add Router to VND
+            LOG.debug("PLUMgrid Library: create_router() called")
+            self._plumlib.create_router(tenant_id, router_db)
+        except Exception as err_message:
+            self.delete_router(context, router_db['id'])
+            raise plum_excep.PLUMgridException(err_msg=err_message)
 
         # Return created router
         return router_db
@@ -577,6 +575,12 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
 
     @pgl
     def _delete_router_pg(self, context, router_id, tenant_id):
+        try:
+            LOG.debug("PLUMgrid Library: delete_router() called")
+            self._plumlib.delete_router(tenant_id, router_id)
+
+        except Exception as err_message:
+            raise plum_excep.PLUMgridException(err_msg=err_message)
         with context.session.begin(subtransactions=True):
             router = self._ensure_router_not_in_use(context, router_id)
             router_ports = router.attached_ports.all()
@@ -586,13 +590,6 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
                 self.delete_port(context.elevated(), rp.port.id)
             super(NeutronPluginPLUMgridV2, self).delete_router(context,
                                                                router_id)
-
-            try:
-                LOG.debug("PLUMgrid Library: delete_router() called")
-                self._plumlib.delete_router(tenant_id, router_id)
-
-            except Exception as err_message:
-                raise plum_excep.PLUMgridException(err_msg=err_message)
 
     def add_router_interface(self, context, router_id, interface_info):
 
@@ -712,6 +709,12 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
             floating_ip = super(NeutronPluginPLUMgridV2,
                                 self).update_floatingip(context, id,
                                                         floatingip)
+            # Update status based on association
+            if floating_ip.get('port_id') is None:
+                floating_ip['status'] = constants.FLOATINGIP_STATUS_DOWN
+            else:
+                floating_ip['status'] = constants.FLOATINGIP_STATUS_ACTIVE
+            self.update_floatingip_status(context, id, floating_ip['status'])
             try:
                 LOG.debug("PLUMgrid Library: update_floatingip() called")
                 self._plumlib.update_floatingip(floating_ip_orig, floating_ip,
@@ -962,7 +965,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
         return plugin_ver.VERSION
 
     def _port_viftype_binding(self, context, port):
-        port[portbindings.VIF_TYPE] = portbindings.VIF_TYPE_IOVISOR
+        port[portbindings.VIF_TYPE] = p_portbindings.VIF_TYPE_IOVISOR
         port[portbindings.VIF_DETAILS] = {
             # TODO(rkukura): Replace with new VIF security details
             portbindings.CAP_PORT_FILTER: True}
