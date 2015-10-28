@@ -35,11 +35,13 @@ from neutron.common import constants
 from neutron.common import utils
 from neutron.db import db_base_plugin_v2
 from neutron.db import external_net_db
+from neutron.db import extraroute_db
 from neutron.db import l3_db
 from neutron.db import portbindings_db
 from neutron.db import quota_db  # noqa
 from neutron.db import securitygroups_db
 from neutron.extensions import portbindings
+from neutron.extensions import extraroute
 from neutron.extensions import securitygroup as sec_grp
 from neutron.i18n import _LI, _LW
 
@@ -87,6 +89,7 @@ def pgl(fn):
 
 class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
                               external_net_db.External_net_db_mixin,
+                              extraroute_db.ExtraRoute_db_mixin,
                               l3_db.L3_NAT_db_mixin,
                               portbindings_db.PortBindingMixin,
                               securitygroups_db.SecurityGroupDbMixin):
