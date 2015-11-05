@@ -1,4 +1,4 @@
-# Copyright 2013 PLUMgrid, Inc. All Rights Reserved.
+# Copyright 2015 PLUMgrid, Inc. All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -223,8 +223,8 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
         """
         LOG.debug("networking-plumgrid: create_port() called")
 
-        # Port operations on PLUMgrid Director(s) is an automatic operation
-        # from the VIF driver operations in Nova.
+        # Port operations on PLUMgrid are through the
+        # VIF driver operations in Nova.
         # It requires admin_state_up to be True
 
         port["port"]["admin_state_up"] = True
@@ -425,7 +425,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
             ipnet = None
             if self._validate_network(s['cidr']):
                 ipnet = netaddr.IPNetwork(s['cidr'])
-                # PLUMgrid Director(s) reserves the last IP address for GW
+                # PLUMgrid reserves the last IP address for GW
                 # when is not defined
                 if (s['gateway_ip'] is attributes.ATTR_NOT_SPECIFIED and
                     s['allocation_pools'] is attributes.ATTR_NOT_SPECIFIED):
@@ -520,7 +520,6 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
             ipnet = netaddr.IPNetwork(new_sub_db['cidr'])
 
             try:
-                # PLUMgrid Server does not support updating resources yet
                 LOG.debug("PLUMgrid Library: update_network() called")
                 self._plumlib.update_subnet(orig_sub_db, new_sub_db, ipnet)
 
