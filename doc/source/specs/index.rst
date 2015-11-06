@@ -1,8 +1,3 @@
-.. networking-plumgrid documentation master file, created by
-   sphinx-quickstart on Tue Jul  9 22:26:36 2013.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 ..
       Licensed under the Apache License, Version 2.0 (the "License"); you may
       not use this file except in compliance with the License. You may obtain
@@ -24,29 +19,24 @@
       '''''''  Heading 4
       (Avoid deeper levels because they do not render well.)
 
-Welcome to networking-plumgrid's documentation!
-========================================================
-
-Contents:
-
-.. toctree::
-   :maxdepth: 2
-
-   readme
-   installation
-   usage
-   contributing
 
 networking-plumgrid specs
 =========================
 
-.. toctree::
-   :maxdepth: 1
+This section contains detailed specification documents inside
+networking-plumgrid.
 
-   specs/index
+
+Spec Template
+--------------
+.. toctree::
+    :maxdepth: 3
+
+    skeleton
+
 
 Indices and tables
-==================
+------------------
 
 * :ref:`genindex`
 * :ref:`modindex`
