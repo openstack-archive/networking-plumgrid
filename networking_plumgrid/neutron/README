@@ -1,0 +1,11 @@
+PLUMgrid Neutron Plugin
+========================
+
+PLUMgrid Neutron Plugin for PLUMgrid Open Networking Suite
+
+* PyPI package location:
+  * https://pypi.python.org/pypi/networking-plumgrid
+
+* For config, install and other details, please refer to
+  wiki page:
+  * http://wiki.openstack.org/PLUMgrid-Neutron
