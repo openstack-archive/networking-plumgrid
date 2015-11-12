@@ -40,7 +40,7 @@ class LazyPluggable(object):
 
 
 IMPL = LazyPluggable('backend',
-       sqlalchemy='networking_pumgrid.neutron.plugins.db.sqlalchemy.api')
+       sqlalchemy='networking_pumgrid.neutron.db.sqlal.api')
 
 
 def purge_deleted(age, granularity='days'):

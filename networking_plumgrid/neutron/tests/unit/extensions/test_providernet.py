@@ -20,10 +20,10 @@ PLUMgrid plugin provider network extension unit tests
 import mock
 from oslo_utils import importutils
 
-from networking_plumgrid.neutron.plugins import plugin as plumgrid_plugin
+from networking_plumgrid.neutron import plugin as plumgrid_plugin
 from neutron.tests.unit.extensions import test_providernet as pnet
 
-PLUM_DRIVER = ('networking_plumgrid.neutron.plugins.drivers.'
+PLUM_DRIVER = ('networking_plumgrid.neutron.drivers.'
                'fake_plumlib.Plumlib')
 FAKE_DIRECTOR = '1.1.1.1'
 FAKE_PORT = '1234'
@@ -33,7 +33,7 @@ FAKE_TIMEOUT = '0'
 
 
 class ProviderNetworksTestCase(pnet.ProvidernetExtensionTestCase):
-    _plugin_name = ('networking_plumgrid.neutron.plugins.'
+    _plugin_name = ('networking_plumgrid.neutron.'
                     'plugin.NeutronPluginPLUMgridV2')
 
     def setUp(self):
