@@ -15,7 +15,7 @@
 import sys
 
 from networking_plumgrid.neutron.plugins.common import exceptions as exception
-from networking_plumgrid.neutron.plugins.db.sqlalchemy import models
+from networking_plumgrid.neutron.plugins.db.sqlal import models
 from neutron.i18n import _LW
 from oslo_config import cfg
 from oslo_db.sqlalchemy import session as db_session
