@@ -27,7 +27,7 @@ CONF = cfg.CONF
 
 
 _BACKEND_MAPPING = {'sqlalchemy':
-                    'networking_plumgrid.neutron.plugins.db.sqlalchemy.api'}
+                    'networking_plumgrid.neutron.db.sqlal.api'}
 
 IMPL = api.DBAPI.from_config(CONF, backend_mapping=_BACKEND_MAPPING)
 

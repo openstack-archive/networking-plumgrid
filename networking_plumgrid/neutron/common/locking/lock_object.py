@@ -18,7 +18,7 @@ PGLock object
 
 #from oslo_versionedobjects import fields
 
-from networking_plumgrid.neutron.plugins.db import api as db_api
+from networking_plumgrid.neutron.db import api as db_api
 
 
 class PGLock(object):
