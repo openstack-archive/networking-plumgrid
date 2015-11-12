@@ -23,15 +23,18 @@ from oslo_utils import importutils
 from sqlalchemy.orm import exc as sa_exc
 
 from networking_plumgrid.neutron.plugins.common.locking import lock as pg_lock
-from networking_plumgrid.neutron.plugins.db.sqlalchemy import api as db_api
+from networking_plumgrid.neutron.plugins.db.sqlal import api as db_api
 
 from functools import wraps
 from networking_plumgrid.neutron.extensions import portbindings\
     as p_portbindings
 from networking_plumgrid.neutron.plugins.common import exceptions as plum_excep
+from networking_plumgrid.neutron.plugins.db import pgdb
 from networking_plumgrid.neutron.plugins import plugin_ver
 from neutron.api.v2 import attributes
 from neutron.common import constants
+from neutron.common import exceptions as n_exc
+from neutron.common import utils
 from neutron.common import utils
 from neutron.db import db_base_plugin_v2
 from neutron.db import external_net_db
@@ -41,8 +44,10 @@ from neutron.db import portbindings_db
 from neutron.db import quota_db  # noqa
 from neutron.db import securitygroups_db
 from neutron.extensions import portbindings
+from neutron.extensions import providernet as provider
 from neutron.extensions import securitygroup as sec_grp
 from neutron.i18n import _LI, _LW
+from neutron.plugins.common import constants as svc_constants
 
 LOG = logging.getLogger(__name__)
 
@@ -110,6 +115,9 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
         LOG.debug('networking-plumgrid: Neutron server with '
                   'PLUMgrid Plugin has started')
 
+    db_base_plugin_v2.NeutronDbPluginV2.register_dict_extend_funcs(
+        attributes.NETWORKS, ['_extend_network_dict_provider_pg'])
+
     def plumgrid_init(self):
         """PLUMgrid initialization."""
         director_plumgrid = cfg.CONF.plumgriddirector.director_server
@@ -131,20 +139,34 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
 
         LOG.debug('networking-plumgrid: create_network() called')
 
+        (network_type, physical_network,
+         segmentation_id) = self._process_provider_create(context,
+                                                          network['network'])
+
         # Plugin DB - Network Create and validation
         tenant_id = self._get_tenant_id_for_create(context,
                                                    network["network"])
         self._network_admin_state(network)
         self._ensure_default_security_group(context, tenant_id)
-        return self._create_network_pg(context, network, tenant_id)
+        return self._create_network_pg(context, network, network_type,
+                                       physical_network, segmentation_id,
+                                       tenant_id)
 
     @pgl
-    def _create_network_pg(self, context, network, tenant_id):
+    def _create_network_pg(self, context, network, network_type,
+                           physical_network, segmentation_id, tenant_id):
         with context.session.begin(subtransactions=True):
             net_db = super(NeutronPluginPLUMgridV2,
                            self).create_network(context, network)
-            # Propagate all L3 data into DB
+            binding = None
+            if network_type:
+                binding = pgdb.add_network_binding(context.session,
+                                                   net_db['id'],
+                                                   str(network_type),
+                                                   str(physical_network),
+                                                   segmentation_id)
             self._process_l3_create(context, net_db, network['network'])
+            self._extend_network_dict_provider_pg(net_db, None, binding)
 
             try:
                 LOG.debug('PLUMgrid Library: create_network() called')
@@ -1038,3 +1060,65 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
                 return True
         except Exception:
             return False
+
+    def _extend_network_dict_provider_pg(self, network, net_db,
+                                         net_binding=None):
+        binding = net_db.pgnetbinding if net_db else net_binding
+        if binding:
+            network[provider.NETWORK_TYPE] = binding.network_type
+            network[provider.PHYSICAL_NETWORK] = binding.physical_network
+            network[provider.SEGMENTATION_ID] = binding.vlan_id
+        return network
+
+    def _process_provider_create(self, context, attrs):
+        network_type = attrs.get(provider.NETWORK_TYPE)
+        physical_network = attrs.get(provider.PHYSICAL_NETWORK)
+        segmentation_id = attrs.get(provider.SEGMENTATION_ID)
+
+        network_type_set = attributes.is_attr_set(network_type)
+        physical_network_set = attributes.is_attr_set(physical_network)
+        segmentation_id_set = attributes.is_attr_set(segmentation_id)
+
+        if not (network_type_set or physical_network_set or
+                segmentation_id_set):
+            return (None, None, None)
+
+        if not network_type_set:
+            msg = _("provider:network_type required")
+            raise n_exc.InvalidInput(error_message=msg)
+        elif network_type == svc_constants.TYPE_FLAT:
+            if segmentation_id_set:
+                msg = _("provider:segmentation_id specified for flat network")
+                raise n_exc.InvalidInput(error_message=msg)
+            else:
+                segmentation_id = None
+        elif network_type == svc_constants.TYPE_VLAN:
+            if not segmentation_id_set:
+                msg = _("provider:segmentation_id required")
+                raise n_exc.InvalidInput(error_message=msg)
+            if not utils.is_valid_vlan_tag(segmentation_id):
+                msg = (_("provider:segmentation_id out of range "
+                         "(%(min_id)s through %(max_id)s)") %
+                       {'min_id': constants.MIN_VLAN_TAG,
+                        'max_id': constants.MAX_VLAN_TAG})
+                raise n_exc.InvalidInput(error_message=msg)
+        elif network_type == svc_constants.TYPE_LOCAL:
+            if physical_network_set:
+                msg = _("provider:physical_network specified for local "
+                        "network")
+                raise n_exc.InvalidInput(error_message=msg)
+            else:
+                physical_network = None
+            if segmentation_id_set:
+                msg = _("provider:segmentation_id specified for local "
+                        "network")
+                raise n_exc.InvalidInput(error_message=msg)
+            else:
+                segmentation_id = None
+        else:
+            if not segmentation_id_set:
+                segmentation_id = None
+            if not physical_network_set:
+                physical_network = None
+
+        return network_type, physical_network, segmentation_id
