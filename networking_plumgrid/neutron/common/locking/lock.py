@@ -16,8 +16,8 @@ import contextlib
 from oslo_log import log as logging
 from oslo_utils import excutils
 
-from networking_plumgrid.neutron.plugins.common import exceptions as exception
-from networking_plumgrid.neutron.plugins.common.locking import lock_object
+from networking_plumgrid.neutron.common import exceptions as exception
+from networking_plumgrid.neutron.common.locking import lock_object
 from neutron.i18n import _LI, _LW
 from retrying import retry
 

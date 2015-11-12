@@ -20,14 +20,14 @@ import mock
 from oslo_utils import importutils
 
 from networking_plumgrid.neutron.extensions import portbindings
-from networking_plumgrid.neutron.plugins import plugin as plumgrid_plugin
+from networking_plumgrid.neutron import plugin as plumgrid_plugin
 from neutron import context
 from neutron.extensions import providernet as provider
 from neutron import manager
 from neutron.tests.unit import _test_extension_portbindings as test_bindings
 from neutron.tests.unit.db import test_db_base_plugin_v2 as test_plugin
 
-PLUM_DRIVER = ('networking_plumgrid.neutron.plugins.drivers.'
+PLUM_DRIVER = ('networking_plumgrid.neutron.drivers.'
                'fake_plumlib.Plumlib')
 FAKE_DIRECTOR = '1.1.1.1'
 FAKE_PORT = '1234'
@@ -37,7 +37,7 @@ FAKE_TIMEOUT = '0'
 
 
 class PLUMgridPluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
-    _plugin_name = ('networking_plumgrid.neutron.plugins.'
+    _plugin_name = ('networking_plumgrid.neutron.'
                     'plugin.NeutronPluginPLUMgridV2')
 
     def setUp(self):
