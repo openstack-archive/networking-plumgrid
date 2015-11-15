@@ -1,0 +1,283 @@
+# Copyright 2015 PLUMgrid, Inc. All Rights Reserved.
+#
+#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
+
+"""
+PLUMgrid plugin physical attachment point extension unit tests
+"""
+
+from networking_plumgrid.neutron.plugins.extensions import \
+    physical_attachment_point as ext_pap
+from networking_plumgrid.neutron.tests.unit import \
+    test_networking_plumgrid as test_pg
+
+from neutron.api import extensions
+from neutron import context
+from neutron import manager
+from neutron.tests.unit.api import test_extensions as test_ext
+from oslo_log import log as logging
+
+LOG = logging.getLogger(__name__)
+
+
+class PAPExtensionManager(object):
+
+    def get_resources(self):
+        return ext_pap.Physical_attachment_point.get_resources()
+
+    def get_actions(self):
+        return []
+
+    def get_request_extensions(self):
+        return []
+
+
+class PhysicalAttachmentPointTestCase(test_pg.PLUMgridPluginV2TestCase):
+    def setUp(self, plugin=None, ext_mgr=None):
+        super(PhysicalAttachmentPointTestCase, self).setUp()
+        ext_mgr = PAPExtensionManager()
+        extensions.PluginAwareExtensionManager._instance = None
+        self.ext_api = test_ext.setup_extensions_middleware(ext_mgr)
+
+
+class TestPhysicalAttachmentPoint(PhysicalAttachmentPointTestCase):
+    def test_create_pap(self):
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+
+        interfaces = [{"hostname": "h1", "interface": "ifc1"}]
+        pap = self._make_pap_dict(interfaces=interfaces)
+        pap_ret = plugin.create_physical_attachment_point(
+                      admin_context, pap)
+        pap["physical_attachment_point"]["id"] = pap_ret["id"]
+        self.assertEqual(pap_ret, pap["physical_attachment_point"])
+
+    def test_create_pap_lacp_true_hash_L2(self):
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+
+        interfaces = [{"hostname": "h1", "interface": "ifc1"}]
+        pap = self._make_pap_dict(interfaces=interfaces, lacp=True)
+        self.assertRaises(ext_pap.InvalidLacpValue,
+            plugin.create_physical_attachment_point,
+            admin_context, pap)
+
+    def test_create_pap_lacp_true_hash_not_L2(self):
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+
+        interfaces = [{"hostname": "h1", "interface": "ifc1"}]
+        pap = self._make_pap_dict(interfaces=interfaces, lacp=False,
+                  hash_mode="L3")
+        self.assertRaises(ext_pap.InvalidLacpValue,
+            plugin.create_physical_attachment_point,
+            admin_context, pap)
+
+    def test_create_pap_no_interfaces(self):
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+
+        pap = self._make_pap_dict()
+        pap_ret = plugin.create_physical_attachment_point(
+                      admin_context, pap)
+        pap["physical_attachment_point"]["id"] = pap_ret["id"]
+        self.assertEqual(pap_ret, pap["physical_attachment_point"])
+
+    def test_create_pap_multi_interfaces(self):
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+
+        interfaces = [{"hostname": "test_host1", "interface": "ifc1"},
+                      {"hostname": "test_host1", "interface": "ifc1"}]
+        pap = self._make_pap_dict(interfaces=interfaces)
+        pap_ret = plugin.create_physical_attachment_point(
+                      admin_context, pap)
+        pap["physical_attachment_point"]["id"] = pap_ret["id"]
+        self.assertEqual(pap_ret, pap["physical_attachment_point"])
+
+    def test_create_pap_max_hosts(self):
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+
+        interfaces = [{"hostname": "h%d" % i, "interface": "ifc%d" % j}
+                      for i in range(1, 16) for j in range(1, 2)]
+        pap = self._make_pap_dict(interfaces=interfaces)
+        pap_ret = plugin.create_physical_attachment_point(
+                      admin_context, pap)
+        pap["physical_attachment_point"]["id"] = pap_ret["id"]
+        self.assertEqual(pap_ret, pap["physical_attachment_point"])
+
+    def test_create_update_show_pap01(self):
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+
+        pap = self._make_pap_dict()
+        pap_old = plugin.create_physical_attachment_point(
+                      admin_context, pap)
+        interfaces = [{"hostname": "test_host", "interface": "ifc"}]
+        pap_new = self._make_pap_dict(interfaces=interfaces)
+
+        pap_new_ret = plugin.update_physical_attachment_point(
+                              admin_context, pap_old["id"], pap_new)
+        pap_new_get = plugin.get_physical_attachment_point(
+                              admin_context, pap_old["id"])
+        pap["physical_attachment_point"]["id"] = pap_old["id"]
+        pap_new["physical_attachment_point"]["id"] = pap_new_ret["id"]
+        self.assertEqual(pap_old, pap["physical_attachment_point"])
+        self.assertEqual(pap_new_ret, pap_new["physical_attachment_point"])
+        self.assertEqual(pap_new_ret, pap_new_get)
+
+    def test_create_update_show_pap02(self):
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+
+        interfaces = [{"hostname": "h1", "interface": "ifc1"},
+                      {"hostname": "h2", "interface": "ifc2"}]
+        pap = self._make_pap_dict(interfaces=interfaces)
+        pap_old = plugin.create_physical_attachment_point(
+                      admin_context, pap)
+
+        pap_new = self._make_pap_dict()
+        pap_new_ret = plugin.update_physical_attachment_point(
+                              admin_context, pap_old["id"], pap_new)
+
+        pap_new_get = plugin.get_physical_attachment_point(
+                              admin_context, pap_old["id"])
+        pap["physical_attachment_point"]["id"] = pap_old["id"]
+        pap_new["physical_attachment_point"]["id"] = pap_new_ret["id"]
+        self.assertEqual(pap_old, pap["physical_attachment_point"])
+        self.assertEqual(pap_new_ret, pap_new["physical_attachment_point"])
+        self.assertEqual(pap_new_ret, pap_new_get)
+
+    def test_create_update_show_pap03(self):
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+
+        interfaces = [{"hostname": "h1", "interface": "ifc1"}]
+        pap = self._make_pap_dict(interfaces=interfaces)
+        pap_old = plugin.create_physical_attachment_point(
+                      admin_context, pap)
+
+        interfaces = [{"hostname": "h1", "interface": "ifc1"},
+                      {"hostname": "h2", "interface": "ifc2"},
+                      {"hostname": "h2", "interface": "ifc2"}]
+        pap_new = self._make_pap_dict(interfaces=interfaces)
+        pap_new_ret = plugin.update_physical_attachment_point(
+                              admin_context, pap_old["id"], pap_new)
+        pap_new_get = plugin.get_physical_attachment_point(
+                              admin_context, pap_old["id"])
+        pap["physical_attachment_point"]["id"] = pap_old["id"]
+        pap_new["physical_attachment_point"]["id"] = pap_new_ret["id"]
+        self.assertEqual(pap_old, pap["physical_attachment_point"])
+        self.assertEqual(pap_new_ret, pap_new["physical_attachment_point"])
+        self.assertEqual(pap_new_ret, pap_new_get)
+
+    def test_create_show_pap_by_uuid(self):
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+
+        interfaces = [{"hostname": "h1", "interface": "ifc1"},
+                      {"hostname": "h2", "interface": "ifc2"},
+                      {"hostname": "h2", "interface": "ifc2"}]
+        pap = self._make_pap_dict(interfaces=interfaces)
+        pap_ret = plugin.create_physical_attachment_point(
+                      admin_context, pap)
+        pap_get_ret = plugin.get_physical_attachment_point(
+                          admin_context, pap_ret["id"])
+        self.assertEqual(pap_get_ret, pap_ret)
+
+    def test_create_show_pap_by_uuid_no_ifcs(self):
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+
+        pap = self._make_pap_dict()
+        pap_ret = plugin.create_physical_attachment_point(
+                      admin_context, pap)
+        pap_get_ret = plugin.get_physical_attachment_point(
+                          admin_context, pap_ret["id"])
+        self.assertEqual(pap_get_ret, pap_ret)
+
+    def test_create_delete_pap_multi_ifcs(self):
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+        interfaces = [{"hostname": "h1", "interface": "ifc1"},
+                      {"hostname": "h2", "interface": "ifc2"},
+                      {"hostname": "h2", "interface": "ifc2"}]
+        pap = self._make_pap_dict(interfaces=interfaces)
+        pap_ret = plugin.create_physical_attachment_point(
+                      admin_context, pap)
+        plugin.delete_physical_attachment_point(
+                          admin_context, pap_ret["id"])
+
+    def test_create_delete_pap_no_ifcs(self):
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+
+        pap = self._make_pap_dict()
+        pap_ret = plugin.create_physical_attachment_point(
+                      admin_context, pap)
+        plugin.delete_physical_attachment_point(
+                          admin_context, pap_ret["id"])
+
+    def test_create_update_get_delete_pap01(self):
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+
+        interfaces = [{"hostname": "h1", "interface": "ifc1"},
+                      {"hostname": "h2", "interface": "ifc2"}]
+        pap = self._make_pap_dict(interfaces=interfaces)
+        pap_old = plugin.create_physical_attachment_point(
+                      admin_context, pap)
+
+        interfaces = [{"hostname": "h1", "interface": "ifc1"},
+                      {"hostname": "h2", "interface": "ifc2"},
+                      {"hostname": "h2", "interface": "ifc2"}]
+        pap_new = self._make_pap_dict(interfaces=interfaces)
+        pap_new_ret = plugin.update_physical_attachment_point(
+                              admin_context, pap_old["id"], pap_new)
+        pap_get_ret = plugin.get_physical_attachment_point(
+                          admin_context, pap_new_ret["id"])
+        self.assertEqual(pap_get_ret, pap_new_ret)
+        plugin.delete_physical_attachment_point(
+            admin_context, pap_get_ret["id"])
+
+    def test_get_all(self):
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+
+        interfaces = [{"hostname": "h1", "interface": "ifc1"},
+                      {"hostname": "h2", "interface": "ifc2"}]
+        pap_1 = self._make_pap_dict(interfaces=interfaces)
+        pap_1_ret = plugin.create_physical_attachment_point(
+                      admin_context, pap_1)
+
+        interfaces = [{"hostname": "h1", "interface": "ifc1"},
+                      {"hostname": "h1", "interface": "ifc2"},
+                      {"hostname": "h1", "interface": "ifc3"}]
+        pap_2 = self._make_pap_dict(interfaces=interfaces)
+        pap_2_ret = plugin.create_physical_attachment_point(
+                              admin_context, pap_2)
+        pap_list_get = plugin.get_physical_attachment_points(
+                          admin_context)
+        cmp(pap_list_get, [pap_1_ret, pap_2_ret])
+
+    def _make_pap_dict(self, lacp=False, hash_mode="L2",
+                       transit_domain_id="test_id",
+                       interfaces=[]):
+        return {"physical_attachment_point": {
+                   "tenant_id": "test_tenant",
+                   "name": "test_name",
+                   "hash_mode": hash_mode,
+                   "lacp": lacp,
+                   "transit_domain_id": "test_transit_domain",
+                   "interfaces": interfaces}}
