@@ -22,8 +22,13 @@ from oslo_log import log as logging
 from oslo_utils import importutils
 from sqlalchemy.orm import exc as sa_exc
 
+import networking_plumgrid
 from networking_plumgrid.neutron.plugins.common.locking import lock as pg_lock
+from networking_plumgrid.neutron.plugins.db.physical_attachment_point import \
+    physical_attachment_point_db as pap_db
 from networking_plumgrid.neutron.plugins.db.sqlal import api as db_api
+from networking_plumgrid.neutron.plugins.db.transitdomain import \
+    transitdomain as tvd_db
 
 from functools import wraps
 from networking_plumgrid.neutron.plugins.common import exceptions as plum_excep
@@ -31,6 +36,7 @@ from networking_plumgrid.neutron.plugins.db import pgdb
 from networking_plumgrid.neutron.plugins.extensions import portbindings\
     as p_portbindings
 from networking_plumgrid.neutron.plugins import plugin_ver
+from neutron.api import extensions
 from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron.common import exceptions as n_exc
@@ -98,18 +104,23 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
                               extraroute_db.ExtraRoute_db_mixin,
                               l3_db.L3_NAT_db_mixin,
                               portbindings_db.PortBindingMixin,
-                              securitygroups_db.SecurityGroupDbMixin):
+                              securitygroups_db.SecurityGroupDbMixin,
+                              pap_db.PhysicalAttachmentPointDb,
+                              tvd_db.TransitDomainDBMixin):
 
     supported_extension_aliases = ["agent", "binding", "external-net",
                                    "extraroute", "provider", "quotas",
-                                   "router", "security-group"]
+                                   "router", "security-group",
+                                   "physical-attachment-point",
+                                   "transit-domain"]
 
     binding_view = "extension:port_binding:view"
     binding_set = "extension:port_binding:set"
 
     def __init__(self):
         LOG.info(_LI('networking-plumgrid: Starting Plugin'))
-
+        extensions.append_api_extensions_path(
+            networking_plumgrid.neutron.plugins.extensions.__path__)
         super(NeutronPluginPLUMgridV2, self).__init__()
         self.plumgrid_init()
         db_api.create_table_pg_lock()
@@ -1123,3 +1134,75 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
                 physical_network = None
 
         return network_type, physical_network, segmentation_id
+
+    def create_physical_attachment_point(self, context,
+                                         physical_attachment_point):
+        LOG.debug("networking_plumgrid: create_physical_attachment_point()"
+                  "called")
+
+        return super(NeutronPluginPLUMgridV2,
+                   self).create_physical_attachment_point(context,
+                             physical_attachment_point)
+
+    def update_physical_attachment_point(self, context, id,
+                                         physical_attachment_point):
+        LOG.debug("networking_plumgrid: update_physical_attachment_point()"
+                  "called")
+
+        return super(NeutronPluginPLUMgridV2,
+                  self).update_physical_attachment_point(context, id,
+                            physical_attachment_point)
+
+    def delete_physical_attachment_point(self, context, id):
+        LOG.debug("networking_plumgrid: delete_physical_attachment_point()"
+                 "called")
+        return super(NeutronPluginPLUMgridV2,
+                   self).delete_physical_attachment_point(context, id)
+
+    def get_physical_attachment_point(self, context, id, fields=None):
+        LOG.debug("networking_plumgrid: get_physical_attachment_point()"
+                  "called")
+        return super(NeutronPluginPLUMgridV2,
+                   self).get_physical_attachment_point(context, id)
+
+    def get_physical_attachment_points(self, context, filters=None,
+                                       fields=None, sorts=None, limit=None,
+                                       marker=None, page_reverse=False):
+        LOG.debug("networking_plumgrid: physical attachment points called")
+        return super(NeutronPluginPLUMgridV2,
+                   self).get_physical_attachment_points(context)
+
+    def create_transit_domain(self, context, transit_domain):
+        LOG.debug("networking_plumgrid: transit_domain()"
+                  "called")
+
+        return super(NeutronPluginPLUMgridV2,
+                   self).create_transit_domain(context,
+                             transit_domain)
+
+    def update_transit_domain(self, context, id, transit_domain):
+        LOG.debug("networking_plumgrid: transit_domain()"
+                  "called")
+
+        return super(NeutronPluginPLUMgridV2,
+                  self).update_transit_domain(context, id,
+                            transit_domain)
+
+    def delete_transit_domain(self, context, id):
+        LOG.debug("networking_plumgrid: delete_transit_domain)"
+                 "called")
+        return super(NeutronPluginPLUMgridV2,
+                   self).delete_transit_domain(context, id)
+
+    def get_transit_domain(self, context, id, fields=None):
+        LOG.debug("networking_plumgrid: get_transit_domain()"
+                  "called")
+        return super(NeutronPluginPLUMgridV2,
+                   self).get_transit_domain(context, id)
+
+    def get_transit_domains(self, context, filters=None,
+                            fields=None, sorts=None, limit=None,
+                            marker=None, page_reverse=False):
+        LOG.debug("networking_plumgrid: transit domain called")
+        return super(NeutronPluginPLUMgridV2,
+                   self).get_transit_domains(context)
