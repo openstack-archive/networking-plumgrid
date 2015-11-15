@@ -131,3 +131,21 @@ class Plumlib(object):
 
     def delete_l2_gateway_connection(self, gw_conn_info):
         pass
+
+    def create_physical_attachment_point(self, physical_attachment_point):
+        pass
+
+    def update_physical_attachment_point(self, physical_attachment_point):
+        pass
+
+    def delete_physical_attachment_point(self, pap_id):
+        pass
+
+    def create_transit_domain(self, transit_domain):
+        pass
+
+    def update_transit_domain(self, transit_domain):
+        pass
+
+    def delete_transit_domain(self, tvd_id):
+        pass

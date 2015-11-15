@@ -136,3 +136,23 @@ class Plumlib(object):
 
     def delete_l2_gateway_connection(self, gw_conn_info):
         self.plumlib.delete_l2_gateway_connection(gw_conn_info)
+
+    def create_physical_attachment_point(self, physical_attachment_point):
+        self.plumlib.create_physical_attachment_point(
+                     physical_attachment_point)
+
+    def update_physical_attachment_point(self, physical_attachment_point):
+        self.plumlib.update_physical_attachment_point(
+                     physical_attachment_point)
+
+    def delete_physical_attachment_point(self, pap_id):
+        self.plumlib.delete_physical_attachment_point(pap_id)
+
+    def create_transit_domain(self, transit_domain):
+        self.plumlib.create_transit_domain(transit_domain)
+
+    def update_transit_domain(self, transit_domain):
+        self.plumlib.update_transit_domain(transit_domain)
+
+    def delete_transit_domain(self, tvd_id):
+        self.plumlib.delete_transit_domain(tvd_id)
