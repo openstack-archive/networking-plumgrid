@@ -1122,3 +1122,31 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
                 physical_network = None
 
         return network_type, physical_network, segmentation_id
+
+    def create_physical_attachment_point(self, context, physical_attachment_point):
+        LOG.debug("networking_plumgrid: create_physical_attachment_point()"
+                  "called")
+
+        return pap_db.add_pap(context, physical_attachment_point)
+
+    def update_physical_attachment_point(self, context, id, physical_attachment_point):
+        LOG.debug("networking_plumgrid: update_physical_attachment_point()"
+                  "called")
+
+        return pap_db.update_pap(context, id, physical_attachment_point)
+
+    def delete_physical_attachment_point(self, context, id):
+        LOG.info("networking_plumgrid: delete_physical_attachment_point()"
+                 "called")
+        return pap_db.delete_pap(context, id)
+
+    def get_physical_attachment_point(self, context, id, fields=None):
+        LOG.debug("networking_plumgrid: get_physical_attachment_point()"
+                  "called")
+        return pap_db.get_pap(context, id)
+
+    def get_physical_attachment_points(self, context, filters=None, fields=None,
+                                       sorts=None, limit=None, marker=None,
+                                       page_reverse=False):
+        LOG.info("PG GET physical attachment points called")
+        return pap_db.get_paps(context)
