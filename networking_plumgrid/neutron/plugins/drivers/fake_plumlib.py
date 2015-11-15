@@ -36,7 +36,7 @@ class Plumlib(object):
                  director_plumgrid + ':' + str(director_port))
         pass
 
-    def create_network(self, tenant_id, net_db, network):
+    def create_network(self, tenant_id, net_db, network, **kwargs):
         net_db["network"] = {}
         for key in (provider.NETWORK_TYPE,
                     provider.PHYSICAL_NETWORK,
@@ -130,4 +130,22 @@ class Plumlib(object):
         pass
 
     def delete_l2_gateway_connection(self, gw_conn_info):
+        pass
+
+    def create_physical_attachment_point(self, physical_attachment_point):
+        pass
+
+    def update_physical_attachment_point(self, physical_attachment_point):
+        pass
+
+    def delete_physical_attachment_point(self, pap_id):
+        pass
+
+    def create_transit_domain(self, transit_domain):
+        pass
+
+    def update_transit_domain(self, transit_domain):
+        pass
+
+    def delete_transit_domain(self, tvd_id):
         pass
