@@ -22,15 +22,20 @@ from oslo_log import log as logging
 from oslo_utils import importutils
 from sqlalchemy.orm import exc as sa_exc
 
+import networking_plumgrid
 from networking_plumgrid.neutron.common.locking import lock as pg_lock
 from networking_plumgrid.neutron.db.sqlal import api as db_api
+from networking_plumgrid.neutron.extensions.db import \
+    physical_attachment_point_db as pap_db
 
 from functools import wraps
 from networking_plumgrid.neutron.common import exceptions as plum_excep
 from networking_plumgrid.neutron.db import pgdb
+
 from networking_plumgrid.neutron.extensions import portbindings\
     as p_portbindings
 from networking_plumgrid.neutron import plugin_ver
+from neutron.api import extensions
 from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron.common import exceptions as n_exc
@@ -51,6 +56,9 @@ from neutron.i18n import _LI, _LW
 from neutron.common import constants as svc_constants
 
 LOG = logging.getLogger(__name__)
+
+extensions.append_api_extensions_path(
+    networking_plumgrid.neutron.extensions.__path__)
 
 director_server_opts = [
     cfg.StrOpt('director_server', default='localhost',
@@ -100,9 +108,10 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
                               portbindings_db.PortBindingMixin,
                               securitygroups_db.SecurityGroupDbMixin):
 
-    supported_extension_aliases = ["agent", "binding", "external-net",
-                                   "extraroute", "provider", "quotas",
-                                   "router", "security-group"]
+    supported_extension_aliases = ["binding", "external-net", "extraroute",
+                                   "provider", "quotas", "router",
+                                   "security-group",
+                                   "physical-attachment-point"]
 
     binding_view = "extension:port_binding:view"
     binding_set = "extension:port_binding:set"
@@ -1123,3 +1132,33 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
                 physical_network = None
 
         return network_type, physical_network, segmentation_id
+
+    def create_physical_attachment_point(self, context,
+            physical_attachment_point):
+        LOG.debug("networking_plumgrid: create_physical_attachment_point()"
+                  "called")
+
+        return pap_db.add_pap(context, physical_attachment_point)
+
+    def update_physical_attachment_point(self, context, id,
+            physical_attachment_point):
+        LOG.debug("networking_plumgrid: update_physical_attachment_point()"
+                  "called")
+
+        return pap_db.update_pap(context, id, physical_attachment_point)
+
+    def delete_physical_attachment_point(self, context, id):
+        LOG.debug("networking_plumgrid: delete_physical_attachment_point()"
+                 "called")
+        return pap_db.delete_pap(context, id)
+
+    def get_physical_attachment_point(self, context, id, fields=None):
+        LOG.debug("networking_plumgrid: get_physical_attachment_point()"
+                  "called")
+        return pap_db.get_pap(context, id)
+
+    def get_physical_attachment_points(self, context, filters=None,
+                                       fields=None, sorts=None, limit=None,
+                                       marker=None, page_reverse=False):
+        LOG.debug("networking_plumgrid: physical attachment points called")
+        return pap_db.get_paps(context)
