@@ -217,12 +217,22 @@ class TestPlumgridProvidernet(PLUMgridPluginV2TestCase):
     def test_create_provider_non_external_non_shared_network(self):
         plugin = manager.NeutronManager.get_plugin()
         admin_context = context.get_admin_context()
+        pap = {"physical_attachment_point": {
+                   "tenant_id": "test_tenant",
+                   "name": "test_name",
+                   "hash_mode": "L2+L3",
+                   "transit_domain_id": "test_transit_domain",
+                   "lacp": True,
+                   "interfaces": []}}
+
+        pap_ret = plugin.create_physical_attachment_point(
+                      admin_context, pap)
         data = {'network': {'name': 'net1',
                             'admin_state_up': True,
                             'tenant_id': 'test_tenant',
                             provider.NETWORK_TYPE: 'vlan',
                             provider.SEGMENTATION_ID: 3333,
-                            provider.PHYSICAL_NETWORK: 'phy3333',
+                            provider.PHYSICAL_NETWORK: pap_ret['id'],
                             'shared': False,
                             'router:external': False}}
 
@@ -230,7 +240,7 @@ class TestPlumgridProvidernet(PLUMgridPluginV2TestCase):
         self.assertEqual(net_db['network'][provider.NETWORK_TYPE], 'vlan')
         self.assertEqual(net_db['network'][provider.SEGMENTATION_ID], 3333)
         self.assertEqual(
-            net_db['network'][provider.PHYSICAL_NETWORK], 'phy3333')
+            net_db['network'][provider.PHYSICAL_NETWORK], pap_ret['id'])
 
 
 class TestDisassociateFloatingIP(PLUMgridPluginV2TestCase):
