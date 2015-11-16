@@ -31,6 +31,7 @@ from networking_plumgrid.neutron.plugins import plugin_ver
 from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron.common import utils
+from neutron.db import agents_db
 from neutron.db import db_base_plugin_v2
 from neutron.db import external_net_db
 from neutron.db import extraroute_db
@@ -84,13 +85,15 @@ def pgl(fn):
     return locker
 
 
-class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
+class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
+                              db_base_plugin_v2.NeutronDbPluginV2,
                               external_net_db.External_net_db_mixin,
                               extraroute_db.ExtraRoute_db_mixin,
                               l3_db.L3_NAT_db_mixin,
                               portbindings_db.PortBindingMixin,
                               securitygroups_db.SecurityGroupDbMixin):
-    supported_extension_aliases = []
+    supported_extension_aliases = ["agent"]
+
     binding_view = "extension:port_binding:view"
     binding_set = "extension:port_binding:set"
 
