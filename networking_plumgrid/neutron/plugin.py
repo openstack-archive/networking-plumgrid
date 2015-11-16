@@ -182,7 +182,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
         """Update Neutron network.
         """
 
-        LOG.debug("networking-plumgrid: update_network() called")
+        LOG.debug("networking-plumgrid: update_network() called with net_id: %s", net_id)
         self._network_admin_state(network)
         net_db = super(NeutronPluginPLUMgridV2,
                        self).get_network(context, net_id)
@@ -199,7 +199,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
             self._process_l3_update(context, net_db, network['network'])
 
             try:
-                LOG.debug("PLUMgrid Library: update_network() called")
+                LOG.debug("PLUMgrid Library: update_network() called with net_id: %s", net_id)
                 self._plumlib.update_network(tenant_id, net_id, network)
 
             except Exception as err_message:
@@ -214,7 +214,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
         Deletes a PLUMgrid-based bridge.
         """
 
-        LOG.debug("networking-plumgrid: delete_network() called")
+        LOG.debug("networking-plumgrid: delete_network() called with net_id: %s", net_id)
         net_db = super(NeutronPluginPLUMgridV2,
                        self).get_network(context, net_id)
         tenant_id = net_db["tenant_id"]
@@ -230,7 +230,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
             lock = pg_lock.PGLock(context, tenant_id, ds_lock)
             with lock.thread_lock(tenant_id):
                 try:
-                    LOG.debug("PLUMgrid Library: update_network() called")
+                    LOG.debug("PLUMgrid Library: update_network() called with net_id: %s", net_id)
                     self._plumlib.delete_network(net_db, net_id)
 
                 except Exception as err_message:
