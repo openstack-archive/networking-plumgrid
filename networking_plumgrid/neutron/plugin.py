@@ -715,18 +715,17 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
 
     @pgl
     def _create_floatingip_pg(self, context, floatingip, tenant_id):
-        with context.session.begin(subtransactions=True):
-
+        try:
             floating_ip = super(NeutronPluginPLUMgridV2,
                                 self).create_floatingip(context, floatingip)
-            try:
-                LOG.debug("PLUMgrid Library: create_floatingip() called")
-                self._plumlib.create_floatingip(floating_ip)
+            LOG.debug("PLUMgrid Library: create_floatingip() called")
+            self._plumlib.create_floatingip(floating_ip)
+            return floating_ip
 
-            except Exception as err_message:
-                raise plum_excep.PLUMgridException(err_msg=err_message)
-
-        return floating_ip
+        except Exception as err_message:
+            if floating_ip is not None:
+                self.delete_floatingip(context, floating_ip["id"])
+            raise plum_excep.PLUMgridException(err_msg=err_message)
 
     def update_floatingip(self, context, id, floatingip):
         LOG.debug("networking-plumgrid: update_floatingip() called")
@@ -740,7 +739,7 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
     @pgl
     def _update_floatingip_pg(self, context, id, floatingip, floating_ip_orig,
                               tenant_id):
-        with context.session.begin(subtransactions=True):
+        try:
             floating_ip = super(NeutronPluginPLUMgridV2,
                                 self).update_floatingip(context, id,
                                                         floatingip)
@@ -750,15 +749,18 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
             else:
                 floating_ip['status'] = constants.FLOATINGIP_STATUS_ACTIVE
             self.update_floatingip_status(context, id, floating_ip['status'])
-            try:
-                LOG.debug("PLUMgrid Library: update_floatingip() called")
-                self._plumlib.update_floatingip(floating_ip_orig, floating_ip,
-                                                id)
+            LOG.debug("PLUMgrid Library: update_floatingip() called")
+            self._plumlib.update_floatingip(floating_ip_orig, floating_ip, id)
 
-            except Exception as err_message:
-                raise plum_excep.PLUMgridException(err_msg=err_message)
+            return floating_ip
 
-        return floating_ip
+        except Exception as err_message:
+            if floatingip['floatingip']['port_id']:
+                self.disassociate_floatingips(context,
+                                              floatingip['floatingip']
+                                              ['port_id'],
+                                              do_notify=False)
+            raise plum_excep.PLUMgridException(err_msg=err_message)
 
     def delete_floatingip(self, context, id):
         LOG.debug("networking-plumgrid: delete_floatingip() called")
@@ -770,16 +772,13 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
 
     @pgl
     def _delete_floatingip_pg(self, context, id, floating_ip_orig, tenant_id):
-        with context.session.begin(subtransactions=True):
+        try:
+            LOG.debug("PLUMgrid Library: delete_floatingip() called")
+            self._plumlib.delete_floatingip(floating_ip_orig, id)
 
-            super(NeutronPluginPLUMgridV2, self).delete_floatingip(context, id)
-
-            try:
-                LOG.debug("PLUMgrid Library: delete_floatingip() called")
-                self._plumlib.delete_floatingip(floating_ip_orig, id)
-
-            except Exception as err_message:
-                raise plum_excep.PLUMgridException(err_msg=err_message)
+        except Exception as err_message:
+            raise plum_excep.PLUMgridException(err_msg=err_message)
+        super(NeutronPluginPLUMgridV2, self).delete_floatingip(context, id)
 
     def disassociate_floatingips(self, context, port_id, do_notify=True):
         LOG.debug("networking-plumgrid: disassociate_floatingips() "
