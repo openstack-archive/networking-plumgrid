@@ -35,7 +35,6 @@ from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron.common import utils
-from neutron.common import utils
 from neutron.db import agents_db
 from neutron.db import db_base_plugin_v2
 from neutron.db import external_net_db
@@ -75,7 +74,7 @@ ds_lock = cfg.CONF.plumgriddirector.distributed_locking
 
 
 def pgl(fn):
-    """ pg_lock decorator"""
+    """pg_lock decorator"""
 
     @wraps(fn)
     def locker(*args, **kwargs):
