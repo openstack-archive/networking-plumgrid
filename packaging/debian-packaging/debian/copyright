@@ -1,0 +1,8 @@
+License-format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: networking-plumgrid
+Upstream-Contact: fawad@plumgrid.com
+Source: http://github.com/openstack/networking-plumgrid
+
+Files: *
+Copyright: Copyright 2015 PLUMgrid, Inc.
+License: ASL 2.0

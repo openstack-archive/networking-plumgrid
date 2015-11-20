@@ -1,0 +1,15 @@
+Source: networking-plumgrid
+Maintainer: Fawad Khaliq <fawad@plumgrid.com>
+Section: python
+Priority: optional
+Standards-version: 3.9.6
+Homepage: http://github.com/networking-plumgrid
+Build-Depends: debhelper (>=9),
+               python-dev,
+               python-setuptools
+
+Package: networking-plumgrid
+Architecture: all
+Depends: ${misc:Depends}
+Description: PLUMgrid Neutron Plugin
+    This package provides PLUMgrid networking plugin for OpenStack Neutron
