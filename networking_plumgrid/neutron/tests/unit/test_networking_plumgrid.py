@@ -214,6 +214,24 @@ class TestPlumgridProvidernet(PLUMgridPluginV2TestCase):
         self.assertEqual(net['network'][provider.SEGMENTATION_ID], 3333)
         self.assertEqual(net['network'][provider.PHYSICAL_NETWORK], 'phy3333')
 
+    def test_create_provider_network02(self):
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+        data = {'network': {'name': 'net1',
+                            'admin_state_up': True,
+                            'tenant_id': 'test_tenant',
+                            provider.NETWORK_TYPE: 'vlan',
+                            provider.SEGMENTATION_ID: 3333,
+                            provider.PHYSICAL_NETWORK: 'phy3333',
+                            'shared': False,
+                            'router:external': False}}
+
+        net_db = plugin.create_network(admin_context, data)
+        self.assertEqual(net_db['network'][provider.NETWORK_TYPE], 'vlan')
+        self.assertEqual(net_db['network'][provider.SEGMENTATION_ID], 3333)
+        self.assertEqual(
+            net_db['network'][provider.PHYSICAL_NETWORK], 'phy3333')
+
 
 class TestDisassociateFloatingIP(PLUMgridPluginV2TestCase):
 
