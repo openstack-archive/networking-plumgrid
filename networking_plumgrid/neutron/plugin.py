@@ -48,7 +48,7 @@ from neutron.extensions import portbindings
 from neutron.extensions import providernet as provider
 from neutron.extensions import securitygroup as sec_grp
 from neutron.i18n import _LI, _LW
-from neutron.common import constants as svc_constants
+from neutron.plugins.common import constants as svc_constants
 
 LOG = logging.getLogger(__name__)
 
