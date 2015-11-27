@@ -30,6 +30,7 @@ class PhysicalAttachmentPoint(model_base.BASEV2, models_v2.HasId,
     __tablename__ = "pg_physical_attachment_points"
 
     name = sa.Column(sa.String(255))
+    transit_domain_id = sa.Column(sa.String(255))
     hash_mode = sa.Column(sa.String(255))
     lacp = sa.Column(sa.Boolean)
 
@@ -77,7 +78,8 @@ class PhysicalAttachmentPointDb(common_db_mixin.CommonDbMixin):
                          tenant_id=pap["tenant_id"],
                          name=pap["name"],
                          hash_mode=pap["hash_mode"],
-                         lacp=pap["lacp"])
+                         lacp=pap["lacp"],
+                         transit_domain_id=pap["transit_domain_id"])
 
             context.session.add(pap_db)
             for interface in pap["interfaces"]:
@@ -190,5 +192,6 @@ class PhysicalAttachmentPointDb(common_db_mixin.CommonDbMixin):
                     "interfaces": interfaces,
                     "hash_mode": pap.hash_mode,
                     "lacp": pap.lacp,
-                    "tenant_id": pap.tenant_id}
+                    "tenant_id": pap.tenant_id,
+                    "transit_domain_id": pap.transit_domain_id}
         return self._fields(pap_dict, fields)

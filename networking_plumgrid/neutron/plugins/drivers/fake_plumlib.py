@@ -36,7 +36,7 @@ class Plumlib(object):
                  director_plumgrid + ':' + str(director_port))
         pass
 
-    def create_network(self, tenant_id, net_db, network):
+    def create_network(self, tenant_id, net_db, network, **kwargs):
         net_db["network"] = {}
         for key in (provider.NETWORK_TYPE,
                     provider.PHYSICAL_NETWORK,

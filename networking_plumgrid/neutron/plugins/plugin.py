@@ -182,6 +182,7 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
     @pgl
     def _create_network_pg(self, context, network, network_type,
                            physical_network, segmentation_id, tenant_id):
+        transit_domain_id = None
         with context.session.begin(subtransactions=True):
             net_db = super(NeutronPluginPLUMgridV2,
                            self).create_network(context, network)
@@ -192,12 +193,18 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
                                                    str(network_type),
                                                    str(physical_network),
                                                    segmentation_id)
+                #FIXME(shahbaz) add the check for existence of pap
+                papdb = super(NeutronPluginPLUMgridV2,
+                              self).get_physical_attachment_point(
+                              context, physical_network)
+                transit_domain_id = papdb["transit_domain_id"]
             self._process_l3_create(context, net_db, network['network'])
             self._extend_network_dict_provider_pg(net_db, None, binding)
 
             try:
                 LOG.debug('PLUMgrid Library: create_network() called')
-                self._plumlib.create_network(tenant_id, net_db, network)
+                self._plumlib.create_network(tenant_id, net_db, network,
+                    transit_domain_id=transit_domain_id)
 
             except Exception as err_message:
                 raise plum_excep.PLUMgridException(err_msg=err_message)
@@ -1271,16 +1278,19 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
         LOG.debug("networking_plumgrid: create_physical_attachment_point()"
                   "called")
 
-        pdb = super(NeutronPluginPLUMgridV2,
-                    self).create_physical_attachment_point(context,
-                                 physical_attachment_point)
-        if "transit_domain" not in pdb:
+        pap_obj = physical_attachment_point["physical_attachment_point"]
+        if "transit_domain" not in pap_obj:
             # create a transit domain
             transit_domain = {"transit_domain":
                               {"name": "",
-                               "tenant_id": pdb["tenant_id"]}}
-            self.create_transit_domain(context, transit_domain)
-        #self._plumlib.create_physical_attachment_point(pdb)
+                               "tenant_id": pap_obj["tenant_id"]}}
+            tvd_db = self.create_transit_domain(context, transit_domain)
+            (physical_attachment_point["physical_attachment_point"]
+             ["transit_domain_id"]) = tvd_db["id"]
+        pdb = super(NeutronPluginPLUMgridV2,
+                    self).create_physical_attachment_point(context,
+                                 physical_attachment_point)
+        self._plumlib.create_physical_attachment_point(pdb)
         return pdb
 
     def update_physical_attachment_point(self, context, id,
@@ -1291,15 +1301,17 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
         pdb = super(NeutronPluginPLUMgridV2,
                     self).update_physical_attachment_point(context, id,
                                 physical_attachment_point)
-        #self._plumlib.update_physical_attachment_point(pdb)
+        self._plumlib.update_physical_attachment_point(pdb)
         return pdb
 
     def delete_physical_attachment_point(self, context, id):
         LOG.debug("networking_plumgrid: delete_physical_attachment_point()"
                  "called")
+        pdb = super(NeutronPluginPLUMgridV2,
+                     self).get_physical_attachment_point(context, id)
         super(NeutronPluginPLUMgridV2,
               self).delete_physical_attachment_point(context, id)
-        #self._plumlib.delete_physical_attachment_point(id)
+        self._plumlib.delete_physical_attachment_point(pdb)
 
     def get_physical_attachment_point(self, context, id, fields=None):
         LOG.debug("networking_plumgrid: get_physical_attachment_point()"
@@ -1321,7 +1333,7 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
         tdb = super(NeutronPluginPLUMgridV2,
                     self).create_transit_domain(context,
                               transit_domain)
-        #self._plumlib.create_transit_domain(tdb)
+        self._plumlib.create_transit_domain(tdb["id"])
         return tdb
 
     def update_transit_domain(self, context, id, transit_domain):
@@ -1331,7 +1343,7 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
         tdb = super(NeutronPluginPLUMgridV2,
                     self).update_transit_domain(context, id,
                             transit_domain)
-        #self._plumlib.update_transit_domain(tdb)
+        self._plumlib.update_transit_domain(tdb)
         return tdb
 
     def delete_transit_domain(self, context, id):
@@ -1339,7 +1351,7 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
                  "called")
         super(NeutronPluginPLUMgridV2,
               self).delete_transit_domain(context, id)
-        #self._plumlib.delete_transit_domain(id)
+        self._plumlib.delete_transit_domain(id)
 
     def get_transit_domain(self, context, id, fields=None):
         LOG.debug("networking_plumgrid: get_transit_domain()"

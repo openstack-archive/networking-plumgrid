@@ -41,8 +41,8 @@ class Plumlib(object):
                                        director_admin,
                                        director_password)
 
-    def create_network(self, tenant_id, net_db, network):
-        self.plumlib.create_network(tenant_id, net_db, network)
+    def create_network(self, tenant_id, net_db, network, **kwargs):
+        self.plumlib.create_network(tenant_id, net_db, **kwargs)
 
     def update_network(self, tenant_id, net_id, network):
         self.plumlib.update_network(tenant_id, net_id, network)
