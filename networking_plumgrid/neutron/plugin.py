@@ -35,7 +35,6 @@ from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron.common import utils
-from neutron.common import utils
 from neutron.db import agents_db
 from neutron.db import db_base_plugin_v2
 from neutron.db import external_net_db
@@ -48,7 +47,8 @@ from neutron.extensions import portbindings
 from neutron.extensions import providernet as provider
 from neutron.extensions import securitygroup as sec_grp
 from neutron.i18n import _LI, _LW
-from neutron.common import constants as svc_constants
+from neutron.plugins.common import constants as svc_constants
+from neutron.plugins.common import utils as svc_utils
 
 LOG = logging.getLogger(__name__)
 
@@ -1097,11 +1097,11 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
             if not segmentation_id_set:
                 msg = _("provider:segmentation_id required")
                 raise n_exc.InvalidInput(error_message=msg)
-            if not utils.is_valid_vlan_tag(segmentation_id):
+            if not svc_utils.is_valid_vlan_tag(segmentation_id):
                 msg = (_("provider:segmentation_id out of range "
                          "(%(min_id)s through %(max_id)s)") %
-                       {'min_id': constants.MIN_VLAN_TAG,
-                        'max_id': constants.MAX_VLAN_TAG})
+                       {'min_id': svc_constants.MIN_VLAN_TAG,
+                        'max_id': svc_constants.MAX_VLAN_TAG})
                 raise n_exc.InvalidInput(error_message=msg)
         elif network_type == svc_constants.TYPE_LOCAL:
             if physical_network_set:
