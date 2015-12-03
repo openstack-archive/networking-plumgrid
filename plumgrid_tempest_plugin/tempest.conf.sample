@@ -1,0 +1,8 @@
+[network]
+#List of switch device,interfaces/labels name and segmentation_ids for l2gateway
+l2gw_switch = tor-switch-01::storage|100
+l2gw_switch_2 = tor-switch-02::web|101
+#l2gw_switch = cell08-5930-01::db|100;app|300
+#l2gw_switch = cell08-5930-01::app|200,cell08-5930-02::db|300
+l2gw_switch_ip = switch_vtep_ip
+
