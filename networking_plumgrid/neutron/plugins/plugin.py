@@ -90,7 +90,7 @@ class NeutronPluginPLUMgridV2(db_base_plugin_v2.NeutronDbPluginV2,
                               l3_db.L3_NAT_db_mixin,
                               portbindings_db.PortBindingMixin,
                               securitygroups_db.SecurityGroupDbMixin):
-
+    supported_extension_aliases = []
     binding_view = "extension:port_binding:view"
     binding_set = "extension:port_binding:set"
 
