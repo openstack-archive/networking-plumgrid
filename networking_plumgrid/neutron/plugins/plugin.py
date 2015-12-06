@@ -22,15 +22,15 @@ from oslo_log import log as logging
 from oslo_utils import importutils
 from sqlalchemy.orm import exc as sa_exc
 
-from networking_plumgrid.neutron.common.locking import lock as pg_lock
-from networking_plumgrid.neutron.db.sqlal import api as db_api
+from networking_plumgrid.neutron.plugins.common.locking import lock as pg_lock
+from networking_plumgrid.neutron.plugins.db.sqlal import api as db_api
 
 from functools import wraps
-from networking_plumgrid.neutron.common import exceptions as plum_excep
-from networking_plumgrid.neutron.db import pgdb
-from networking_plumgrid.neutron.extensions import portbindings\
+from networking_plumgrid.neutron.plugins.common import exceptions as plum_excep
+from networking_plumgrid.neutron.plugins.db import pgdb
+from networking_plumgrid.neutron.plugins.extensions import portbindings\
     as p_portbindings
-from networking_plumgrid.neutron import plugin_ver
+from networking_plumgrid.neutron.plugins import plugin_ver
 from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron.common import exceptions as n_exc
@@ -66,7 +66,7 @@ director_server_opts = [
     cfg.BoolOpt('distributed_locking', default=True,
                help=_("Distributed locking is enabled or disabled")),
     cfg.StrOpt('driver',
-               default="networking_plumgrid.neutron.drivers.plumlib."
+               default="networking_plumgrid.neutron.plugins.drivers.plumlib."
                        "Plumlib",
                help=_("PLUMgrid Driver")), ]
 

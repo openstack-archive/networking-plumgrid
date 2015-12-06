@@ -19,7 +19,7 @@ function neutron_plugin_configure_common {
     Q_PLUGIN_CONF_FILENAME=plumgrid.ini
     Q_PLUGIN_CONF_FILE=$Q_PLUGIN_CONF_PATH/$Q_PLUGIN_CONF_FILENAME
     Q_PLUGIN="plumgrid"
-    Q_PLUGIN_CLASS="networking_plumgrid.neutron.plugin.NeutronPluginPLUMgridV2"
+    Q_PLUGIN_CLASS="networking_plumgrid.neutron.plugins.plugin.NeutronPluginPLUMgridV2"
     PLUMGRID_DIRECTOR_IP=${PLUMGRID_DIRECTOR_IP:-localhost}
     PLUMGRID_DIRECTOR_PORT=${PLUMGRID_DIRECTOR_PORT:-7766}
     PLUMGRID_ADMIN=${PLUMGRID_ADMIN:-username}
@@ -41,7 +41,7 @@ function configure_plumgrid_plugin {
     echo "Configuring Neutron for PLUMgrid"
 
     if is_service_enabled q-svc ; then
-        Q_PLUGIN_CLASS="networking_plumgrid.neutron.plugin.NeutronPluginPLUMgridV2"
+        Q_PLUGIN_CLASS="networking_plumgrid.neutron.plugins.plugin.NeutronPluginPLUMgridV2"
         export NETWORK_API_EXTENSIONS='binding,external-net,extraroute,provider,quotas,router,security-group'
         NEUTRON_CONF=/etc/neutron/neutron.conf
         iniset $NEUTRON_CONF DEFAULT core_plugin "$Q_PLUGIN_CLASS"

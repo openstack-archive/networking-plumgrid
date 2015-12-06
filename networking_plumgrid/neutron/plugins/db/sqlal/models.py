@@ -25,7 +25,7 @@ BASE = declarative.declarative_base()
 
 
 def get_session():
-    from networking_plumgrid.neutron.db.sqlal import api as db_api
+    from networking_plumgrid.neutron.plugins.db.sqlal import api as db_api
     return db_api.get_session()
 
 

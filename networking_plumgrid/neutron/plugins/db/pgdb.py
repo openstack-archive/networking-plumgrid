@@ -12,7 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from networking_plumgrid.neutron.db import pg_models
+from networking_plumgrid.neutron.plugins.db import pg_models
 
 
 def add_network_binding(session, network_id, network_type, physical_network,

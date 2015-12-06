@@ -20,10 +20,10 @@ PLUMgrid plugin security group extension unit tests
 import mock
 from oslo_utils import importutils
 
-from networking_plumgrid.neutron import plugin as plumgrid_plugin
+from networking_plumgrid.neutron.plugins import plugin as plumgrid_plugin
 from neutron.tests.unit.extensions import test_securitygroup as ext_sg
 
-PLUM_DRIVER = ('networking_plumgrid.neutron.drivers.'
+PLUM_DRIVER = ('networking_plumgrid.neutron.plugins.drivers.'
                'fake_plumlib.Plumlib')
 FAKE_DIRECTOR = '1.1.1.1'
 FAKE_PORT = '1234'
@@ -33,7 +33,7 @@ FAKE_TIMEOUT = '0'
 
 
 class SecurityGroupsTestCase(ext_sg.SecurityGroupDBTestCase):
-    _plugin_name = ('networking_plumgrid.neutron.'
+    _plugin_name = ('networking_plumgrid.neutron.plugins.'
                     'plugin.NeutronPluginPLUMgridV2')
 
     def setUp(self):
