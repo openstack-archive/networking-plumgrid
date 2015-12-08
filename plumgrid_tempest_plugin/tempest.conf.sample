@@ -1,0 +1,6 @@
+[network]
+#List of switch device,interfaces/labels name and segmentation_ids for l2gateway
+l2gw_switch = tor-switch-01::192.168.10.100::storage|100
+l2gw_switch_2 = tor-switch-02::192.168.10.100::web|101
+l2gw_switch_ip = 3.3.3.3/32
+
