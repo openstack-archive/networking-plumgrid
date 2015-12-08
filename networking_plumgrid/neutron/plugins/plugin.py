@@ -22,15 +22,19 @@ from oslo_log import log as logging
 from oslo_utils import importutils
 from sqlalchemy.orm import exc as sa_exc
 
+import networking_plumgrid
 from networking_plumgrid.neutron.plugins.common.locking import lock as pg_lock
 from networking_plumgrid.neutron.plugins.db.sqlal import api as db_api
 
 from functools import wraps
 from networking_plumgrid.neutron.plugins.common import exceptions as plum_excep
+from networking_plumgrid.neutron.plugins.db.l2gateway import (l2gateway_db
+    as l2gw_db)
 from networking_plumgrid.neutron.plugins.db import pgdb
 from networking_plumgrid.neutron.plugins.extensions import portbindings\
     as p_portbindings
 from networking_plumgrid.neutron.plugins import plugin_ver
+from neutron.api import extensions as n_ext
 from neutron.api.v2 import attributes
 from neutron.common import constants
 from neutron.common import exceptions as n_exc
@@ -68,9 +72,18 @@ director_server_opts = [
     cfg.StrOpt('driver',
                default="networking_plumgrid.neutron.plugins.drivers.plumlib."
                        "Plumlib",
-               help=_("PLUMgrid Driver")), ]
+               help=_("PLUMgrid Driver"))]
+
+l2_gateway_opts = [
+    cfg.StrOpt('vendor', default='vendor',
+               help=_("L2 Gateway Vendor Type")),
+    cfg.StrOpt('sw_username',
+               help=_("Username of VTEP device")),
+    cfg.StrOpt('sw_password',
+               help=_("Password of VTEP device"))]
 
 cfg.CONF.register_opts(director_server_opts, "plumgriddirector")
+cfg.CONF.register_opts(l2_gateway_opts, "l2gateway")
 ds_lock = cfg.CONF.plumgriddirector.distributed_locking
 
 
@@ -98,11 +111,13 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
                               extraroute_db.ExtraRoute_db_mixin,
                               l3_db.L3_NAT_db_mixin,
                               portbindings_db.PortBindingMixin,
-                              securitygroups_db.SecurityGroupDbMixin):
+                              securitygroups_db.SecurityGroupDbMixin,
+                              l2gw_db.L2GatewayMixin):
 
     supported_extension_aliases = ["agent", "binding", "external-net",
                                    "extraroute", "provider", "quotas",
-                                   "router", "security-group"]
+                                   "router", "security-group", "l2-gateway",
+                                   "l2-gateway-connection"]
 
     binding_view = "extension:port_binding:view"
     binding_set = "extension:port_binding:set"
@@ -110,6 +125,8 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
     def __init__(self):
         LOG.info(_LI('networking-plumgrid: Starting Plugin'))
 
+        n_ext.append_api_extensions_path(
+                      networking_plumgrid.neutron.plugins.extensions.__path__)
         super(NeutronPluginPLUMgridV2, self).__init__()
         self.plumgrid_init()
         db_api.create_table_pg_lock()
@@ -1123,3 +1140,120 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
                 physical_network = None
 
         return network_type, physical_network, segmentation_id
+
+    #
+    # PLUMgrid plugin extensions
+    #
+
+    def create_l2_gateway(self, context, l2_gateway):
+        LOG.debug("networking-plumgrid: create_l2_gateway() called")
+        director_plumgrid = cfg.CONF.plumgriddirector.director_server
+        director_admin = cfg.CONF.plumgriddirector.username
+        director_password = cfg.CONF.plumgriddirector.password
+        vendor_type = cfg.CONF.l2gateway.vendor
+        sw_username = cfg.CONF.l2gateway.sw_username
+        sw_password = cfg.CONF.l2gateway.sw_password
+
+        with context.session.begin(subtransactions=True):
+            gateway_info = l2gw_db.L2GatewayMixin.create_l2_gateway(self,
+                                                                    context,
+                                                                    l2_gateway)
+            try:
+                LOG.debug('PLUMgrid Library: create_l2_gateway() called')
+                self._plumlib.create_l2_gateway(director_plumgrid,
+                                                director_admin,
+                                                director_password,
+                                                gateway_info,
+                                                vendor_type,
+                                                sw_username,
+                                                sw_password)
+                return gateway_info
+            except Exception as err_message:
+                raise plum_excep.PLUMgridException(err_msg=err_message)
+
+    def get_l2_gateway(self, context, id, fields=None):
+        LOG.debug("networking-plumgrid: get_l2_gateway() called")
+        with context.session.begin(subtransactions=True):
+            res = l2gw_db.L2GatewayMixin.get_l2_gateway(self, context, id,
+                                                        fields=fields)
+            return res
+
+    def delete_l2_gateway(self, context, id):
+        LOG.debug("networking-plumgrid: delete_l2_gateway() called")
+        with context.session.begin(subtransactions=True):
+            gw_info = l2gw_db.L2GatewayMixin.get_l2_gateway(self, context, id)
+            l2gw_db.L2GatewayMixin.delete_l2_gateway(self, context, id)
+            try:
+                LOG.debug('PLUMgrid Library: delete_l2_gateway() called')
+                self._plumlib.delete_l2_gateway(gw_info)
+            except Exception as err_message:
+                raise plum_excep.PLUMgridException(err_msg=err_message)
+
+    def get_l2_gateways(self, context, filters=None, fields=None,
+                        sorts=None, limit=None, marker=None,
+                        page_reverse=False):
+        LOG.debug("networking-plumgrid: get_l2_gateways() called")
+        with context.session.begin(subtransactions=True):
+            res = l2gw_db.L2GatewayMixin.get_l2_gateways(self, context,
+                                              filters=filters, fields=fields,
+                                              sorts=sorts, limit=limit,
+                                              marker=marker,
+                                              page_reverse=page_reverse)
+            return res
+
+    def update_l2_gateway(self, context, id, l2_gateway):
+        LOG.debug("networking-plumgrid: update_l2_gateway() called")
+        with context.session.begin(subtransactions=True):
+            res = l2gw_db.L2GatewayMixin.update_l2_gateway(self, context, id,
+                                                           l2_gateway)
+            return res
+
+    def delete_l2_gateway_connection(self, context, id):
+        LOG.debug("networking-plumgrid: delete_l2_gateway_connection() called")
+        with context.session.begin(subtransactions=True):
+            gw_conn_info = l2gw_db.L2GatewayMixin.get_l2_gateway_connection(
+                                                                      self,
+                                                                      context,
+                                                                      id)
+            l2gw_db.L2GatewayMixin.delete_l2_gateway_connection(self,
+                                                                context,
+                                                                id)
+            try:
+                LOG.debug("PLUMgrid Library: delete_l2_gateway_connection() "
+                          "called")
+                self._plumlib.delete_l2_gateway_connection(gw_conn_info)
+            except Exception as err_message:
+                raise plum_excep.PLUMgridException(err_msg=err_message)
+
+    def create_l2_gateway_connection(self, context, l2_gateway_connection):
+        LOG.debug("networking-plumgrid: create_l2_gateway_connection() called")
+        with context.session.begin(subtransactions=True):
+            gw_conn_info = l2gw_db.L2GatewayMixin.create_l2_gateway_connection(
+                                                         self,
+                                                         context,
+                                                         l2_gateway_connection)
+            try:
+                LOG.debug("PLUMgrid Library: create_l2_gateway_connection() "
+                          "called")
+                self._plumlib.add_l2_gateway_connection(gw_conn_info)
+                return gw_conn_info
+            except Exception as err_message:
+                raise plum_excep.PLUMgridException(err_msg=err_message)
+
+    def get_l2_gateway_connections(self, context, filters=None,
+                                   fields=None,
+                                   sorts=None, limit=None, marker=None,
+                                   page_reverse=False):
+        LOG.debug("networking-plumgrid: get_l2_gateway_connections() called")
+        with context.session.begin(subtransactions=True):
+            res = l2gw_db.L2GatewayMixin.get_l2_gateway_connections(self,
+                                                                    context)
+            return res
+
+    def get_l2_gateway_connection(self, context, id, fields=None):
+        LOG.debug("networking-plumgrid: get_l2_gateway_connection() called")
+        with context.session.begin(subtransactions=True):
+            res = l2gw_db.L2GatewayMixin.get_l2_gateway_connection(self,
+                                                                   context,
+                                                                   id)
+            return res

@@ -113,3 +113,21 @@ class Plumlib(object):
 
     def delete_security_group_rule(self, sg_rule_db):
         pass
+
+    def create_l2_gateway(self, director_plumgrid,
+                          director_admin,
+                          director_password,
+                          gateway_info,
+                          vendor_type,
+                          sw_username,
+                          sw_password):
+        pass
+
+    def delete_l2_gateway(self, gw_info):
+        pass
+
+    def add_l2_gateway_connection(self, gw_conn_info):
+        pass
+
+    def delete_l2_gateway_connection(self, gw_conn_info):
+        pass
