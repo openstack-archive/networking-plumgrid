@@ -616,7 +616,7 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
             ipnet = netaddr.IPNetwork(new_sub_db['cidr'])
 
             try:
-                LOG.debug("PLUMgrid Library: update_network() called")
+                LOG.debug("PLUMgrid Library: update_subnet() called")
                 self._plumlib.update_subnet(orig_sub_db, new_sub_db, ipnet)
 
             except Exception as err_message:
