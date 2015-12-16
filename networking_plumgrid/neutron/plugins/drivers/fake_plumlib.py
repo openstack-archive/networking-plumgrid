@@ -53,7 +53,7 @@ class Plumlib(object):
     def create_subnet(self, sub_db, net_db, ipnet):
         pass
 
-    def update_subnet(self, orig_sub_db, new_sub_db, ipnet):
+    def update_subnet(self, orig_sub_db, new_sub_db, ipnet, net_db):
         pass
 
     def delete_subnet(self, tenant_id, net_db, net_id):

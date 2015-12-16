@@ -603,12 +603,14 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
         # Collecting subnet info
         orig_sub_db = self._get_subnet(context, subnet_id)
         tenant_id = orig_sub_db["tenant_id"]
+        net_id = orig_sub_db["network_id"]
+        net_db = self.get_network(context, net_id)
         return self._update_subnet_pg(context, subnet_id, subnet, orig_sub_db,
-                                      tenant_id)
+                                      net_db, tenant_id)
 
     @pgl
     def _update_subnet_pg(self, context, subnet_id, subnet, orig_sub_db,
-                          tenant_id):
+                          net_db, tenant_id):
         with context.session.begin(subtransactions=True):
             # Plugin DB - Subnet Update
             new_sub_db = super(NeutronPluginPLUMgridV2,
@@ -616,8 +618,9 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
             ipnet = netaddr.IPNetwork(new_sub_db['cidr'])
 
             try:
-                LOG.debug("PLUMgrid Library: update_subnet() called")
-                self._plumlib.update_subnet(orig_sub_db, new_sub_db, ipnet)
+                LOG.debug("PLUMgrid Library: update_network() called")
+                self._plumlib.update_subnet(orig_sub_db, new_sub_db, ipnet,
+                                            net_db)
 
             except Exception as err_message:
                 raise plum_excep.PLUMgridException(err_msg=err_message)
