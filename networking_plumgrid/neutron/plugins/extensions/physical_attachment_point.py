@@ -40,11 +40,16 @@ class UpdateParametersRequired(nexceptions.InvalidInput):
 
 
 class InvalidLacpValue(nexceptions.InvalidInput):
-    message = _("Invalid LACP value for give hash_mode")
+    message = _("LACP value must be set to True for hash_mode %(hash_mode)s")
 
 
 class NoPhysicalAttachmentPointFound(nexceptions.NotFound):
     message = _("Physical Attachment Point with id %(id)s does not exist")
+
+
+class TransitDomainLimit(nexceptions.InvalidInput):
+    message = _("Only one physical attachment point"
+                " allowed per transit domain.")
 
 
 def _validate_interfaces_list(data, valid_values=None):
@@ -56,7 +61,7 @@ def _validate_interfaces_list(data, valid_values=None):
             raise InvalidInterfaceFormat("hostname field is required")
 
         if 'interface' not in interface:
-            raise InvalidInterfaceFormat("interface field is required")
+            raise InvalidInterfaceFormat("interface_name field is required")
 
 
 attr.validators['type:validate_interfaces_list'] = _validate_interfaces_list
@@ -81,6 +86,24 @@ RESOURCE_ATTRIBUTE_MAP = {
         },
         'interfaces': {
             'allow_post': True,
+            'allow_put': False,
+            'is_visible': True,
+            'default': [],
+            'validate': {
+                'type:validate_interfaces_list': None
+            }
+        },
+        'add_interfaces': {
+            'allow_post': False,
+            'allow_put': True,
+            'is_visible': True,
+            'default': [],
+            'validate': {
+                'type:validate_interfaces_list': None
+            }
+        },
+        'remove_interfaces': {
+            'allow_post': False,
             'allow_put': True,
             'is_visible': True,
             'default': [],
@@ -94,8 +117,7 @@ RESOURCE_ATTRIBUTE_MAP = {
             'is_visible': True,
             'default': 'L2',
             'validate': {
-                'type:values': ['L2', 'L3',
-                                'L3+L4']
+                'type:values': ['L2', 'L2+L3', 'L3', 'L3+L4']
             }
         },
         'lacp': {
@@ -111,7 +133,7 @@ RESOURCE_ATTRIBUTE_MAP = {
             'allow_post': False,
             'allow_put': False,
             'is_visible': False,
-            'default': True,
+            'default': False,
             'validate': {
                  'type:boolean': None
             }

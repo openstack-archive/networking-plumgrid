@@ -1345,9 +1345,12 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
             except Exception as err_message:
                 if tvd_created:
                     if tvd_db:
+                        super(NeutronPluginPLUMgridV2,
+                              self).delete_physical_attachment_point(context,
+                                    pdb["id"])
                         self.delete_transit_domain(context, tvd_db["id"])
                 LOG.error(err_message)
-                raise
+                raise plum_excep.PLUMgridException(err_msg=err_message)
         return pdb
 
     def update_physical_attachment_point(self, context, id,
@@ -1359,11 +1362,15 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
             pdb = super(NeutronPluginPLUMgridV2,
                         self).update_physical_attachment_point(context, id,
                                     physical_attachment_point)
+            pap_db = pdb
             try:
+                pap = physical_attachment_point["physical_attachment_point"]
+                pdb['add_interfaces'] = pap.get("add_interfaces", [])
+                pdb['remove_interfaces'] = pap.get("remove_interfaces", [])
                 self._plumlib.update_physical_attachment_point(pdb)
             except Exception as err_message:
                 raise plum_excep.PLUMgridException(err_msg=err_message)
-        return pdb
+        return pap_db
 
     def delete_physical_attachment_point(self, context, id):
         LOG.debug("networking_plumgrid: delete_physical_attachment_point() "
