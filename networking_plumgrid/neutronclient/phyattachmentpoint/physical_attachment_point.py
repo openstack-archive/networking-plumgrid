@@ -1,4 +1,4 @@
-## Copyright 2015 OpenStack Foundation.
+# Copyright 2015 OpenStack Foundation.
 # All Rights Reserved
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -46,8 +46,7 @@ def add_known_arguments(self, parser):
                ' attachment point. '
                '(--interface option can be repeated)'))
     parser.add_argument('--hash_mode', dest='hash_mode', help=_('Hash mode'
-                        ' for the physical attachment point. Example would'
-                        ' L2, L3 etc'))
+                        ' for the physical attachment point. Default is L2'))
     parser.add_argument('--lacp', dest='lacp', help=_('LACP mode is enabled'
                         ' or disabled. Default is enabled. Options:'
                         ' True/False'))
@@ -149,11 +148,77 @@ class PhysicalAttachmentPointUpdate(extension.ClientExtensionUpdate,
         parser.add_argument(
             '--name', metavar='name',
             help=_('Descriptive name for logical gateway.'))
-        add_known_arguments(self, parser)
+        parser.add_argument(
+            '--add_interface',
+            metavar='hostname=HOSTNAME,interface_name=INTERFACE-NAME',
+            action='append', dest='add_interfaces', type=utils.str2dict,
+            help=_('Hostnames and corresponding interfaces for physical'
+                   ' attachment point. '
+                   '(--add_interface option can be repeated)'))
+        parser.add_argument(
+            '--remove_interface',
+            metavar='hostname=HOSTNAME,interface_name=INTERFACE-NAME',
+            action='append', dest='remove_interfaces', type=utils.str2dict,
+            help=_('Hostnames and corresponding interfaces for physical'
+                   ' attachment point. '
+                   '(--remove_interface option can be repeated)'))
+        parser.add_argument('--hash_mode', dest='hash_mode', help=_('Hash mode'
+                            ' for the physical attachment point. Example would'
+                            ' L2, L3 etc'))
+        parser.add_argument('--lacp', dest='lacp', help=_('LACP mode can be'
+                            ' enabled or disabled. Default is disabled.'
+                            ' Options: True/False'))
 
     def args2body(self, parsed_args):
-        if parsed_args.interfaces or parsed_args.lacp or parsed_args.hash_mode:
-            body = args2body(self, parsed_args)
-        else:
-            body = {'physical_attachment_point': {'name': parsed_args.name}}
-        return body
+        try:
+            if parsed_args.add_interfaces:
+                add_interfaces = parsed_args.add_interfaces
+            else:
+                add_interfaces = []
+            add_interface_dict = []
+            for interface in add_interfaces:
+                if "hostname" in interface and "interface_name" in interface:
+                    interface = {'hostname': interface['hostname'],
+                                 'interface': interface['interface_name']}
+                else:
+                    raise KeyError("hostname and interface_name are "
+                                   "both needed")
+                add_interface_dict.append(interface)
+            if parsed_args.remove_interfaces:
+                remove_interfaces = parsed_args.remove_interfaces
+            else:
+                remove_interfaces = []
+            remove_interface_dict = []
+            for interface in remove_interfaces:
+                if "hostname" in interface and "interface_name" in interface:
+                    interface = {'hostname': interface['hostname'],
+                                 'interface': interface['interface_name']}
+                else:
+                    raise KeyError("hostname and interface_name "
+                                   "are both needed")
+                remove_interface_dict.append(interface)
+            if parsed_args.name:
+                pap_name = parsed_args.name
+                body = {'physical_attachment_point': {'name': pap_name}}
+            else:
+                body = {'physical_attachment_point': {}}
+            if parsed_args.add_interfaces:
+                (body['physical_attachment_point'][
+                 'add_interfaces']) = add_interface_dict
+            if parsed_args.remove_interfaces:
+                (body['physical_attachment_point']
+                 ['remove_interfaces']) = remove_interface_dict
+            if parsed_args.lacp:
+                if (str(parsed_args.lacp).lower() == 'false' or
+                    str(parsed_args.lacp).lower() == 'true'):
+                    (body['physical_attachment_point']
+                     ['lacp']) = parsed_args.lacp
+                else:
+                    raise Exception("Please pass True/true, False/false"
+                                    " for LACP")
+            if parsed_args.hash_mode:
+                (body['physical_attachment_point']
+                     ['hash_mode']) = parsed_args.hash_mode
+            return body
+        except KeyError as err:
+            raise Exception("KeyError: " + str(err))
