@@ -10,6 +10,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from networking_plumgrid.neutron.plugins.db.physical_attachment_point import \
+    physical_attachment_point_db as pap_models
 from networking_plumgrid.neutron.plugins.extensions import \
     transitdomain as ext_tvd
 from neutron.db import common_db_mixin
@@ -98,6 +100,8 @@ class TransitDomainDBMixin(common_db_mixin.CommonDbMixin):
         """
 
         try:
+            if self._transit_domain_check_phy_att_points(context, tvd_id):
+                raise ext_tvd.TransitDomainInUse(id=tvd_id)
             query = context.session.query(TransitDomain)
             tvd_db = query.filter_by(id=tvd_id).first()
         except exc.NoResultFound:
@@ -110,3 +114,7 @@ class TransitDomainDBMixin(common_db_mixin.CommonDbMixin):
                     "implicit": tvd.implicit,
                     "tenant_id": tvd.tenant_id}
         return self._fields(tvd_dict, fields)
+
+    def _transit_domain_check_phy_att_points(self, context, transit_domain_id):
+        return (context.session.query(pap_models.PhysicalAttachmentPoint).
+                filter_by(transit_domain_id=transit_domain_id).first())
