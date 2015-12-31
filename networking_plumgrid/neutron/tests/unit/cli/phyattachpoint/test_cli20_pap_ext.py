@@ -171,11 +171,8 @@ class CLITestV20ExtensionPhyAttPJSON(test_cli20.CLITestV20Base):
     def test_update_physical_attachment_point(self):
         """Test Update physical attachment point hash mode."""
 
-        args = ['myid', '--name', 'myname', '--hash_mode', 'L2',
-                '--lacp', 'True', '--interface',
-                'hostname=u1,interface_name=i1']
-        values = {'name': 'myname', 'hash_mode': 'L2', 'lacp': 'True',
-                  'interfaces': [{'hostname': 'u1', 'interface': 'i1'}]}
+        args = ['myid', '--lacp', 'False']
+        values = {'lacp': 'False'}
         self._update_physical_attachment_point(args, values)
 
     def test_update_physical_attachment_point_name(self):
