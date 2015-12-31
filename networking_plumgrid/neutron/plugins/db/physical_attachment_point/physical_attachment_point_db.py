@@ -73,36 +73,42 @@ class PhysicalAttachmentPointDb(common_db_mixin.CommonDbMixin):
                    interfaces : List of interfaces to be attached to physical
                                 attachment point
         """
-
         pap = physical_attachment_point["physical_attachment_point"]
-        if pap.get("implicit") is None:
-            pap["implicit"] = False
 
-        lacp_flag = self._lacp_flag(pap)
-        if pap["hash_mode"].lower() == "l2":
-            if lacp_flag:
-                raise ext_pap.InvalidLacpValue
-        else:
-            if not lacp_flag:
-                raise ext_pap.InvalidLacpValue
+        #  check availability of physical interfaces
+        self._check_ifc(context, pap["interfaces"])
 
-        with context.session.begin(subtransactions=True):
-            pap_db = PhysicalAttachmentPoint(
-                         tenant_id=pap["tenant_id"],
-                         name=pap["name"],
-                         hash_mode=pap["hash_mode"],
-                         lacp=lacp_flag,
-                         transit_domain_id=pap["transit_domain_id"],
-                         implicit=pap["implicit"])
+        #  check if transit domain already contains
+        #  a physical attachment point
+        tvd_id = pap["transit_domain_id"]
+        t_limit = self._check_transit_domain_limit(context, tvd_id)
 
-            context.session.add(pap_db)
-            for interface in pap["interfaces"]:
-                interface_db = Interface(hostname=interface["hostname"],
-                                         interface=interface["interface"],
-                                         pap=pap_db)
+        if not t_limit:
+            if pap.get("implicit") is None:
+                pap["implicit"] = False
 
-                context.session.add(interface_db)
-        return self._make_pap_dict(pap_db)
+            lacp_flag = self._lacp_flag(pap)
+            if pap["hash_mode"].lower() != "l2":
+                if not lacp_flag:
+                    raise ext_pap.InvalidLacpValue(hash_mode=pap["hash_mode"])
+
+            with context.session.begin(subtransactions=True):
+                pap_db = PhysicalAttachmentPoint(
+                             tenant_id=pap["tenant_id"],
+                             name=pap["name"],
+                             hash_mode=pap["hash_mode"],
+                             lacp=lacp_flag,
+                             transit_domain_id=pap["transit_domain_id"],
+                             implicit=pap["implicit"])
+
+                context.session.add(pap_db)
+                for interface in pap["interfaces"]:
+                    interface_db = Interface(hostname=interface["hostname"],
+                                             interface=interface["interface"],
+                                             pap=pap_db)
+
+                    context.session.add(interface_db)
+            return self._make_pap_dict(pap_db)
 
     def update_physical_attachment_point(self, context, pap_id,
             physical_attachment_point):
@@ -137,24 +143,31 @@ class PhysicalAttachmentPointDb(common_db_mixin.CommonDbMixin):
                 pap_db.update({"name": pap["name"]})
 
             if 'hash_mode' in pap:
+                if not pap_db.lacp and pap['hash_mode'].lower() != 'l2':
+                    raise ext_pap.InvalidLacpValue(hash_mode=pap["hash_mode"])
                 pap_db.update({"hash_mode": pap["hash_mode"]})
 
             if 'lacp' in pap:
+                lacp_flag = self._lacp_flag(pap)
+                if not lacp_flag and pap_db.hash_mode != "L2":
+                    raise ext_pap.InvalidLacpValue(hash_mode=pap["hash_mode"])
                 pap_db.update({"lacp": self._lacp_flag(pap)})
 
-            if 'interfaces' in pap:
-                try:
-                    query = self._model_query(context, Interface)
-                    query.filter_by(pap_id=pap_id).delete()
-                except exc.NoResultFound:
-                    pass
-                for interface in pap["interfaces"]:
-                    interface_db = Interface(hostname=interface["hostname"],
-                                             interface=interface["interface"],
-                                             pap=pap_db)
+            if 'add_interfaces' in pap:
+                self._check_ifc(context, pap["add_interfaces"])
+                for interface in pap["add_interfaces"]:
+                    interface_db = Interface(
+                                   hostname=interface["hostname"],
+                                   interface=interface["interface"],
+                                   pap=pap_db)
                     context.session.add(interface_db)
-                pap_db.interfaces = query.filter_by(pap_id=pap_id).all()
-
+            if 'remove_interfaces' in pap:
+                for interface in pap["remove_interfaces"]:
+                    query = self._model_query(context, Interface)
+                    query.filter_by(hostname=interface["hostname"],
+                          interface=interface["interface"]).delete()
+            query = self._model_query(context, Interface)
+            pap_db.interfaces = query.filter_by(pap_id=pap_id).all()
         return self._make_pap_dict(pap_db)
 
     def get_physical_attachment_point(self, context, pap_id, fields=None):
@@ -222,3 +235,25 @@ class PhysicalAttachmentPointDb(common_db_mixin.CommonDbMixin):
             return True
         else:
             raise Exception("Please pass True/true or False/false for LACP")
+
+    def _check_transit_domain_limit(self, context, td_id):
+        try:
+            query = self._model_query(context, PhysicalAttachmentPoint)
+            pap_db = query.filter_by(transit_domain_id=td_id).one()
+            if pap_db:
+                raise ext_pap.TransitDomainLimit
+        except exc.NoResultFound:
+            return False
+
+    def _check_ifc(self, context, interfaces):
+        for interface in interfaces:
+            query = self._model_query(context, Interface)
+            host = interface["hostname"]
+            ifc_name = interface["interface"]
+            try:
+                ifc = query.filter_by(hostname=host, interface=ifc_name).one()
+                if ifc:
+                    raise ext_pap.InterfaceInUse(ifc=host + "+" + ifc_name,
+                              id=ifc.pap_id)
+            except exc.NoResultFound:
+                pass
