@@ -40,12 +40,16 @@ class UpdateParametersRequired(nexceptions.InvalidInput):
 
 
 class InvalidLacpValue(nexceptions.InvalidInput):
-    message = _("Invalid LACP value for give hash_mode")
+    message = _("LACP value must be set to True for hash_mode %(hash_mode)s")
 
 
 class NoPhysicalAttachmentPointFound(nexceptions.NotFound):
     message = _("Physical Attachment Point with id %(id)s does not exist")
 
+
+class TransitDomainFull(nexceptions.InvalidInput):
+    message = _("Transit domain full: One Physical Attachment Point"
+                " allowed per transit domain")
 
 def _validate_interfaces_list(data, valid_values=None):
     if not isinstance(data, list):
@@ -56,7 +60,7 @@ def _validate_interfaces_list(data, valid_values=None):
             raise InvalidInterfaceFormat("hostname field is required")
 
         if 'interface' not in interface:
-            raise InvalidInterfaceFormat("interface field is required")
+            raise InvalidInterfaceFormat("interface_name field is required")
 
 
 attr.validators['type:validate_interfaces_list'] = _validate_interfaces_list
@@ -81,6 +85,24 @@ RESOURCE_ATTRIBUTE_MAP = {
         },
         'interfaces': {
             'allow_post': True,
+            'allow_put': False,
+            'is_visible': True,
+            'default': [],
+            'validate': {
+                'type:validate_interfaces_list': None
+            }
+        },
+        'add_interfaces': {
+            'allow_post': False,
+            'allow_put': True,
+            'is_visible': True,
+            'default': [],
+            'validate': {
+                'type:validate_interfaces_list': None
+            }
+        },
+        'remove_interfaces': {
+            'allow_post': False,
             'allow_put': True,
             'is_visible': True,
             'default': [],

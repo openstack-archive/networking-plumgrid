@@ -72,9 +72,10 @@ class TestPhysicalAttachmentPoint(PhysicalAttachmentPointTestCase):
         tid = self._create_transit_domain(admin_context, plugin)
         pap = self._make_pap_dict(interfaces=interfaces, lacp='True',
                                   transit_domain_id=tid)
-        self.assertRaises(ext_pap.InvalidLacpValue,
-            plugin.create_physical_attachment_point,
-            admin_context, pap)
+        pap_ret = plugin.create_physical_attachment_point(
+                      admin_context, pap)
+        pap["physical_attachment_point"]["id"] = pap_ret["id"]
+        self.assertEqualPap(pap_ret, pap["physical_attachment_point"])
 
     def test_create_pap_lacp_false_hash_not_L2(self):
         plugin = manager.NeutronManager.get_plugin()
@@ -132,43 +133,46 @@ class TestPhysicalAttachmentPoint(PhysicalAttachmentPointTestCase):
         pap = self._make_pap_dict(transit_domain_id=tid)
         pap_old = plugin.create_physical_attachment_point(
                       admin_context, pap)
-        interfaces = [{"hostname": "test_host", "interface": "ifc"}]
-        pap_new = self._make_pap_dict(interfaces=interfaces,
-                                      transit_domain_id=tid)
+        add_interfaces = [{"hostname": "test_host", "interface": "ifc"}]
+        pap_new = self._make_pap_update_dict(add_interfaces=add_interfaces,
+                                             transit_domain_id=tid)
 
         pap_new_ret = plugin.update_physical_attachment_point(
                               admin_context, pap_old["id"], pap_new)
         pap_new_get = plugin.get_physical_attachment_point(
                               admin_context, pap_old["id"])
-        pap["physical_attachment_point"]["id"] = pap_old["id"]
-        pap_new["physical_attachment_point"]["id"] = pap_new_ret["id"]
-        self.assertEqual(pap_old, pap["physical_attachment_point"])
-        self.assertEqual(pap_new_ret, pap_new["physical_attachment_point"])
-        self.assertEqual(pap_new_ret, pap_new_get)
+
+        pap_new["physical_attachment_point"]["interfaces"] = self._update_interfaces(
+            add_interfaces=add_interfaces)
+
+        self.assertEqualPap(pap_old, pap["physical_attachment_point"])
+        self.assertEqualPap(pap_new_ret, pap_new["physical_attachment_point"])
+        self.assertEqualPap(pap_new_ret, pap_new_get)
 
     def test_create_update_show_pap02(self):
         plugin = manager.NeutronManager.get_plugin()
         admin_context = context.get_admin_context()
 
         interfaces = [{"hostname": "h1", "interface": "ifc1"},
-                      {"hostname": "h2", "interface": "ifc2"}]
+                      {"hostname": "h2", "interface": "ifc1"}]
         tid = self._create_transit_domain(admin_context, plugin)
         pap = self._make_pap_dict(interfaces=interfaces,
                                   transit_domain_id=tid)
         pap_old = plugin.create_physical_attachment_point(
                       admin_context, pap)
-
-        pap_new = self._make_pap_dict(transit_domain_id=tid)
+        pap_new = self._make_pap_update_dict(remove_interfaces=interfaces,
+                                             transit_domain_id=tid)
         pap_new_ret = plugin.update_physical_attachment_point(
                               admin_context, pap_old["id"], pap_new)
-
         pap_new_get = plugin.get_physical_attachment_point(
                               admin_context, pap_old["id"])
-        pap["physical_attachment_point"]["id"] = pap_old["id"]
-        pap_new["physical_attachment_point"]["id"] = pap_new_ret["id"]
-        self.assertEqual(pap_old, pap["physical_attachment_point"])
-        self.assertEqual(pap_new_ret, pap_new["physical_attachment_point"])
-        self.assertEqual(pap_new_ret, pap_new_get)
+
+        pap_new["physical_attachment_point"]["interfaces"] = self._update_interfaces(
+            interfaces=interfaces, remove_interfaces=interfaces)
+
+        self.assertEqualPap(pap_old, pap["physical_attachment_point"])
+        self.assertEqualPap(pap_new_ret, pap_new["physical_attachment_point"])
+        self.assertEqualPap(pap_new_ret, pap_new_get)
 
     def test_create_update_show_pap03(self):
         plugin = manager.NeutronManager.get_plugin()
@@ -181,20 +185,22 @@ class TestPhysicalAttachmentPoint(PhysicalAttachmentPointTestCase):
         pap_old = plugin.create_physical_attachment_point(
                       admin_context, pap)
 
-        interfaces = [{"hostname": "h1", "interface": "ifc1"},
-                      {"hostname": "h2", "interface": "ifc2"},
-                      {"hostname": "h2", "interface": "ifc2"}]
-        pap_new = self._make_pap_dict(interfaces=interfaces,
-                                      transit_domain_id=tid)
+        add_interfaces = [{"hostname": "h1", "interface": "ifc2"},
+                      {"hostname": "h2", "interface": "ifc1"}]
+        pap_new = self._make_pap_update_dict(add_interfaces=add_interfaces,
+                                             transit_domain_id=tid)
         pap_new_ret = plugin.update_physical_attachment_point(
                               admin_context, pap_old["id"], pap_new)
         pap_new_get = plugin.get_physical_attachment_point(
                               admin_context, pap_old["id"])
         pap["physical_attachment_point"]["id"] = pap_old["id"]
-        pap_new["physical_attachment_point"]["id"] = pap_new_ret["id"]
+        
         self.assertEqual(pap_old, pap["physical_attachment_point"])
-        self.assertEqual(pap_new_ret, pap_new["physical_attachment_point"])
-        self.assertEqual(pap_new_ret, pap_new_get)
+
+        pap_new["physical_attachment_point"]["interfaces"] = self._update_interfaces(
+            interfaces=interfaces, add_interfaces=add_interfaces)
+        self.assertEqualPap(pap_new_ret, pap_new["physical_attachment_point"])
+        self.assertEqualPap(pap_new_ret, pap_new_get)
 
     def test_create_show_pap_by_uuid(self):
         plugin = manager.NeutronManager.get_plugin()
@@ -257,20 +263,18 @@ class TestPhysicalAttachmentPoint(PhysicalAttachmentPointTestCase):
                       {"hostname": "h2", "interface": "ifc2"}]
         tid = self._create_transit_domain(admin_context, plugin)
         pap = self._make_pap_dict(interfaces=interfaces,
-                                  transit_domain_id=tid)
+                                   transit_domain_id=tid)
         pap_old = plugin.create_physical_attachment_point(
                       admin_context, pap)
 
-        interfaces = [{"hostname": "h1", "interface": "ifc1"},
-                      {"hostname": "h2", "interface": "ifc2"},
-                      {"hostname": "h2", "interface": "ifc2"}]
-        pap_new = self._make_pap_dict(interfaces=interfaces,
-                                      transit_domain_id=tid)
+        add_interfaces = [{"hostname": "h2", "interface": "ifc2"}]
+        pap_new = self._make_pap_update_dict(add_interfaces=add_interfaces,
+                                             transit_domain_id=tid)
         pap_new_ret = plugin.update_physical_attachment_point(
                               admin_context, pap_old["id"], pap_new)
         pap_get_ret = plugin.get_physical_attachment_point(
                           admin_context, pap_new_ret["id"])
-        self.assertEqual(pap_get_ret, pap_new_ret)
+        self.assertEqualPap(pap_get_ret, pap_new_ret)
         plugin.delete_physical_attachment_point(
             admin_context, pap_get_ret["id"])
 
@@ -310,6 +314,19 @@ class TestPhysicalAttachmentPoint(PhysicalAttachmentPointTestCase):
                    "transit_domain_id": transit_domain_id,
                    "interfaces": interfaces}}
 
+    def _make_pap_update_dict(self, lacp=False, hash_mode="L2",
+                              transit_domain_id="test_id",
+                              add_interfaces=[], remove_interfaces=[]):
+        return {"physical_attachment_point": {
+                   "tenant_id": "test_tenant",
+                   "name": "test_name",
+                   "hash_mode": hash_mode,
+                   "lacp": lacp,
+                   "implicit": False,
+                   "transit_domain_id": transit_domain_id,
+                   "add_interfaces": add_interfaces,
+                   "remove_interfaces": remove_interfaces}}
+
     def _create_transit_domain(self, admin_context, plugin):
         td = {"transit_domain": {
                   "tenant_id": "test_tenant",
@@ -317,3 +334,27 @@ class TestPhysicalAttachmentPoint(PhysicalAttachmentPointTestCase):
                   "implicit": False}}
         res = plugin.create_transit_domain(admin_context, td)
         return res["id"]
+
+    def _update_interfaces(self, **kwargs):
+        interfaces = kwargs.pop("interfaces", [])
+        add_interfaces = kwargs.pop("add_interfaces", [])
+        remove_interfaces = kwargs.pop("remove_interfaces", [])
+
+        interfaces.extend(add_interfaces)
+        for interface in remove_interfaces:
+            interfaces = interfaces.remove(interface)
+
+        if not interfaces:
+            interfaces = []
+        return interfaces
+
+    def assertEqualPap(self, pap_ref, pap_actual):
+        def make_pap_dict(pap_db):
+            return  {"name": pap_db["name"],
+                     "lacp": pap_db["lacp"],
+                     "hash_mode": pap_db["hash_mode"],
+                     "interfaces": pap_db["interfaces"]}
+
+        pap_ref = make_pap_dict(pap_ref)
+        pap_actual = make_pap_dict(pap_actual)
+        return self.assertEqual(pap_ref, pap_actual)
