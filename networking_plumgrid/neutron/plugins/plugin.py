@@ -1360,7 +1360,8 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
                         self).update_physical_attachment_point(context, id,
                                     physical_attachment_point)
             try:
-                self._plumlib.update_physical_attachment_point(pdb)
+                pass
+                #self._plumlib.update_physical_attachment_point(pdb)
             except Exception as err_message:
                 raise plum_excep.PLUMgridException(err_msg=err_message)
         return pdb

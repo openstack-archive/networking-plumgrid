@@ -81,6 +81,24 @@ RESOURCE_ATTRIBUTE_MAP = {
         },
         'interfaces': {
             'allow_post': True,
+            'allow_put': False,
+            'is_visible': True,
+            'default': [],
+            'validate': {
+                'type:validate_interfaces_list': None
+            }
+        },
+        'add_interfaces': {
+            'allow_post': False,
+            'allow_put': True,
+            'is_visible': True,
+            'default': [],
+            'validate': {
+                'type:validate_interfaces_list': None
+            }
+        },
+        'remove_interfaces': {
+            'allow_post': False,
             'allow_put': True,
             'is_visible': True,
             'default': [],

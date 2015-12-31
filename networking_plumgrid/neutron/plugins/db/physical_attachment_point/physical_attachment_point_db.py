@@ -142,17 +142,20 @@ class PhysicalAttachmentPointDb(common_db_mixin.CommonDbMixin):
             if 'lacp' in pap:
                 pap_db.update({"lacp": self._lacp_flag(pap)})
 
-            if 'interfaces' in pap:
-                try:
-                    query = self._model_query(context, Interface)
-                    query.filter_by(pap_id=pap_id).delete()
-                except exc.NoResultFound:
-                    pass
-                for interface in pap["interfaces"]:
-                    interface_db = Interface(hostname=interface["hostname"],
-                                             interface=interface["interface"],
-                                             pap=pap_db)
-                    context.session.add(interface_db)
+            if 'add_interfaces' in pap or 'remove_interfaces' in pap:
+                query = self._model_query(context, Interface)
+                if 'add_interfaces' in pap:
+                    for interface in pap["add_interfaces"]:
+                        interface_db = Interface(
+                                       hostname=interface["hostname"],
+                                       interface=interface["interface"],
+                                       pap=pap_db)
+                        context.session.add(interface_db)
+                if 'remove_interfaces' in pap:
+                    for interface in pap["remove_interfaces"]:
+                        query = self._model_query(context, Interface)
+                        query.filter_by(hostname=interface["hostname"],
+                              interface=interface["interface"]).delete()
                 pap_db.interfaces = query.filter_by(pap_id=pap_id).all()
 
         return self._make_pap_dict(pap_db)

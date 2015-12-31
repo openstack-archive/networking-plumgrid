@@ -25,6 +25,9 @@ TVDS = 'transit-domains'
 class NoTransitDomainFound(nexceptions.NotFound):
     message = _("Transit domain with id %(id)s does not exist")
 
+class TransitDomainInUse(nexceptions.InUse):
+    message = _("Transit domain with id %(id)s is in use.")
+
 
 RESOURCE_ATTRIBUTE_MAP = {
     TVD: {
