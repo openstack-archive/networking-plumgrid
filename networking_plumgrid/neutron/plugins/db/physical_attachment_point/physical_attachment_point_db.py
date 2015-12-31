@@ -79,12 +79,9 @@ class PhysicalAttachmentPointDb(common_db_mixin.CommonDbMixin):
             pap["implicit"] = False
 
         lacp_flag = self._lacp_flag(pap)
-        if pap["hash_mode"].lower() == "l2":
-            if lacp_flag:
-                raise ext_pap.InvalidLacpValue
-        else:
+        if pap["hash_mode"].lower() != "l2":
             if not lacp_flag:
-                raise ext_pap.InvalidLacpValue
+                raise ext_pap.InvalidLacpValue(hash_mode=pap["hash_mode"])
 
         with context.session.begin(subtransactions=True):
             pap_db = PhysicalAttachmentPoint(
@@ -137,23 +134,30 @@ class PhysicalAttachmentPointDb(common_db_mixin.CommonDbMixin):
                 pap_db.update({"name": pap["name"]})
 
             if 'hash_mode' in pap:
+                if not pap_db.lacp:
+                    raise ext_pap.InvalidLacpValue(hash_mode=pap["hash_mode"])
                 pap_db.update({"hash_mode": pap["hash_mode"]})
 
             if 'lacp' in pap:
+                lacp_flag = self._lacp_flag(pap)
+                if not lacp_flag and pap_db.hash_mode != "L2":
+                    raise ext_pap.InvalidLacpValue(hash_mode=pap["hash_mode"])
                 pap_db.update({"lacp": self._lacp_flag(pap)})
 
-            if 'interfaces' in pap:
-                try:
-                    query = self._model_query(context, Interface)
-                    query.filter_by(pap_id=pap_id).delete()
-                except exc.NoResultFound:
-                    pass
-                for interface in pap["interfaces"]:
-                    interface_db = Interface(hostname=interface["hostname"],
-                                             interface=interface["interface"],
-                                             pap=pap_db)
+            if 'add_interfaces' in pap:
+                for interface in pap["add_interfaces"]:
+                    interface_db = Interface(
+                                   hostname=interface["hostname"],
+                                   interface=interface["interface"],
+                                   pap=pap_db)
                     context.session.add(interface_db)
-                pap_db.interfaces = query.filter_by(pap_id=pap_id).all()
+            if 'remove_interfaces' in pap:
+                for interface in pap["remove_interfaces"]:
+                    query = self._model_query(context, Interface)
+                    query.filter_by(hostname=interface["hostname"],
+                          interface=interface["interface"]).delete()
+            query = self._model_query(context, Interface)
+            pap_db.interfaces = query.filter_by(pap_id=pap_id).all()
 
         return self._make_pap_dict(pap_db)
 
