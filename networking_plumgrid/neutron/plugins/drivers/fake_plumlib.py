@@ -44,7 +44,7 @@ class Plumlib(object):
             net_db["network"][key] = network["network"][key]
         return net_db
 
-    def update_network(self, tenant_id, net_id, network):
+    def update_network(self, tenant_id, net_id, network, orig_net_db):
         pass
 
     def delete_network(self, net_db, net_id):

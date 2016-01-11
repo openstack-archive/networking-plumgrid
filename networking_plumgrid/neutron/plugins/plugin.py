@@ -252,10 +252,12 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
         net_db = super(NeutronPluginPLUMgridV2,
                        self).get_network(context, net_id)
         tenant_id = net_db["tenant_id"]
-        return self._update_network_pg(context, net_id, network, tenant_id)
+        return self._update_network_pg(context, net_id, network, net_db,
+                                       tenant_id)
 
     @pgl
-    def _update_network_pg(self, context, net_id, network, tenant_id):
+    def _update_network_pg(self, context, net_id, network, orig_net_db,
+                           tenant_id):
         with context.session.begin(subtransactions=True):
             # Plugin DB - Network Update
             net_db = super(
@@ -265,7 +267,8 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
 
             try:
                 LOG.debug("PLUMgrid Library: update_network() called")
-                self._plumlib.update_network(tenant_id, net_id, network)
+                self._plumlib.update_network(tenant_id, net_id, network,
+                                             orig_net_db)
 
             except Exception as err_message:
                 raise plum_excep.PLUMgridException(err_msg=err_message)
