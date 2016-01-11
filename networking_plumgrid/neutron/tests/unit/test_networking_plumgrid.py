@@ -108,9 +108,11 @@ class TestPlumgridPluginSubnetsV2(test_plugin.TestSubnetsV2,
         tenant_context = context.Context('', 'not_admin')
 
         network1 = self._fake_network('network1')
+        network1['network']['tenant_id'] = tenant_context.tenant_id
         network1_ret = plugin.create_network(tenant_context, network1)
 
         subnet1 = self._fake_subnet(network1_ret['id'])
+        subnet1['subnet']['tenant_id'] = tenant_context.tenant_id
         plugin.create_subnet(tenant_context, subnet1)
         net_db = plugin.get_network(admin_context, network1_ret['id'])
 

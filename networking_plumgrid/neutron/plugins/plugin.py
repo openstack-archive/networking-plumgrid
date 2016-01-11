@@ -173,8 +173,7 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
                                                           network['network'])
 
         # Plugin DB - Network Create and validation
-        tenant_id = self._get_tenant_id_for_create(context,
-                                                   network["network"])
+        tenant_id = network["network"]["tenant_id"]
         self._network_admin_state(network)
         self._ensure_default_security_group(context, tenant_id)
         return self._create_network_pg(context, network, network_type,
