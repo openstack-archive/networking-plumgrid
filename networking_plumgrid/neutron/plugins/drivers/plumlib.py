@@ -44,8 +44,8 @@ class Plumlib(object):
     def create_network(self, tenant_id, net_db, network, **kwargs):
         self.plumlib.create_network(tenant_id, net_db, network, **kwargs)
 
-    def update_network(self, tenant_id, net_id, network):
-        self.plumlib.update_network(tenant_id, net_id, network)
+    def update_network(self, tenant_id, net_id, network, orig_net_db):
+        self.plumlib.update_network(tenant_id, net_id, network, orig_net_db)
 
     def delete_network(self, net_db, net_id):
         self.plumlib.delete_network(net_db, net_id)
@@ -53,8 +53,8 @@ class Plumlib(object):
     def create_subnet(self, sub_db, net_db, ipnet):
         self.plumlib.create_subnet(sub_db, net_db, ipnet)
 
-    def update_subnet(self, orig_sub_db, new_sub_db, ipnet):
-        self.plumlib.update_subnet(orig_sub_db, new_sub_db, ipnet)
+    def update_subnet(self, orig_sub_db, new_sub_db, ipnet, net_db):
+        self.plumlib.update_subnet(orig_sub_db, new_sub_db, ipnet, net_db)
 
     def delete_subnet(self, tenant_id, net_db, net_id):
         self.plumlib.delete_subnet(tenant_id, net_db, net_id)

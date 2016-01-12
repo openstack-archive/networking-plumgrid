@@ -23,6 +23,8 @@ from oslo_utils import importutils
 from sqlalchemy.orm import exc as sa_exc
 
 import networking_plumgrid
+from networking_plumgrid.neutron.plugins.common import constants as \
+    net_pg_const
 from networking_plumgrid.neutron.plugins.common.locking import lock as pg_lock
 from networking_plumgrid.neutron.plugins.db.physical_attachment_point import \
     physical_attachment_point_db as pap_db
@@ -216,15 +218,15 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
                                                        str(network_type),
                                                        str(physical_network),
                                                        segmentation_id)
-
-                    papdb = super(NeutronPluginPLUMgridV2,
-                                  self).get_physical_attachment_point(
-                                  context, physical_network)
-                    transit_domain_id = papdb["transit_domain_id"]
-                    (network["network"]
-                     ["provider:physical_network"]) = str(physical_network)
-                    (network["network"]
-                     ["provider:network_type"]) = str(network_type)
+                    if network_type.lower() != net_pg_const.L3_GATEWAY_NET:
+                        papdb = super(NeutronPluginPLUMgridV2,
+                                      self).get_physical_attachment_point(
+                                      context, physical_network)
+                        transit_domain_id = papdb["transit_domain_id"]
+                        (network["network"]
+                        ["provider:physical_network"]) = str(physical_network)
+                        (network["network"]
+                        ["provider:network_type"]) = str(network_type)
                 self._extend_network_dict_provider_pg(net_db, None, binding)
 
                 LOG.debug('PLUMgrid Library: create_network() called')
@@ -251,10 +253,12 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
         net_db = super(NeutronPluginPLUMgridV2,
                        self).get_network(context, net_id)
         tenant_id = net_db["tenant_id"]
-        return self._update_network_pg(context, net_id, network, tenant_id)
+        return self._update_network_pg(context, net_id, network, net_db,
+                                       tenant_id)
 
     @pgl
-    def _update_network_pg(self, context, net_id, network, tenant_id):
+    def _update_network_pg(self, context, net_id, network, orig_net_db,
+                           tenant_id):
         with context.session.begin(subtransactions=True):
             # Plugin DB - Network Update
             net_db = super(
@@ -264,7 +268,8 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
 
             try:
                 LOG.debug("PLUMgrid Library: update_network() called")
-                self._plumlib.update_network(tenant_id, net_id, network)
+                self._plumlib.update_network(tenant_id, net_id, network,
+                                             orig_net_db)
 
             except Exception as err_message:
                 raise plum_excep.PLUMgridException(err_msg=err_message)
@@ -284,12 +289,14 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
         tenant_id = net_db["tenant_id"]
         self._delete_network_pg(context, net_id, net_db, tenant_id)
         if net_db.get("provider:physical_network"):
-            pap_id = net_db["provider:physical_network"]
-            pap_db = super(NeutronPluginPLUMgridV2,
-                     self).get_physical_attachment_point(context, pap_id,
-                                                         fields=None)
-            if pap_db.get("implicit"):
-                self.delete_physical_attachment_point(context, pap_id)
+            if (net_db.get("provider:network_type").lower() !=
+                net_pg_const.L3_GATEWAY_NET):
+                pap_id = net_db["provider:physical_network"]
+                pap_db = super(NeutronPluginPLUMgridV2,
+                         self).get_physical_attachment_point(context, pap_id,
+                                                             fields=None)
+                if pap_db.get("implicit"):
+                    self.delete_physical_attachment_point(context, pap_id)
 
     def _delete_network_pg(self, context, net_id, net_db, tenant_id):
 
@@ -602,12 +609,14 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
         # Collecting subnet info
         orig_sub_db = self._get_subnet(context, subnet_id)
         tenant_id = orig_sub_db["tenant_id"]
+        net_id = orig_sub_db["network_id"]
+        net_db = self.get_network(context, net_id)
         return self._update_subnet_pg(context, subnet_id, subnet, orig_sub_db,
-                                      tenant_id)
+                                      net_db, tenant_id)
 
     @pgl
     def _update_subnet_pg(self, context, subnet_id, subnet, orig_sub_db,
-                          tenant_id):
+                          net_db, tenant_id):
         with context.session.begin(subtransactions=True):
             # Plugin DB - Subnet Update
             new_sub_db = super(NeutronPluginPLUMgridV2,
@@ -615,8 +624,9 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
             ipnet = netaddr.IPNetwork(new_sub_db['cidr'])
 
             try:
-                LOG.debug("PLUMgrid Library: update_subnet() called")
-                self._plumlib.update_subnet(orig_sub_db, new_sub_db, ipnet)
+                LOG.debug("PLUMgrid Library: update_network() called")
+                self._plumlib.update_subnet(orig_sub_db, new_sub_db, ipnet,
+                                            net_db)
 
             except Exception as err_message:
                 raise plum_excep.PLUMgridException(err_msg=err_message)
