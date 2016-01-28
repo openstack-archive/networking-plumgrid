@@ -194,9 +194,11 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
                                self).create_network(context, network)
                 binding = None
                 self._process_l3_create(context, net_db, network['network'])
-                if network_type:
+
+                if network_type and network_type != 'local':
                     pass
-                elif 'router:external' in net_db and net_db['router:external']:
+                elif ('router:external' in network['network'] and
+                      network['network']['router:external']):
                     hostname, ifc = self._plumlib.get_available_interface()
                     # create pap
                     pap_dict = {"physical_attachment_point": {
