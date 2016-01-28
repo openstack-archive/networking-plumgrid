@@ -28,3 +28,4 @@ EXT_ALIAS = 'l2-gateway-connection'
 L2_GATEWAY_SERVICES = "l2-gateway-services"
 L2_GATEWAYS_CONNECTION = "%ss" % EXT_ALIAS
 L3_GATEWAY_NET = 'l3-gateway'
+LOCAL = "local"
