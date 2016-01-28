@@ -59,10 +59,10 @@ class Plumlib(object):
     def delete_subnet(self, tenant_id, net_db, net_id):
         pass
 
-    def create_port(self, port_db, router_db):
+    def create_port(self, port_db, router_db, subnet_db):
         pass
 
-    def update_port(self, port_db, router_db):
+    def update_port(self, port_db, router_db, subnet_db):
         pass
 
     def delete_port(self, port_db, router_db):
@@ -77,7 +77,8 @@ class Plumlib(object):
     def delete_router(self, tenant_id, router_id):
         pass
 
-    def add_router_interface(self, tenant_id, router_id, port_db, ipnet):
+    def add_router_interface(self, tenant_id, router_id, port_db, ipnet,
+                             ip_version):
         pass
 
     def remove_router_interface(self, tenant_id, net_id, router_id):
