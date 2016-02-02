@@ -195,26 +195,6 @@ class L2GWTestCase(testlib_api.SqlTestCase):
         result = self._update_l2_gateway(l2gw_id, l2_gw_update_dict)
         self.assertNotEqual(result['name'], name_create)
 
-    def test_l2_gateway_update_without_devices(self):
-        """Test l2 gateway update without devices."""
-        name_create = "l2gw_1"
-        name_update = "l2gw_updated"
-        vtep_ifc = "1"
-        vtep_ip = "3.3.3.3/32"
-        device_name = "device1"
-        device_ip = "192.168.10.100"
-        data_l2gw_create = self._get_l2_gateway_data(name_create,
-                                                     vtep_ifc,
-                                                     vtep_ip,
-                                                     device_name,
-                                                     device_ip)
-        gw_org = self._create_l2gateway(data_l2gw_create)
-        l2gw_id = gw_org['id']
-        l2_gw_update_dict = {"l2_gateway": {"name": name_update}}
-        result = self._update_l2_gateway(l2gw_id, l2_gw_update_dict)
-        self.assertNotEqual(result['name'], name_create)
-        self.assertEqual(result['name'], name_update)
-
     def _create_l2gateway_connection(self, l2gateway_con):
         """Create L2 gateway connection resource helper method."""
         with self.ctx.session.begin(subtransactions=True):
