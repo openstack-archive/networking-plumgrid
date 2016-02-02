@@ -81,6 +81,8 @@ class L2gatewaySegmentationIDNotFound(exceptions.NotFound):
 class MultipleSegmentsFound(exceptions.NeutronException):
     message = _("Multiple segments found for the network  '%(network_id)s'")
 
+class L2GatewayDeviceRequired(exceptions.NeutronException):
+    message = _("L2 Gateway Device is required")
 
 class L2GatewayInterfaceRequired(exceptions.NeutronException):
     message = _("L2 Gateway Interface required")

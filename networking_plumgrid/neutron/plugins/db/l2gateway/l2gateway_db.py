@@ -199,8 +199,7 @@ class L2GatewayMixin(db_query.L2GatewayCommonDbMixin):
             raise l2gw_exc.L2GatewayInUse(gateway_id=id)
         dev_db = self._get_l2_gateway_devices(context, id)
         if not gw.get('devices'):
-            l2gw_db.name = gw.get('name')
-            return self._make_l2_gateway_dict(l2gw_db)
+            raise l2gw_exc.L2GatewayDeviceRequired()
         for device in devices:
             dev_name = device['device_name']
             dev_db = self._get_l2gw_devices_by_name_andl2gwid(context,
@@ -308,10 +307,10 @@ class L2GatewayMixin(db_query.L2GatewayCommonDbMixin):
         is_vlan = self._is_vlan_configured_on_any_interface_for_l2gw(context,
                                                               l2_gw_id,
                                                               segmentation_id)
-        if not is_vlan:
-            raise l2gw_exc.L2GatewaySegmentationRequired()
         network_id = l2gw_validators.validate_network_mapping_list(nw_map,
                                                                    is_vlan)
+        if not is_vlan:
+            raise l2gw_exc.L2GatewaySegmentationRequired()
         gw_db = self._get_l2_gateway(context, l2_gw_id)
         tenant_id = self._get_tenant_id_for_create(context, gw_db)
         if self._retrieve_gateway_connections(context,
