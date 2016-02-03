@@ -54,7 +54,7 @@ class TransitDomainLimit(nexceptions.InvalidInput):
 
 class InterfaceInUse(nexceptions.InvalidInput):
     message = _("Interface %(ifc)s is already in use by physical"
-                "attachment point with id %(id)s")
+                " attachment point with id %(id)s")
 
 
 def _validate_interfaces_list(data, valid_values=None):
