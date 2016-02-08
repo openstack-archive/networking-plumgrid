@@ -202,6 +202,7 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
                     pap_dict = {"physical_attachment_point": {
                                     "name": net_db["name"],
                                     "lacp": False,
+                                    "active_standby": False,
                                     "hash_mode": "L2",
                                     "tenant_id": net_db["tenant_id"],
                                     "implicit": True,

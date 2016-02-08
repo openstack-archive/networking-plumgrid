@@ -78,6 +78,44 @@ class TestPhysicalAttachmentPoint(PhysicalAttachmentPointTestCase):
         pap["physical_attachment_point"]["id"] = pap_ret["id"]
         self.assertEqual(pap_ret, pap["physical_attachment_point"])
 
+    def test_create_pap_as_false_lacp_false(self):
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+
+        interfaces = [{"hostname": "h1", "interface": "ifc1"}]
+        tid = self._create_transit_domain(admin_context, plugin)
+        pap = self._make_pap_dict(interfaces=interfaces, active_standby=True,
+                                  transit_domain_id=tid)
+        pap_ret = plugin.create_physical_attachment_point(
+                      admin_context, pap)
+        pap["physical_attachment_point"]["id"] = pap_ret["id"]
+        self.assertEqual(pap_ret, pap["physical_attachment_point"])
+
+    def test_create_pap_as_true_lacp_false(self):
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+
+        interfaces = [{"hostname": "h1", "interface": "ifc1"}]
+        tid = self._create_transit_domain(admin_context, plugin)
+        pap = self._make_pap_dict(interfaces=interfaces, active_standby=True,
+                                  transit_domain_id=tid)
+        pap_ret = plugin.create_physical_attachment_point(
+                      admin_context, pap)
+        pap["physical_attachment_point"]["id"] = pap_ret["id"]
+        self.assertEqual(pap_ret, pap["physical_attachment_point"])
+
+    def test_create_pap_as_true_lacp_true(self):
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+
+        interfaces = [{"hostname": "h1", "interface": "ifc1"}]
+        tid = self._create_transit_domain(admin_context, plugin)
+        pap = self._make_pap_dict(interfaces=interfaces, active_standby=True,
+                                  lacp=True, transit_domain_id=tid)
+        self.assertRaises(plum_excep.PLUMgridException,
+            plugin.create_physical_attachment_point,
+            admin_context, pap)
+
     def test_create_pap_lacp_false_hash_not_L2(self):
         plugin = manager.NeutronManager.get_plugin()
         admin_context = context.get_admin_context()
@@ -291,7 +329,8 @@ class TestPhysicalAttachmentPoint(PhysicalAttachmentPointTestCase):
                           admin_context)
         cmp(pap_list_get, [pap_1_ret, pap_2_ret])
 
-    def _make_pap_dict(self, lacp=False, hash_mode="L2",
+    def _make_pap_dict(self, lacp=False, active_standby=False,
+                       hash_mode="L2",
                        transit_domain_id="test_id",
                        interfaces=[]):
         return {"physical_attachment_point": {
@@ -299,11 +338,13 @@ class TestPhysicalAttachmentPoint(PhysicalAttachmentPointTestCase):
                    "name": "test_name",
                    "hash_mode": hash_mode,
                    "lacp": lacp,
+                   "active_standby": active_standby,
                    "implicit": False,
                    "transit_domain_id": transit_domain_id,
                    "interfaces": interfaces}}
 
-    def _make_pap_update_dict(self, lacp=False, hash_mode="L2",
+    def _make_pap_update_dict(self, lacp=False, active_standby=False,
+                              hash_mode="L2",
                               transit_domain_id="test_id",
                               add_interfaces=[], remove_interfaces=[]):
         return {"physical_attachment_point": {
@@ -311,6 +352,7 @@ class TestPhysicalAttachmentPoint(PhysicalAttachmentPointTestCase):
                    "name": "test_name",
                    "hash_mode": hash_mode,
                    "lacp": lacp,
+                   "active_standby": active_standby,
                    "implicit": False,
                    "transit_domain_id": transit_domain_id,
                    "add_interfaces": add_interfaces,
