@@ -48,8 +48,12 @@ def add_known_arguments(self, parser):
     parser.add_argument('--hash_mode', dest='hash_mode', help=_('Hash mode'
                         ' for the physical attachment point. Default is L2'))
     parser.add_argument('--lacp', dest='lacp', help=_('LACP mode is enabled'
-                        ' or disabled. Default is enabled. Options:'
+                        ' or disabled. Default is disabled. Options:'
                         ' True/False'))
+    parser.add_argument('--active_standby', dest='active_standby',
+                        help=_('A/S mode is enabled'
+                               ' or disabled. Default is disabled. Options:'
+                               ' True/False'))
     parser.add_argument('--transit_domain', dest='transit_domain_id',
                         help=_('Transit domain where'
                         ' physical attachment point should be'))
@@ -83,6 +87,14 @@ def args2body(self, parsed_args):
             else:
                 raise Exception("Please pass True, true, False or false"
                                 " for LACP")
+        if parsed_args.active_standby:
+            if (str(parsed_args.active_standby).lower() == 'false' or
+                str(parsed_args.active_standby).lower() == 'true'):
+                body['physical_attachment_point']['active_standby'] = (
+                    parsed_args.active_standby)
+            else:
+                raise Exception("Please pass True, true, False or false"
+                                " for active_standby")
         if parsed_args.hash_mode:
             (body['physical_attachment_point']
                  ['hash_mode']) = parsed_args.hash_mode
@@ -168,6 +180,10 @@ class PhysicalAttachmentPointUpdate(extension.ClientExtensionUpdate,
         parser.add_argument('--lacp', dest='lacp', help=_('LACP mode can be'
                             ' enabled or disabled. Default is disabled.'
                             ' Options: True/False'))
+        parser.add_argument('--active_standby', dest='active_standby',
+                            help=_('A/S mode can be'
+                                   ' enabled or disabled. Default is disabled.'
+                                   ' Options: True/False'))
 
     def args2body(self, parsed_args):
         try:
@@ -216,6 +232,14 @@ class PhysicalAttachmentPointUpdate(extension.ClientExtensionUpdate,
                 else:
                     raise Exception("Please pass True/true, False/false"
                                     " for LACP")
+            if parsed_args.active_standby:
+                if (str(parsed_args.active_standby).lower() == 'false' or
+                    str(parsed_args.active_standby).lower() == 'true'):
+                    (body['physical_attachment_point']
+                     ['active_standby']) = parsed_args.active_standby
+                else:
+                    raise Exception("Please pass True/true, False/false"
+                                    " for A/S")
             if parsed_args.hash_mode:
                 (body['physical_attachment_point']
                      ['hash_mode']) = parsed_args.hash_mode

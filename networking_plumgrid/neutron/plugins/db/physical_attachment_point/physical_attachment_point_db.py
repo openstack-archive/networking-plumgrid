@@ -33,6 +33,7 @@ class PhysicalAttachmentPoint(model_base.BASEV2, models_v2.HasId,
     transit_domain_id = sa.Column(sa.String(255))
     hash_mode = sa.Column(sa.String(255))
     lacp = sa.Column(sa.Boolean)
+    active_standby = sa.Column(sa.Boolean)
     implicit = sa.Column(sa.Boolean)
 
 
@@ -70,6 +71,7 @@ class PhysicalAttachmentPointDb(common_db_mixin.CommonDbMixin):
                    id : physical attachment point
                    hash_mode : L2, L3 etc
                    lacp : True/False
+                   active_standby: True/False
                    interfaces : List of interfaces to be attached to physical
                                 attachment point
         """
@@ -92,12 +94,17 @@ class PhysicalAttachmentPointDb(common_db_mixin.CommonDbMixin):
                 if not lacp_flag:
                     raise ext_pap.InvalidLacpValue(hash_mode=pap["hash_mode"])
 
+            as_flag = self._as_flag(pap)
+            if as_flag and lacp_flag:
+                raise ext_pap.InvalidLacpValueAs
+
             with context.session.begin(subtransactions=True):
                 pap_db = PhysicalAttachmentPoint(
                              tenant_id=pap["tenant_id"],
                              name=pap["name"],
                              hash_mode=pap["hash_mode"],
                              lacp=lacp_flag,
+                             active_standby=as_flag,
                              transit_domain_id=pap["transit_domain_id"],
                              implicit=pap["implicit"])
 
@@ -125,6 +132,7 @@ class PhysicalAttachmentPointDb(common_db_mixin.CommonDbMixin):
                    id : physical attachment point
                    hash_mode : L2+L3 etc
                    lacp : True/False
+                   active_standby: True/False
                    interfaces : List of interfaces to be attached to physical
                                 attachment point
         """
@@ -158,6 +166,18 @@ class PhysicalAttachmentPointDb(common_db_mixin.CommonDbMixin):
                     raise ext_pap.InvalidLacpValue(hash_mode=pap["hash_mode"])
                 pap_db.update({"hash_mode": pap["hash_mode"]})
                 pap_db.update({"lacp": self._lacp_flag(pap)})
+
+            if 'active_standby' in pap and 'lacp' not in pap:
+                as_flag = self._as_flag(pap)
+                if pap_db.lacp and as_flag:
+                    raise ext_pap.InvalidLacpValueAs
+                pap_db.update({"active_standby": as_flag})
+            elif 'active_standby' in pap and 'lacp' in pap:
+                as_flag = self._as_flag(pap)
+                lacp_flag = self._lacp_flag(pap)
+                if lacp_flag and as_flag:
+                    raise ext_pap.InvalidLacpValueAs
+                pap_db.update({"active_standby": as_flag})
 
             if 'add_interfaces' in pap:
                 self._check_ifc(context, pap["add_interfaces"])
@@ -228,6 +248,7 @@ class PhysicalAttachmentPointDb(common_db_mixin.CommonDbMixin):
                     "interfaces": interfaces,
                     "hash_mode": pap.hash_mode,
                     "lacp": pap.lacp,
+                    "active_standby": pap.active_standby,
                     "tenant_id": pap.tenant_id,
                     "transit_domain_id": pap.transit_domain_id,
                     "implicit": pap.implicit}
@@ -240,6 +261,15 @@ class PhysicalAttachmentPointDb(common_db_mixin.CommonDbMixin):
             return True
         else:
             raise Exception("Please pass True/true or False/false for LACP")
+
+    def _as_flag(self, pap):
+        if str(pap.get("active_standby")).lower() == 'false':
+            return False
+        elif str(pap.get("active_standby")).lower() == 'true':
+            return True
+        else:
+            raise Exception("Please pass True/true or False/false"
+                            "for active_standby")
 
     def _check_transit_domain_limit(self, context, td_id):
         try:
