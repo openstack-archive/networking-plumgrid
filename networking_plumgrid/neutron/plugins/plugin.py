@@ -234,6 +234,7 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
                     pap_dict = {"physical_attachment_point": {
                                     "name": net_db["name"],
                                     "lacp": False,
+                                    "active_standby": False,
                                     "hash_mode": "L2",
                                     "tenant_id": net_db["tenant_id"],
                                     "implicit": True,
@@ -1451,11 +1452,11 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
                   "called")
 
         with context.session.begin(subtransactions=True):
-            pdb = super(NeutronPluginPLUMgridV2,
-                        self).update_physical_attachment_point(context, id,
-                                    physical_attachment_point)
-            pap_db = pdb
             try:
+                pdb = super(NeutronPluginPLUMgridV2,
+                            self).update_physical_attachment_point(context, id,
+                                        physical_attachment_point)
+                pap_db = pdb
                 pap = physical_attachment_point["physical_attachment_point"]
                 pdb['add_interfaces'] = pap.get("add_interfaces", [])
                 pdb['remove_interfaces'] = pap.get("remove_interfaces", [])
