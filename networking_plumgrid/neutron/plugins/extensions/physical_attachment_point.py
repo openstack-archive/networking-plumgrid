@@ -44,6 +44,10 @@ class InvalidLacpValue(nexceptions.InvalidInput):
     message = _("LACP value must be set to True for hash_mode %(hash_mode)s")
 
 
+class InvalidLacpValueAs(nexceptions.InvalidInput):
+    message = _("LACP must be set to False to enable Active/Standby mode")
+
+
 class NoPhysicalAttachmentPointFound(nexceptions.NotFound):
     message = _("Physical Attachment Point with id %(id)s does not exist")
 
@@ -127,6 +131,15 @@ RESOURCE_ATTRIBUTE_MAP = {
             }
         },
         'lacp': {
+            'allow_post': True,
+            'allow_put': True,
+            'is_visible': True,
+            'default': False,
+            'validate': {
+                 'type:boolean': None
+            }
+        },
+        'active_standby': {
             'allow_post': True,
             'allow_put': True,
             'is_visible': True,

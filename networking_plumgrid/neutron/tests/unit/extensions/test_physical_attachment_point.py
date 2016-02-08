@@ -57,9 +57,9 @@ class TestPhysicalAttachmentPoint(PhysicalAttachmentPointTestCase):
         admin_context = context.get_admin_context()
 
         interfaces = [{"hostname": "h1", "interface": "ifc1"}]
-        tid = self._create_transit_domain(admin_context, plugin)
+        td = self._create_transit_domain(admin_context, plugin)
         pap = self._make_pap_dict(interfaces=interfaces,
-                                  transit_domain_id=tid["id"])
+                                  transit_domain_id=td["id"])
         pap_ret = plugin.create_physical_attachment_point(
                       admin_context, pap)
         pap["physical_attachment_point"]["id"] = pap_ret["id"]
@@ -70,9 +70,9 @@ class TestPhysicalAttachmentPoint(PhysicalAttachmentPointTestCase):
         admin_context = context.get_admin_context()
 
         interfaces = [{"hostname": "h1", "interface": "ifc1"}]
-        tid = self._create_transit_domain(admin_context, plugin)
+        td = self._create_transit_domain(admin_context, plugin)
         pap = self._make_pap_dict(interfaces=interfaces,
-                                  transit_domain_id=tid["name"])
+                                  transit_domain_id=td["name"])
         pap_ret = plugin.create_physical_attachment_point(
                       admin_context, pap)
         pap["physical_attachment_point"]["id"] = pap_ret["id"]
@@ -83,22 +83,60 @@ class TestPhysicalAttachmentPoint(PhysicalAttachmentPointTestCase):
         admin_context = context.get_admin_context()
 
         interfaces = [{"hostname": "h1", "interface": "ifc1"}]
-        tid = self._create_transit_domain(admin_context, plugin)
+        td = self._create_transit_domain(admin_context, plugin)
         pap = self._make_pap_dict(interfaces=interfaces, lacp=True,
-                                  transit_domain_id=tid["id"])
+                                  transit_domain_id=td["id"])
         pap_ret = plugin.create_physical_attachment_point(
                       admin_context, pap)
         pap["physical_attachment_point"]["id"] = pap_ret["id"]
         self.assertEqual(pap_ret, pap["physical_attachment_point"])
+
+    def test_create_pap_as_false_lacp_false(self):
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+
+        interfaces = [{"hostname": "h1", "interface": "ifc1"}]
+        td = self._create_transit_domain(admin_context, plugin)
+        pap = self._make_pap_dict(interfaces=interfaces, active_standby=True,
+                                  transit_domain_id=td["id"])
+        pap_ret = plugin.create_physical_attachment_point(
+                      admin_context, pap)
+        pap["physical_attachment_point"]["id"] = pap_ret["id"]
+        self.assertEqual(pap_ret, pap["physical_attachment_point"])
+
+    def test_create_pap_as_true_lacp_false(self):
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+
+        interfaces = [{"hostname": "h1", "interface": "ifc1"}]
+        td = self._create_transit_domain(admin_context, plugin)
+        pap = self._make_pap_dict(interfaces=interfaces, active_standby=True,
+                                  transit_domain_id=td["id"])
+        pap_ret = plugin.create_physical_attachment_point(
+                      admin_context, pap)
+        pap["physical_attachment_point"]["id"] = pap_ret["id"]
+        self.assertEqual(pap_ret, pap["physical_attachment_point"])
+
+    def test_create_pap_as_true_lacp_true(self):
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+
+        interfaces = [{"hostname": "h1", "interface": "ifc1"}]
+        td = self._create_transit_domain(admin_context, plugin)
+        pap = self._make_pap_dict(interfaces=interfaces, active_standby=True,
+                                  lacp=True, transit_domain_id=td["id"])
+        self.assertRaises(plum_excep.PLUMgridException,
+            plugin.create_physical_attachment_point,
+            admin_context, pap)
 
     def test_create_pap_lacp_false_hash_not_L2(self):
         plugin = manager.NeutronManager.get_plugin()
         admin_context = context.get_admin_context()
 
         interfaces = [{"hostname": "h1", "interface": "ifc1"}]
-        tid = self._create_transit_domain(admin_context, plugin)
+        td = self._create_transit_domain(admin_context, plugin)
         pap = self._make_pap_dict(interfaces=interfaces, lacp='False',
-                  hash_mode="L3", transit_domain_id=tid["id"])
+                  hash_mode="L3", transit_domain_id=td["id"])
         self.assertRaises(plum_excep.PLUMgridException,
             plugin.create_physical_attachment_point,
             admin_context, pap)
@@ -106,8 +144,8 @@ class TestPhysicalAttachmentPoint(PhysicalAttachmentPointTestCase):
     def test_create_pap_no_interfaces(self):
         plugin = manager.NeutronManager.get_plugin()
         admin_context = context.get_admin_context()
-        tid = self._create_transit_domain(admin_context, plugin)
-        pap = self._make_pap_dict(transit_domain_id=tid["id"])
+        td = self._create_transit_domain(admin_context, plugin)
+        pap = self._make_pap_dict(transit_domain_id=td["id"])
         pap_ret = plugin.create_physical_attachment_point(
                       admin_context, pap)
         pap["physical_attachment_point"]["id"] = pap_ret["id"]
@@ -119,9 +157,9 @@ class TestPhysicalAttachmentPoint(PhysicalAttachmentPointTestCase):
 
         interfaces = [{"hostname": "test_host1", "interface": "ifc1"},
                       {"hostname": "test_host1", "interface": "ifc1"}]
-        tid = self._create_transit_domain(admin_context, plugin)
+        td = self._create_transit_domain(admin_context, plugin)
         pap = self._make_pap_dict(interfaces=interfaces,
-                  transit_domain_id=tid["id"])
+                  transit_domain_id=td["id"])
         pap_ret = plugin.create_physical_attachment_point(
                       admin_context, pap)
         pap["physical_attachment_point"]["id"] = pap_ret["id"]
@@ -133,9 +171,9 @@ class TestPhysicalAttachmentPoint(PhysicalAttachmentPointTestCase):
 
         interfaces = [{"hostname": "h%d" % i, "interface": "ifc%d" % j}
                       for i in range(1, 16) for j in range(1, 2)]
-        tid = self._create_transit_domain(admin_context, plugin)
+        td = self._create_transit_domain(admin_context, plugin)
         pap = self._make_pap_dict(interfaces=interfaces,
-                  transit_domain_id=tid["id"])
+                  transit_domain_id=td["id"])
         pap_ret = plugin.create_physical_attachment_point(
                       admin_context, pap)
         pap["physical_attachment_point"]["id"] = pap_ret["id"]
@@ -145,13 +183,13 @@ class TestPhysicalAttachmentPoint(PhysicalAttachmentPointTestCase):
         plugin = manager.NeutronManager.get_plugin()
         admin_context = context.get_admin_context()
 
-        tid = self._create_transit_domain(admin_context, plugin)
-        pap = self._make_pap_dict(transit_domain_id=tid["id"])
+        td = self._create_transit_domain(admin_context, plugin)
+        pap = self._make_pap_dict(transit_domain_id=td["id"])
         pap_old = plugin.create_physical_attachment_point(
                       admin_context, pap)
         add_interfaces = [{"hostname": "test_host", "interface": "ifc"}]
         pap_new = self._make_pap_update_dict(add_interfaces=add_interfaces,
-                                             transit_domain_id=tid["id"])
+                                             transit_domain_id=td["id"])
 
         pap_new_ret = plugin.update_physical_attachment_point(
                               admin_context, pap_old["id"], pap_new)
@@ -168,13 +206,13 @@ class TestPhysicalAttachmentPoint(PhysicalAttachmentPointTestCase):
 
         interfaces = [{"hostname": "h1", "interface": "ifc1"},
                       {"hostname": "h2", "interface": "ifc1"}]
-        tid = self._create_transit_domain(admin_context, plugin)
+        td = self._create_transit_domain(admin_context, plugin)
         pap = self._make_pap_dict(interfaces=interfaces,
-                                  transit_domain_id=tid["id"])
+                                  transit_domain_id=td["id"])
         pap_old = plugin.create_physical_attachment_point(
                       admin_context, pap)
         pap_new = self._make_pap_update_dict(remove_interfaces=interfaces,
-                                             transit_domain_id=tid["id"])
+                                             transit_domain_id=td["id"])
         pap_new_ret = plugin.update_physical_attachment_point(
                               admin_context, pap_old["id"], pap_new)
         pap_new_get = plugin.get_physical_attachment_point(
@@ -188,16 +226,16 @@ class TestPhysicalAttachmentPoint(PhysicalAttachmentPointTestCase):
         admin_context = context.get_admin_context()
 
         interfaces = [{"hostname": "h1", "interface": "ifc1"}]
-        tid = self._create_transit_domain(admin_context, plugin)
+        td = self._create_transit_domain(admin_context, plugin)
         pap = self._make_pap_dict(interfaces=interfaces,
-                                  transit_domain_id=tid["id"])
+                                  transit_domain_id=td["id"])
         pap_old = plugin.create_physical_attachment_point(
                       admin_context, pap)
 
         add_interfaces = [{"hostname": "h1", "interface": "ifc2"},
                       {"hostname": "h2", "interface": "ifc1"}]
         pap_new = self._make_pap_update_dict(add_interfaces=add_interfaces,
-                                             transit_domain_id=tid["id"])
+                                             transit_domain_id=td["id"])
         pap_new_ret = plugin.update_physical_attachment_point(
                               admin_context, pap_old["id"], pap_new)
         pap_new_get = plugin.get_physical_attachment_point(
@@ -213,9 +251,9 @@ class TestPhysicalAttachmentPoint(PhysicalAttachmentPointTestCase):
         interfaces = [{"hostname": "h1", "interface": "ifc1"},
                       {"hostname": "h2", "interface": "ifc2"},
                       {"hostname": "h2", "interface": "ifc2"}]
-        tid = self._create_transit_domain(admin_context, plugin)
+        td = self._create_transit_domain(admin_context, plugin)
         pap = self._make_pap_dict(interfaces=interfaces,
-                                  transit_domain_id=tid["id"])
+                                  transit_domain_id=td["id"])
         pap_ret = plugin.create_physical_attachment_point(
                       admin_context, pap)
         pap_get_ret = plugin.get_physical_attachment_point(
@@ -226,8 +264,8 @@ class TestPhysicalAttachmentPoint(PhysicalAttachmentPointTestCase):
         plugin = manager.NeutronManager.get_plugin()
         admin_context = context.get_admin_context()
 
-        tid = self._create_transit_domain(admin_context, plugin)
-        pap = self._make_pap_dict(transit_domain_id=tid["id"])
+        td = self._create_transit_domain(admin_context, plugin)
+        pap = self._make_pap_dict(transit_domain_id=td["id"])
         pap_ret = plugin.create_physical_attachment_point(
                       admin_context, pap)
         pap_get_ret = plugin.get_physical_attachment_point(
@@ -240,9 +278,9 @@ class TestPhysicalAttachmentPoint(PhysicalAttachmentPointTestCase):
         interfaces = [{"hostname": "h1", "interface": "ifc1"},
                       {"hostname": "h2", "interface": "ifc2"},
                       {"hostname": "h2", "interface": "ifc2"}]
-        tid = self._create_transit_domain(admin_context, plugin)
+        td = self._create_transit_domain(admin_context, plugin)
         pap = self._make_pap_dict(interfaces=interfaces,
-                                  transit_domain_id=tid["id"])
+                                  transit_domain_id=td["id"])
         pap_ret = plugin.create_physical_attachment_point(
                       admin_context, pap)
         plugin.delete_physical_attachment_point(
@@ -252,8 +290,8 @@ class TestPhysicalAttachmentPoint(PhysicalAttachmentPointTestCase):
         plugin = manager.NeutronManager.get_plugin()
         admin_context = context.get_admin_context()
 
-        tid = self._create_transit_domain(admin_context, plugin)
-        pap = self._make_pap_dict(transit_domain_id=tid["id"])
+        td = self._create_transit_domain(admin_context, plugin)
+        pap = self._make_pap_dict(transit_domain_id=td["id"])
         pap_ret = plugin.create_physical_attachment_point(
                       admin_context, pap)
         plugin.delete_physical_attachment_point(
@@ -265,15 +303,15 @@ class TestPhysicalAttachmentPoint(PhysicalAttachmentPointTestCase):
 
         interfaces = [{"hostname": "h1", "interface": "ifc1"},
                       {"hostname": "h2", "interface": "ifc1"}]
-        tid = self._create_transit_domain(admin_context, plugin)
+        td = self._create_transit_domain(admin_context, plugin)
         pap = self._make_pap_dict(interfaces=interfaces,
-                                  transit_domain_id=tid["id"])
+                                  transit_domain_id=td["id"])
         pap_old = plugin.create_physical_attachment_point(
                       admin_context, pap)
 
         add_interfaces = [{"hostname": "h2", "interface": "ifc2"}]
         pap_new = self._make_pap_update_dict(add_interfaces=add_interfaces,
-                                             transit_domain_id=tid["id"])
+                                             transit_domain_id=td["id"])
         pap_new_ret = plugin.update_physical_attachment_point(
                               admin_context, pap_old["id"], pap_new)
         pap_get_ret = plugin.get_physical_attachment_point(
@@ -288,25 +326,26 @@ class TestPhysicalAttachmentPoint(PhysicalAttachmentPointTestCase):
 
         interfaces = [{"hostname": "h1", "interface": "ifc1"},
                       {"hostname": "h2", "interface": "ifc2"}]
-        tid1 = self._create_transit_domain(admin_context, plugin)
+        td1 = self._create_transit_domain(admin_context, plugin)
         pap_1 = self._make_pap_dict(interfaces=interfaces,
-                                    transit_domain_id=tid1["id"])
+                                    transit_domain_id=td1["id"])
         pap_1_ret = plugin.create_physical_attachment_point(
                       admin_context, pap_1)
 
         interfaces = [{"hostname": "h1", "interface": "ifc2"},
                       {"hostname": "h1", "interface": "ifc3"},
                       {"hostname": "h1", "interface": "ifc4"}]
-        tid2 = self._create_transit_domain(admin_context, plugin)
+        td2 = self._create_transit_domain(admin_context, plugin)
         pap_2 = self._make_pap_dict(interfaces=interfaces,
-                                    transit_domain_id=tid2["id"])
+                                    transit_domain_id=td2["id"])
         pap_2_ret = plugin.create_physical_attachment_point(
                               admin_context, pap_2)
         pap_list_get = plugin.get_physical_attachment_points(
                           admin_context)
         cmp(pap_list_get, [pap_1_ret, pap_2_ret])
 
-    def _make_pap_dict(self, lacp=False, hash_mode="L2",
+    def _make_pap_dict(self, lacp=False, active_standby=False,
+                       hash_mode="L2",
                        transit_domain_id="test_id",
                        interfaces=[]):
         return {"physical_attachment_point": {
@@ -314,11 +353,13 @@ class TestPhysicalAttachmentPoint(PhysicalAttachmentPointTestCase):
                    "name": "test_name",
                    "hash_mode": hash_mode,
                    "lacp": lacp,
+                   "active_standby": active_standby,
                    "implicit": False,
                    "transit_domain_id": transit_domain_id,
                    "interfaces": interfaces}}
 
-    def _make_pap_update_dict(self, lacp=False, hash_mode="L2",
+    def _make_pap_update_dict(self, lacp=False, active_standby=False,
+                              hash_mode="L2",
                               transit_domain_id="test_id",
                               add_interfaces=[], remove_interfaces=[]):
         return {"physical_attachment_point": {
@@ -326,6 +367,7 @@ class TestPhysicalAttachmentPoint(PhysicalAttachmentPointTestCase):
                    "name": "test_name",
                    "hash_mode": hash_mode,
                    "lacp": lacp,
+                   "active_standby": active_standby,
                    "implicit": False,
                    "transit_domain_id": transit_domain_id,
                    "add_interfaces": add_interfaces,
