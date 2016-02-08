@@ -45,6 +45,7 @@ def upgrade():
         sa.Column('tenant_id', sa.String(length=36), nullable=True),
         sa.Column('implicit', sa.Boolean(), nullable=True),
         sa.Column('lacp', sa.Boolean(), nullable=False),
+        sa.Column('active_standby', sa.Boolean(), nullable=False),
         sa.Column('hash_mode', sa.String(length=255), nullable=True),
         sa.Column('transit_domain_id', sa.String(length=36), nullable=True),
         sa.ForeignKeyConstraint(
