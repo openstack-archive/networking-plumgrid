@@ -20,6 +20,7 @@ import netaddr
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import importutils
+from six import string_types
 from sqlalchemy.orm import exc as sa_exc
 
 import networking_plumgrid
@@ -170,6 +171,8 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
 
         LOG.debug('networking-plumgrid: create_network() called')
 
+        # Process network attributes for consistency
+        self._process_network_db(network)
         (network_type, physical_network,
          segmentation_id) = self._process_provider_create(context,
                                                           network['network'])
@@ -1480,3 +1483,10 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
         return super(NeutronPluginPLUMgridV2,
                    self).get_transit_domains(context, filters,
                              fields, sorts, limit, marker, page_reverse)
+
+    def _process_network_db(self, network):
+        if ('provider:network_type' in network['network'] and
+            isinstance(network['network']['provider:network_type'],
+                       string_types)):
+            net_type = network['network']['provider:network_type'].lower()
+            network['network']['provider:network_type'] = net_type
