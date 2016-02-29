@@ -130,6 +130,7 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
                                    "router", "security-group", "l2-gateway",
                                    "l2-gateway-connection",
                                    "physical-attachment-point",
+                                   "subnet_allocation",
                                    "transit-domain"]
 
     binding_view = "extension:port_binding:view"
