@@ -88,7 +88,7 @@ class ClientBase(rest_client.RestClient):
 
         resp, body = self.post(uri, body=body, headers=headers,
                                extra_headers=extra_headers)
-        self.expected_success([httplib.CREATED, httplib.ACCEPTED], resp.status)
+        self.expected_success(httplib.CREATED, resp.status)
 
         return resp, self.deserialize(body)
 
@@ -139,9 +139,9 @@ class ClientBase(rest_client.RestClient):
         body = self.serialize(object_dict)
         uri = self.get_uri(resource, uuid=uuid, params=params)
 
-        resp, body = self.patch(uri, body=body)
+        resp, body = self.put(uri, body=body)
 
-        self.expected_success(httplib.ACCEPTED, resp.status)
+        self.expected_success(httplib.OK, resp.status)
 
         return resp, self.deserialize(body)
 
@@ -157,8 +157,7 @@ class ClientBase(rest_client.RestClient):
         uri = self.get_uri(resource, uuid=uuid, params=params)
 
         resp, body = self.delete(uri)
-        self.expected_success([httplib.ACCEPTED, httplib.NO_CONTENT],
-                              resp.status)
+        self.expected_success(httplib.NO_CONTENT, resp.status)
         if resp.status == httplib.ACCEPTED:
             body = self.deserialize(body)
 
