@@ -16,6 +16,8 @@ from tempest import clients
 from tempest import config
 from tempest import test
 
+from plumgrid_tempest_plugin.services.pap import pap_client
+from plumgrid_tempest_plugin.services.pap import td_client
 
 CONF = config.CONF
 
@@ -24,13 +26,15 @@ class Manager(clients.Manager):
     def __init__(self, credentials=None, service=None):
         super(Manager, self).__init__(credentials, service)
         params = {
-            'service': CONF.network.name,
+            'service': 'network',
             'region': CONF.identity.region,
             'endpoint_type': CONF.network.endpoint_type,
             'build_interval': CONF.network.build_interval,
             'build_timeout': CONF.network.build_timeout
         }
         params.update(self.default_params)
+        self.td_client = td_client.TDClient(self.auth_provider, **params)
+        self.pap_client = pap_client.PAPClient(self.auth_provider, **params)
 
 
 class BaseTest(test.BaseTestCase):
