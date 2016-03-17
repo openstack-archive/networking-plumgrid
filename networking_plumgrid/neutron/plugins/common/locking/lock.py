@@ -90,7 +90,7 @@ class PGLock(object):
         # Only the resource that owns the lock will be releasing it.
         result = lock_object.PGLock.release(uuid)
         if result is True:
-            LOG.warn(_LW("Lock was already released on resource %s!"), uuid)
+            LOG.warning(_LW("Lock was already released on resource %s!"), uuid)
         else:
             LOG.debug("Resource %(resource)s released "
                       "lock" % {'resource': self.uuid})
