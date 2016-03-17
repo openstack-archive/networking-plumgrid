@@ -16,7 +16,7 @@
 Proxy Routines to link to PLUMgrid Library
 """
 
-from neutron.i18n import _LI
+from networking_plumgrid._i18n import _LI
 from oslo_log import log as logging
 from plumgridlib import plumlib
 

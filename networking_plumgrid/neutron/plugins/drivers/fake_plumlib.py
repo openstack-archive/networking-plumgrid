@@ -12,8 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from networking_plumgrid._i18n import _LI
 from neutron.extensions import providernet as provider
-from neutron.i18n import _LI
 from oslo_log import log as logging
 
 LOG = logging.getLogger(__name__)
