@@ -97,7 +97,7 @@ ds_lock = cfg.CONF.plumgriddirector.distributed_locking
 
 
 def pgl(fn):
-    """ pg_lock decorator"""
+    """pg_lock decorator"""
 
     @wraps(fn)
     def locker(*args, **kwargs):
