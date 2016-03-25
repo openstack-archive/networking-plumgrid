@@ -1,5 +1,4 @@
-# Copyright 2013 OpenStack Foundation
-# Copyright 2013 IBM Corp.
+# Copyright 2016 PLUMgrid, Inc. All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -112,12 +111,12 @@ class InstallVenv(object):
         print('Installing dependencies with pip (this can take a while)...')
 
         # First things first, make sure our venv has the latest pip and
-        # setuptools.
-        self.pip_install('pip>=1.3')
+        # setuptools and pbr
+        self.pip_install('pip>=1.4')
         self.pip_install('setuptools')
+        self.pip_install('pbr')
 
-        self.pip_install('-r', self.requirements)
-        self.pip_install('-r', self.test_requirements)
+        self.pip_install('-r', self.requirements, '-r', self.test_requirements)
 
     def parse_args(self, argv):
         """Parses command-line arguments."""
@@ -125,7 +124,7 @@ class InstallVenv(object):
         parser.add_option('-n', '--no-site-packages',
                           action='store_true',
                           help="Do not inherit packages from global Python "
-                               "install")
+                               "install.")
         return parser.parse_args(argv[1:])[0]
 
 

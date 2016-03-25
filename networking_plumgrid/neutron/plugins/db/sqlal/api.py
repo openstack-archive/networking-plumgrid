@@ -99,7 +99,7 @@ def pg_lock_create(uuid):
             session.add(models.PGLock(uuid=uuid))
             LOG.debug("Lock acquired for resource: " + uuid)
     except:  # noqa
-        LOG.warn(_LW("Lock contest, sending back to re-try: %s"), uuid)
+        LOG.warning(_LW("Lock contest, sending back to re-try: %s"), uuid)
         raise exception.TenantResourcesInUse
 
 

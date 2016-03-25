@@ -1,0 +1,6 @@
+[run]
+branch = True
+source = networking_plumgrid
+
+[report]
+ignore_errors = True
