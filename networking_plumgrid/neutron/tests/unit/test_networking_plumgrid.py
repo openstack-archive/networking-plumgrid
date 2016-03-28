@@ -78,7 +78,7 @@ class TestPlumgridPluginPortsV2(test_plugin.TestPortsV2,
         self.skipTest("Plugin does not support Neutron allocation process")
 
     def test_create_port_with_ipv6_dhcp_stateful_subnet_in_fixed_ips(self):
-        self.skipTest("Plugin does not support IPv6")
+        self.skipTest("Plugin does not support DHCPv6 with IPv6")
 
 
 class TestPlumgridPluginSubnetsV2(test_plugin.TestSubnetsV2,
@@ -142,10 +142,10 @@ class TestPlumgridPluginSubnetsV2(test_plugin.TestSubnetsV2,
                            'ip_version': 4}}
 
     def test_subnet_update_enable_dhcp_no_ip_available_returns_409_ipv6(self):
-        self.skipTest("Plugin does not support IPv6")
+        self.skipTest("Plugin does not support DHCPv6 with IPv6")
 
     def test_create_subnet_ipv6_pd_gw_values(self):
-        self.skipTest("Plugin does not support IPv6")
+        self.skipTest("Plugin does not support Prefix Delegation with IPv6")
 
 
 class TestPlumgridPluginPortBinding(PLUMgridPluginV2TestCase,
