@@ -16,6 +16,7 @@ import netaddr
 from neutron.api.v2 import attributes
 from neutron.common import exceptions
 
+from networking_plumgrid._i18n import _
 from networking_plumgrid.neutron.plugins.common import constants
 
 ALLOWED_CONNECTION_ATTRIBUTES = set((constants.NETWORK_ID,

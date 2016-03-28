@@ -14,8 +14,8 @@
 #    under the License.
 #
 
+from networking_plumgrid._i18n import _
 from neutronclient.common import extension
-from neutronclient.i18n import _
 
 
 class TransitDomain(extension.NeutronClientExtension):
