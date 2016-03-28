@@ -14,9 +14,9 @@
 #    under the License.
 #
 
+from networking_plumgrid._i18n import _
 from neutronclient.common import extension
 from neutronclient.common import utils
-from neutronclient.i18n import _
 from oslo_serialization import jsonutils
 
 INTERFACE_DELIMITER = ";"
