@@ -20,6 +20,7 @@ import netaddr
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import importutils
+from oslo_utils import uuidutils
 from six import string_types
 from sqlalchemy.orm import exc as sa_exc
 
@@ -1199,6 +1200,13 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
                 raise n_exc.InvalidInput(error_message=msg)
             else:
                 segmentation_id = None
+            if not physical_network_set:
+                msg = _("provider:physical_network required")
+                raise n_exc.InvalidInput(error_message=msg)
+            else:
+                if not uuidutils.is_uuid_like(physical_network):
+                    physical_network = self._process_phy_net(context,
+                                           physical_network)
         elif network_type == svc_constants.TYPE_VLAN:
             if not segmentation_id_set:
                 msg = _("provider:segmentation_id required")
@@ -1209,6 +1217,14 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
                        {'min_id': svc_constants.MIN_VLAN_TAG,
                         'max_id': svc_constants.MAX_VLAN_TAG})
                 raise n_exc.InvalidInput(error_message=msg)
+            if not physical_network_set:
+                msg = _("provider:physical_network required")
+                raise n_exc.InvalidInput(error_message=msg)
+            else:
+                if not uuidutils.is_uuid_like(physical_network):
+                    physical_network = self._process_phy_net(context,
+                                           physical_network)
+
         elif network_type == svc_constants.TYPE_LOCAL:
             if physical_network_set:
                 msg = _("provider:physical_network specified for local "
@@ -1352,6 +1368,9 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
         LOG.debug("networking_plumgrid: create_physical_attachment_point() "
                   "called")
         pap_obj = physical_attachment_point["physical_attachment_point"]
+        physical_attachment_point["physical_attachment_point"] \
+            = self._process_pap(context, pap_obj)
+        LOG.error(physical_attachment_point)
         tvd_created = False
         tvd_db = None
         with context.session.begin(subtransactions=True):
@@ -1505,3 +1524,38 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
                        string_types)):
             net_type = network['network']['provider:network_type'].lower()
             network['network']['provider:network_type'] = net_type
+
+    def _process_phy_net(self, context, pap_name):
+        pap_id_list = self.get_physical_attachment_points(context,
+                          filters={'name': [pap_name]}, fields=["id"])
+        if len(pap_id_list) == 1:
+            return pap_id_list[0]["id"]
+        elif len(pap_id_list) == 0:
+            err_message = ("No physical_attachment_point matches "
+                           "found for name '%s'" % pap_name)
+            raise plum_excep.PLUMgridException(err_msg=err_message)
+        else:
+            err_message = ("Multiple physical_attachment_point"
+                           " matches found for name"
+                           " '%s', use an ID to be more specific." % pap_name)
+            raise plum_excep.PLUMgridException(err_msg=err_message)
+
+    def _process_pap(self, context, pap_db):
+        if not uuidutils.is_uuid_like(pap_db['transit_domain_id']):
+            td_id_list = self.get_transit_domains(context,
+                             filters={'name': [pap_db['transit_domain_id']]},
+                             fields=["id"])
+            if len(td_id_list) == 1:
+                pap_db['transit_domain_id'] = td_id_list[0]["id"]
+            elif len(td_id_list) == 0:
+                err_message = ("No physical_attachment_point"
+                               " matches found for name"
+                               " '%s'" % pap_db['transit_domain_id'])
+                raise plum_excep.PLUMgridException(err_msg=err_message)
+            else:
+                err_message = ("Multiple physical_attachment_point"
+                               " matches found for name"
+                               " '%s', use an ID to be more"
+                               " specific." % pap_db['transit_domain_id'])
+                raise plum_excep.PLUMgridException(err_msg=err_message)
+        return pap_db

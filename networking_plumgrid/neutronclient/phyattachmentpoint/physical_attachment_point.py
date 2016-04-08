@@ -50,7 +50,7 @@ def add_known_arguments(self, parser):
     parser.add_argument('--lacp', dest='lacp', help=_('LACP mode is enabled'
                         ' or disabled. Default is enabled. Options:'
                         ' True/False'))
-    parser.add_argument('--transit_domain_id', dest='transit_domain_id',
+    parser.add_argument('--transit_domain', dest='transit_domain_id',
                         help=_('Transit domain where'
                         ' physical attachment point should be'))
 

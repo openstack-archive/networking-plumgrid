@@ -196,7 +196,6 @@ class PhysicalAttachmentPointDb(common_db_mixin.CommonDbMixin):
         """
         Gets the list of all the existing physical attachment points
         """
-
         return self._get_collection(context, PhysicalAttachmentPoint,
                                     self._make_pap_dict, filters=filters,
                                     sorts=sorts, limit=limit,
