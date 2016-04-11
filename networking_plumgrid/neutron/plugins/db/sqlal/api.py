@@ -14,9 +14,9 @@
 '''Implementation of SQLAlchemy backend.'''
 import sys
 
+from networking_plumgrid._i18n import _LW
 from networking_plumgrid.neutron.plugins.common import exceptions as exception
 from networking_plumgrid.neutron.plugins.db.sqlal import models
-from neutron.i18n import _LW
 from oslo_config import cfg
 from oslo_db.sqlalchemy import session as db_session
 import sqlalchemy

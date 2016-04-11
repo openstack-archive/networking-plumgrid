@@ -24,6 +24,8 @@ from six import string_types
 from sqlalchemy.orm import exc as sa_exc
 
 import networking_plumgrid
+from networking_plumgrid._i18n import _
+from networking_plumgrid._i18n import _LI, _LW
 from networking_plumgrid.neutron.plugins.common import constants as \
     net_pg_const
 from networking_plumgrid.neutron.plugins.common.locking import lock as pg_lock
@@ -59,7 +61,6 @@ from neutron.db import securitygroups_db
 from neutron.extensions import portbindings
 from neutron.extensions import providernet as provider
 from neutron.extensions import securitygroup as sec_grp
-from neutron.i18n import _LI, _LW
 from neutron.plugins.common import constants as svc_constants
 from neutron.plugins.common import utils as svc_utils
 
