@@ -29,6 +29,7 @@ from networking_plumgrid._i18n import _LI, _LW
 from networking_plumgrid.neutron.plugins.common import constants as \
     net_pg_const
 from networking_plumgrid.neutron.plugins.common.locking import lock as pg_lock
+from networking_plumgrid.neutron.plugins.common import pg_helper
 from networking_plumgrid.neutron.plugins.db.physical_attachment_point import \
     physical_attachment_point_db as pap_db
 from networking_plumgrid.neutron.plugins.db.sqlal import api as db_api
@@ -384,9 +385,13 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
                     else:
                         router_db = None
 
+                    # Retrieve subnet information
+                    subnet_db = pg_helper._retrieve_subnet_dict(self, port_db,
+                                                                context)
                     try:
                         LOG.debug("PLUMgrid Library: create_port() called")
-                        self._plumlib.create_port(port_db, router_db)
+                        self._plumlib.create_port(port_db, router_db,
+                                                  subnet_db)
 
                     except Exception as err:
                         raise plum_excep.PLUMgridException(err_msg=err)
@@ -444,9 +449,13 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
                                                                  port['port'],
                                                                  port_db)
 
+                    # Retrieve subnet information
+                    subnet_db = pg_helper._retrieve_subnet_dict(self, port_db,
+                                                                context)
                     try:
                         LOG.debug("PLUMgrid Library: create_port() called")
-                        self._plumlib.update_port(port_db, router_db)
+                        self._plumlib.update_port(port_db, router_db,
+                                                  subnet_db)
 
                     except Exception as err:
                         raise plum_excep.PLUMgridException(err_msg=err)
@@ -614,7 +623,7 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
                 context, subnet_id)
             try:
                 LOG.debug("PLUMgrid Library: delete_subnet() called")
-                self._plumlib.delete_subnet(tenant_id, net_db, net_id)
+                self._plumlib.delete_subnet(tenant_id, net_db, net_id, sub_db)
             except Exception as err_message:
                 raise plum_excep.PLUMgridException(err_msg=err_message)
 
@@ -747,11 +756,13 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
                     subnet_db = super(NeutronPluginPLUMgridV2,
                                       self)._get_subnet(context, subnet_id)
                     ipnet = netaddr.IPNetwork(subnet_db['cidr'])
+                    ip_version = subnet_db['ip_version']
 
                     # Create interface on the network controller
                     LOG.debug("PLUMgrid Library: add_router_interface called")
                     self._plumlib.add_router_interface(tenant_id, router_id,
-                                                       port_db, ipnet)
+                                                       port_db, ipnet,
+                                                       ip_version)
 
                 except Exception as err_message:
                     raise plum_excep.PLUMgridException(err_msg=err_message)
