@@ -14,6 +14,7 @@
 
 from neutron.common import exceptions
 
+from networking_plumgrid._i18n import _
 from networking_plumgrid.neutron.plugins.common import (l2_exceptions
      as l2gw_exc)
 from networking_plumgrid.neutron.plugins.common import constants
