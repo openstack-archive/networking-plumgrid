@@ -20,8 +20,19 @@ from tempest.test_discover import plugins
 
 
 class PLUMgridTempestPlugin(plugins.TempestPlugin):
-
+    """
+    A PLUMgridTempestPlugin class provides the basic hooks for an external
+    plugin to provide tempest the necessary information to run the plugin.
+    """
     def load_tests(self):
+        """
+        Method to return the information necessary to load the tests in the
+        plugin.
+
+        :return: a tuple with the first value being the test_dir and the second
+                 being the top_level
+        :return type: tuple
+        """
         base_path = os.path.split(os.path.dirname(
             os.path.abspath(__file__)))[0]
         test_dir = "plumgrid_tempest_plugin/tests"
@@ -29,7 +40,24 @@ class PLUMgridTempestPlugin(plugins.TempestPlugin):
         return full_test_dir, base_path
 
     def register_opts(self, conf):
-        project_config.register_opts()
+        """
+        Add additional configuration options to tempest.
+
+        This method will be run for the plugin during the register_opts()
+        function in tempest.config
+
+        Parameters:
+        conf (ConfigOpts): The conf object that can be used to register
+        additional options on.
+        """
+        project_config.register_opts(conf)
 
     def get_opt_lists(self):
+        """
+        Get a list of options for sample config generation
+
+        Return option_list: A list of tuples with the group name
+                            and options in that group.
+        Return type: list
+        """
         return project_config.list_opts()
