@@ -1368,9 +1368,6 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
         LOG.debug("networking_plumgrid: create_physical_attachment_point() "
                   "called")
         pap_obj = physical_attachment_point["physical_attachment_point"]
-        physical_attachment_point["physical_attachment_point"] \
-            = self._process_pap(context, pap_obj)
-        LOG.error(physical_attachment_point)
         tvd_created = False
         tvd_db = None
         with context.session.begin(subtransactions=True):
@@ -1387,6 +1384,7 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
                     (physical_attachment_point["physical_attachment_point"]
                      ["transit_domain_id"]) = tvd_db["id"]
                 else:
+                    pap_obj = self._process_pap(context, pap_obj)
                     try:
                         super(NeutronPluginPLUMgridV2,
                               self).get_transit_domain(context,
@@ -1548,12 +1546,12 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
             if len(td_id_list) == 1:
                 pap_db['transit_domain_id'] = td_id_list[0]["id"]
             elif len(td_id_list) == 0:
-                err_message = ("No physical_attachment_point"
+                err_message = ("No transit_domain"
                                " matches found for name"
                                " '%s'" % pap_db['transit_domain_id'])
                 raise plum_excep.PLUMgridException(err_msg=err_message)
             else:
-                err_message = ("Multiple physical_attachment_point"
+                err_message = ("Multiple transit_domain"
                                " matches found for name"
                                " '%s', use an ID to be more"
                                " specific." % pap_db['transit_domain_id'])

@@ -65,6 +65,18 @@ class TestPhysicalAttachmentPoint(PhysicalAttachmentPointTestCase):
         pap["physical_attachment_point"]["id"] = pap_ret["id"]
         self.assertEqual(pap_ret, pap["physical_attachment_point"])
 
+    def test_create_pap_without_td(self):
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+
+        interfaces = [{"hostname": "h1", "interface": "ifc1"}]
+        pap = self._make_pap_dict(interfaces=interfaces)
+        LOG.error(pap)
+        pap_ret = plugin.create_physical_attachment_point(
+                      admin_context, pap)
+        pap["physical_attachment_point"]["id"] = pap_ret["id"]
+        self.assertEqual(pap_ret, pap["physical_attachment_point"])
+
     def test_create_pap_with_td_name(self):
         plugin = manager.NeutronManager.get_plugin()
         admin_context = context.get_admin_context()
@@ -307,7 +319,7 @@ class TestPhysicalAttachmentPoint(PhysicalAttachmentPointTestCase):
         cmp(pap_list_get, [pap_1_ret, pap_2_ret])
 
     def _make_pap_dict(self, lacp=False, hash_mode="L2",
-                       transit_domain_id="test_id",
+                       transit_domain_id=None,
                        interfaces=[]):
         return {"physical_attachment_point": {
                    "tenant_id": "test_tenant",
