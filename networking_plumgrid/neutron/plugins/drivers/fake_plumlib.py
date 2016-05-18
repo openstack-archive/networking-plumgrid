@@ -153,3 +153,19 @@ class Plumlib(object):
 
     def get_available_interface(self):
         return "host1", "ifc1"
+
+    def create_endpoint_group(self, tenant_id, epg_db, vm_ifc_mac_list):
+        pass
+
+    def delete_endpoint_group(self, tenant_id, epg_id):
+        pass
+
+    def update_endpoint_group(self, tenant_id, epg_id, epg_db,
+                              add_mac_list=None, remove_mac_list=None):
+        pass
+
+    def create_endpoint_policy(self, tenant_id, epp_db):
+        pass
+
+    def delete_endpoint_policy(self, tenant_id, epp_id):
+        pass
