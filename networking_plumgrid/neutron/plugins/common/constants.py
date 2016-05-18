@@ -1,4 +1,4 @@
-# Copyright 2015 PLUMgrid, Inc. All Rights Reserved.
+# Copyright 2016 PLUMgrid, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -29,3 +29,12 @@ L2_GATEWAY_SERVICES = "l2-gateway-services"
 L2_GATEWAYS_CONNECTION = "%ss" % EXT_ALIAS
 L3_GATEWAY_NET = 'l3-gateway'
 LOCAL = "local"
+SOURCE_EPG = "source_epg"
+DESTINATION_EPG = "destination_epg"
+SERVICE_EPG = "service_epg"
+VM_EP = "vm_ep"
+VM_CLASSIFICATION = "vm_class"
+BINDING_VIF_TYPE_IOVISOR = "iovisor"
+SUPPORTED_ENDPOINT_GROUP_TYPES = ["vm_class", "vm_ep"]
+SUPPORTED_ENDPOINT_POLICY_PROTOCOLS = ["any", "tcp", "udp", "icmp"]
+SUPPORTED_ENDPOINT_POLICY_ACTIONS = ['copy']
