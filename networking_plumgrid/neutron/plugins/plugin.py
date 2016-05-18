@@ -1,4 +1,4 @@
-# Copyright 2015 PLUMgrid, Inc. All Rights Reserved.
+# Copyright 2016 PLUMgrid, Inc. All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -29,8 +29,18 @@ from networking_plumgrid._i18n import _
 from networking_plumgrid._i18n import _LI, _LW
 from networking_plumgrid.neutron.plugins.common import constants as \
     net_pg_const
+from networking_plumgrid.neutron.plugins.common import \
+    endpoint_group_exceptions as epg_exc
+from networking_plumgrid.neutron.plugins.common import \
+    endpoint_group_validator as epg_valid
+from networking_plumgrid.neutron.plugins.common import \
+    endpoint_policy_validator as epp_valid
 from networking_plumgrid.neutron.plugins.common.locking import lock as pg_lock
 from networking_plumgrid.neutron.plugins.common import pg_helper
+from networking_plumgrid.neutron.plugins.db.endpoint_group import \
+    endpoint_group_db as epg_db
+from networking_plumgrid.neutron.plugins.db.endpoint_policy import \
+    endpoint_policy_db as epp_db
 from networking_plumgrid.neutron.plugins.db.physical_attachment_point import \
     physical_attachment_point_db as pap_db
 from networking_plumgrid.neutron.plugins.db.sqlal import api as db_api
@@ -126,6 +136,8 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
                               securitygroups_db.SecurityGroupDbMixin,
                               pap_db.PhysicalAttachmentPointDb,
                               tvd_db.TransitDomainDBMixin,
+                              epg_db.EndpointGroupMixin,
+                              epp_db.EndpointPolicyMixin,
                               l2gw_db.L2GatewayMixin):
 
     supported_extension_aliases = ["agent", "binding", "external-net",
@@ -134,7 +146,8 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
                                    "l2-gateway-connection",
                                    "physical-attachment-point",
                                    "subnet_allocation",
-                                   "transit-domain"]
+                                   "transit-domain", "endpoint-group",
+                                   "endpoint-policy"]
 
     binding_view = "extension:port_binding:view"
     binding_set = "extension:port_binding:set"
@@ -1562,3 +1575,298 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
                                " specific." % pap_db['transit_domain_id'])
                 raise plum_excep.PLUMgridException(err_msg=err_message)
         return pap_db
+
+    def create_endpoint_group(self, context, endpoint_group):
+        LOG.info(_LI("networking_plumgrid: Endpoint group create method "
+                  "called"))
+        vm_mac_list = []
+        epg_obj = endpoint_group["endpoint_group"]
+        try:
+            endpoint_group["endpoint_group"] = self._process_epg(context,
+                                                                 epg_obj)
+        except (ValueError, TypeError, KeyError):
+            raise epg_exc.InvalidDataProvided()
+        ep_type = endpoint_group["endpoint_group"]["endpoint_type"]
+        if ep_type not in net_pg_const.SUPPORTED_ENDPOINT_GROUP_TYPES:
+            raise epg_exc.InvalidEndpointGroupType(type=str(ep_type))
+        with context.session.begin(subtransactions=True):
+            for port in endpoint_group["endpoint_group"]["ports"]:
+                port_db = super(NeutronPluginPLUMgridV2,
+                            self).get_port(context, port["id"])
+                if not port_db:
+                    raise epg_exc.PortNotFound(id=port["id"])
+                if not epg_valid._validate_vm_ep_association(port_db,
+                                                             ep_type):
+                    raise epg_exc.PortAlreadyInUse(id=port["id"])
+                self._port_viftype_binding(context, port_db)
+                # validate port owner is nova
+                if not epg_valid._validate_endpoint_group_port(port_db):
+                    raise epg_exc.InvalidPortForEndpointGroup(id=port["id"])
+                vm_mac_list.append(port_db["mac_address"])
+            epg = super(NeutronPluginPLUMgridV2,
+                        self).create_endpoint_group(context,
+                                  endpoint_group)
+            try:
+                tenant_id = epg["tenant_id"]
+                self._plumlib.create_endpoint_group(tenant_id, epg,
+                                                    vm_mac_list)
+            except Exception as err_message:
+                raise plum_excep.PLUMgridException(err_msg=err_message)
+        return epg
+
+    def delete_endpoint_group(self, context, id):
+        LOG.info(_LI("networking_plumgrid: Endpoint group delete method "
+                  "called"))
+        epg_db = super(NeutronPluginPLUMgridV2,
+                       self).get_endpoint_group(context, id)
+        with context.session.begin(subtransactions=True):
+            super(NeutronPluginPLUMgridV2,
+                  self).delete_endpoint_group(context,
+                                              id)
+            try:
+                tenant_id = epg_db["tenant_id"]
+                epg_id = epg_db["id"]
+                self._plumlib.delete_endpoint_group(tenant_id, epg_id)
+            except Exception as err_message:
+                raise plum_excep.PLUMgridException(err_msg=err_message)
+
+    def update_endpoint_group(self, context, id, endpoint_group):
+        LOG.info(_LI("networking_plumgrid: Endpoint group update method "
+                 "called"))
+        add_vm_mac_list = []
+        remove_vm_mac_list = []
+        orig_epg_db = self.get_endpoint_group(context, id)
+        ep_type = orig_epg_db["endpoint_type"]
+        epg_obj = endpoint_group["endpoint_group"]
+        endpoint_group["endpoint_group"] = self._process_epg_update(context,
+                                                                    epg_obj)
+        with context.session.begin(subtransactions=True):
+            if "add_ports" in endpoint_group["endpoint_group"]:
+                for port in endpoint_group["endpoint_group"]["add_ports"]:
+                    port_db = super(NeutronPluginPLUMgridV2,
+                                self).get_port(context, port["id"])
+                    self._port_viftype_binding(context, port_db)
+                    # validate port owner is nova
+                    if not epg_valid._validate_endpoint_group_port(port_db):
+                        raise epg_exc.InvalidPortForEndpointGroup(
+                                                        id=port["id"])
+                    if not epg_valid._validate_vm_ep_association(port_db,
+                                                                 ep_type):
+                        raise epg_exc.PortAlreadyInUse(id=port["id"])
+                    add_vm_mac_list.append(port_db["mac_address"])
+            if "remove_ports" in endpoint_group["endpoint_group"]:
+                for port in endpoint_group["endpoint_group"]["remove_ports"]:
+                    port_db = super(NeutronPluginPLUMgridV2,
+                                self).get_port(context, port["id"])
+                    self._port_viftype_binding(context, port_db)
+                    # validate port owner is nova
+                    if not epg_valid._validate_endpoint_group_port(port_db):
+                        raise epg_exc.InvalidPortForEndpointGroup(
+                                                        id=port["id"])
+                    remove_vm_mac_list.append(port_db["mac_address"])
+
+            epg = super(NeutronPluginPLUMgridV2,
+                        self).update_endpoint_group(context,
+                                  id, endpoint_group)
+            epg_dict = epg
+            epg_db = endpoint_group["endpoint_group"]
+            epg['add_ports'] = epg_db.get("add_ports", [])
+            epg['remove_ports'] = epg_db.get("remove_ports", [])
+            try:
+                tenant_id = epg['tenant_id']
+                epg_id = id
+                self._plumlib.update_endpoint_group(tenant_id, epg_id, epg,
+                                                    add_vm_mac_list,
+                                                    remove_vm_mac_list)
+            except Exception as err_message:
+                raise plum_excep.PLUMgridException(err_msg=err_message)
+        return epg_dict
+
+    def get_endpoint_group(self, context, id, fields=None):
+        LOG.info(_LI("networking_plumgrid: Get endpoint group "
+                  "called"))
+        return super(NeutronPluginPLUMgridV2,
+                     self).get_endpoint_group(context, id, fields)
+
+    def get_endpoint_groups(self, context, filters=None,
+                           fields=None, sorts=None, limit=None,
+                           marker=None, page_reverse=False):
+        LOG.info(_LI("networking_plumgrid: List endpoint groups"
+                  "called"))
+        return super(NeutronPluginPLUMgridV2,
+                   self).get_endpoint_groups(context, filters,
+                             fields, sorts, limit, marker, page_reverse)
+
+    def create_endpoint_policy(self, context, endpoint_policy):
+        LOG.info(_LI("networking_plumgrid: Create endpoint policy "
+                     "method called"))
+        epp_obj = endpoint_policy["endpoint_policy"]
+        endpoint_policy["endpoint_policy"] = self._process_epp(context,
+                                                               epp_obj)
+        if epp_valid._validate_endpoint_policy_config(epp_obj):
+            with context.session.begin(subtransactions=True):
+                epp = super(NeutronPluginPLUMgridV2,
+                            self).create_endpoint_policy(context,
+                                      endpoint_policy)
+                try:
+                    tenant_id = epp["tenant_id"]
+                    self._plumlib.create_endpoint_policy(tenant_id, epp)
+                except Exception as err_message:
+                    raise plum_excep.PLUMgridException(err_msg=err_message)
+        return epp
+
+    def delete_endpoint_policy(self, context, id):
+        LOG.info(_LI("networking_plumgrid: Delete Endpoint policy "
+                 "delete method called"))
+        epg_db = super(NeutronPluginPLUMgridV2,
+                       self).get_endpoint_policy(context, id)
+        with context.session.begin(subtransactions=True):
+            super(NeutronPluginPLUMgridV2,
+                  self).delete_endpoint_policy(context, id)
+            try:
+                tenant_id = epg_db["tenant_id"]
+                epg_id = id
+                self._plumlib.delete_endpoint_policy(tenant_id, epg_id)
+            except Exception as err_message:
+                raise plum_excep.PLUMgridException(err_msg=err_message)
+
+    def get_endpoint_policy(self, context, id, fields=None):
+        LOG.debug("networking_plumgrid: get_endpoint_group "
+                  "called")
+        return super(NeutronPluginPLUMgridV2,
+                     self).get_endpoint_policy(context, id, fields)
+
+    def get_endpoint_policies(self, context, filters=None,
+                              fields=None, sorts=None, limit=None,
+                              marker=None, page_reverse=False):
+        LOG.debug("networking_plumgrid: list endpoint policies"
+                  "called")
+        return super(NeutronPluginPLUMgridV2,
+                   self).get_endpoint_policies(context, filters,
+                             fields, sorts, limit, marker, page_reverse)
+
+    def _process_epg(self, context, epg_db):
+        for port in epg_db['ports']:
+            if not uuidutils.is_uuid_like(port['id']):
+                port_id_list = self.get_ports(context,
+                                 filters={'name': [port['id']]},
+                                 fields=["id"])
+
+                if len(port_id_list) == 1:
+                    port['id'] = port_id_list[0]["id"]
+                elif len(port_id_list) == 0:
+                    err_message = ("No port"
+                                   " matches found for name"
+                                   " '%s'" % port['id'])
+                    raise plum_excep.PLUMgridException(err_msg=err_message)
+                else:
+                    err_message = ("Multiple port"
+                                   " matches found for name"
+                                   " '%s', use an ID to be more"
+                                   " specific." % port['id'])
+                    raise plum_excep.PLUMgridException(err_msg=err_message)
+        return epg_db
+
+    def _process_epp(self, context, epp_db):
+        if (not uuidutils.is_uuid_like(epp_db['src_grp']) and
+            epp_db['src_grp'] is not None):
+            src_grp_list = self.get_endpoint_groups(context,
+                             filters={'name': [epp_db['src_grp']]},
+                             fields=["id"])
+
+            if len(src_grp_list) == 1:
+                epp_db['src_grp'] = src_grp_list[0]["id"]
+            elif len(src_grp_list) == 0:
+                err_message = ("No endpoint group"
+                               " matches found for source group"
+                               " '%s'" % epp_db['src_grp'])
+                raise plum_excep.PLUMgridException(err_msg=err_message)
+            else:
+                err_message = ("Multiple endpoint group"
+                               " matches found for source group"
+                               " '%s', use an ID to be more"
+                               " specific." % epp_db['src_grp'])
+                raise plum_excep.PLUMgridException(err_msg=err_message)
+        if (not uuidutils.is_uuid_like(epp_db['dst_grp']) and
+            epp_db['dst_grp'] is not None):
+            dst_grp_list = self.get_endpoint_groups(context,
+                             filters={'name': [epp_db['dst_grp']]},
+                             fields=["id"])
+
+            if len(dst_grp_list) == 1:
+                epp_db['dst_grp'] = dst_grp_list[0]["id"]
+            elif len(dst_grp_list) == 0:
+                err_message = ("No endpoint group"
+                               " matches found for destination group"
+                               " '%s'" % epp_db['dst_grp'])
+                raise plum_excep.PLUMgridException(err_msg=err_message)
+            else:
+                err_message = ("Multiple endpoint group"
+                               " matches found for destination group"
+                               " '%s', use an ID to be more"
+                               " specific." % epp_db['dst_grp'])
+                raise plum_excep.PLUMgridException(err_msg=err_message)
+        if (not uuidutils.is_uuid_like(epp_db['service_endpoint_group']) and
+            epp_db['service_endpoint_group'] is not None):
+            svc_grp_list = self.get_endpoint_groups(context,
+                         filters={'name': [epp_db['service_endpoint_group']]},
+                         fields=["id"])
+
+            if len(svc_grp_list) == 1:
+                epp_db['service_endpoint_group'] = svc_grp_list[0]["id"]
+            elif len(svc_grp_list) == 0:
+                err_message = ("No endpoint group"
+                               " matches found for service endpoint"
+                               " group '%s'"
+                               % epp_db['service_endpoint_group'])
+                raise plum_excep.PLUMgridException(err_msg=err_message)
+            else:
+                err_message = ("Multiple endpoint group"
+                               " matches found for service endpoint"
+                               " group '%s', use an ID to be more"
+                               " specific." % epp_db['service_endpoint_group'])
+                raise plum_excep.PLUMgridException(err_msg=err_message)
+        return epp_db
+
+    def _process_epg_update(self, context, epg_db):
+        if 'add_ports' in epg_db:
+            for port in epg_db['add_ports']:
+                if not uuidutils.is_uuid_like(port['id']):
+                    port_id_list = self.get_ports(context,
+                                     filters={'name': [port['id']]},
+                                     fields=["id"])
+
+                    if len(port_id_list) == 1:
+                        port['id'] = port_id_list[0]["id"]
+                    elif len(port_id_list) == 0:
+                        err_message = ("No port"
+                                       " matches found for name"
+                                       " '%s'" % port['id'])
+                        raise plum_excep.PLUMgridException(err_msg=err_message)
+                    else:
+                        err_message = ("Multiple port"
+                                       " matches found for name"
+                                       " '%s', use an ID to be more"
+                                       " specific." % port['id'])
+                        raise plum_excep.PLUMgridException(err_msg=err_message)
+        if 'remove_ports' in epg_db:
+            for port in epg_db['remove_ports']:
+                if not uuidutils.is_uuid_like(port['id']):
+                    port_id_list = self.get_ports(context,
+                                     filters={'name': [port['id']]},
+                                     fields=["id"])
+
+                    if len(port_id_list) == 1:
+                        port['id'] = port_id_list[0]["id"]
+                    elif len(port_id_list) == 0:
+                        err_message = ("No port"
+                                       " matches found for name"
+                                       " '%s'" % port['id'])
+                        raise plum_excep.PLUMgridException(err_msg=err_message)
+                    else:
+                        err_message = ("Multiple port"
+                                       " matches found for name"
+                                       " '%s', use an ID to be more"
+                                       " specific." % port['id'])
+                        raise plum_excep.PLUMgridException(err_msg=err_message)
+        return epg_db
