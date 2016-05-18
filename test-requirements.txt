@@ -16,4 +16,4 @@ testtools>=1.4.0
 tempest-lib>=0.10.0
 WebTest>=2.0
 -e git://git.openstack.org/openstack/neutron.git@master#egg=neutron
--e git://git.openstack.org/openstack/python-neutronclient.git@master#egg=python-neutronclient
+-e git://git.openstack.org/openstack/python-neutronclient.git@fc6b9b0be1c3646b88ef03e9eb6236fc810a1afb#egg=python-neutronclient
