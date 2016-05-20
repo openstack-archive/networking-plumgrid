@@ -286,7 +286,8 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
 
             try:
                 LOG.debug("PLUMgrid Library: update_network() called")
-                self._plumlib.update_network(tenant_id, net_id, network,
+                updated_net_db = {"network": net_db}
+                self._plumlib.update_network(tenant_id, net_id, updated_net_db,
                                              orig_net_db)
 
             except Exception as err_message:
