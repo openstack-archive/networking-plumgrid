@@ -1135,16 +1135,16 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
             boundary = int(netaddr.IPAddress(subnet['gateway_ip']))
         else:
             boundary = net.last
-        potential_dhcp_ip = int(net.first + 1)
+        potential_dhcp_ip = int(net.last - 1)
         if boundary == potential_dhcp_ip:
-            first_ip = net.first + 3
-            boundary = net.first + 2
+            last_ip = net.last - 3
+            boundary = net.last - 2
         else:
-            first_ip = net.first + 2
-        last_ip = net.last - 1
+            last_ip = net.last - 2
+        first_ip = net.first + 1
         # Use the gw_ip to find a point for splitting allocation pools
         # for this subnet
-        split_ip = min(max(boundary, net.first), net.last)
+        split_ip = max(min(boundary, net.last), net.first)
         if split_ip > first_ip:
             pools.append({'start': str(netaddr.IPAddress(first_ip)),
                           'end': str(netaddr.IPAddress(split_ip - 1))})
