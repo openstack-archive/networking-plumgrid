@@ -131,7 +131,7 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
     supported_extension_aliases = ["agent", "binding", "external-net",
                                    "extraroute", "provider", "quotas",
                                    "router", "security-group", "l2-gateway",
-                                   "l2-gateway-connection",
+                                   "l2-gateway-connection", "dns-integration",
                                    "physical-attachment-point",
                                    "subnet_allocation",
                                    "transit-domain"]
