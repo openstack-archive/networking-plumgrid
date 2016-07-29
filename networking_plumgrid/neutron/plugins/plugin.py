@@ -29,10 +29,15 @@ from networking_plumgrid._i18n import _
 from networking_plumgrid._i18n import _LI, _LW
 from networking_plumgrid.neutron.plugins.common import constants as \
     net_pg_const
+from networking_plumgrid.neutron.plugins.common import \
+    policy_exceptions as policy_exc
 from networking_plumgrid.neutron.plugins.common.locking import lock as pg_lock
 from networking_plumgrid.neutron.plugins.common import pg_helper
 from networking_plumgrid.neutron.plugins.db.physical_attachment_point import \
     physical_attachment_point_db as pap_db
+from networking_plumgrid.neutron.plugins.db.policy import endpoint_db
+from networking_plumgrid.neutron.plugins.db.policy import policy_tag_db
+from networking_plumgrid.neutron.plugins.db.policy import endpoint_group_db
 from networking_plumgrid.neutron.plugins.db.sqlal import api as db_api
 from networking_plumgrid.neutron.plugins.db.transitdomain import \
     transitdomain as tvd_db
@@ -126,7 +131,10 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
                               securitygroups_db.SecurityGroupDbMixin,
                               pap_db.PhysicalAttachmentPointDb,
                               tvd_db.TransitDomainDBMixin,
-                              l2gw_db.L2GatewayMixin):
+                              l2gw_db.L2GatewayMixin,
+                              policy_tag_db.PolicyTagMixin,
+                              endpoint_group_db.EndpointGroupMixin,
+                              endpoint_db.EndpointMixin):
 
     supported_extension_aliases = ["agent", "binding", "external-net",
                                    "extraroute", "provider", "quotas",
@@ -134,7 +142,8 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
                                    "l2-gateway-connection",
                                    "physical-attachment-point",
                                    "subnet_allocation",
-                                   "transit-domain"]
+                                   "transit-domain", "policy-tag",
+                                   "endpoint-group", "endpoint"]
 
     binding_view = "extension:port_binding:view"
     binding_set = "extension:port_binding:set"
@@ -1568,3 +1577,237 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
                                " specific." % pap_db['transit_domain_id'])
                 raise plum_excep.PLUMgridException(err_msg=err_message)
         return pap_db
+
+    # Policy Tag API
+    def create_policy_tag(self, context, policy_tag):
+        LOG.debug("networking-plumgrid: create_policy_tag() called")
+        floatingip = {}
+        if "floating_ip" in policy_tag["policy_tag"] and \
+            policy_tag["policy_tag"]["floating_ip"]:
+            floatingip = pg_helper._check_floatingip_network(self, context, policy_tag)
+            policy_tag["policy_tag"]["floating_ip_address"] = floatingip["floating_ip_address"]
+        tag_type = policy_tag["policy_tag"]["tag_type"]
+        if tag_type not in net_pg_const.SUPPORTED_POLICY_TAG_TYPES:
+            raise policy_exc.InvalidPolicyTagType(type=str(tag_type))
+        with context.session.begin(subtransactions=True):
+            if floatingip:
+                # Set status of Floating IP to ACTIVE
+                floatingip['status'] = constants.FLOATINGIP_STATUS_ACTIVE
+                self.update_floatingip_status(context,
+                                              floatingip["id"],
+                                              floatingip['status'])
+            ptag = super(NeutronPluginPLUMgridV2,
+                        self).create_policy_tag(context,
+                                  policy_tag)
+            try:
+                tenant_id = ptag["tenant_id"]
+                #self._plumlib.create_policy_tag(tenant_id, ptag,
+                #                                    floatingip)
+            except Exception as err_message:
+                raise plum_excep.PLUMgridException(err_msg=err_message)
+        return ptag
+
+    def get_policy_tag(self, context, id, fields=None):
+        LOG.debug("networking-plumgrid: get_policy_tag() called")
+        return super(NeutronPluginPLUMgridV2,
+                     self).get_policy_tag(context, id, fields)
+
+    def delete_policy_tag(self, context, id):
+        LOG.debug("networking-plumgrid: delete_policy_tag() called")
+        ptag_db = super(NeutronPluginPLUMgridV2,
+                       self).get_policy_tag(context, id)
+        fp_id = ptag_db["floating_ip"]
+        floating_ip = {}
+        #router_id = epg_db.get('router_id', None)
+        with context.session.begin(subtransactions=True):
+            if fp_id:
+                floating_ip = super(NeutronPluginPLUMgridV2,
+                                         self).get_floatingip(context, fp_id)
+                floating_ip['status'] = constants.FLOATINGIP_STATUS_DOWN
+                self.update_floatingip_status(context, fp_id,
+                                              floating_ip['status'])
+        #with context.session.begin(subtransactions=True):
+            super(NeutronPluginPLUMgridV2,
+                  self).delete_policy_tag(context,
+                                              id)
+            try:
+                tenant_id = ptag_db["tenant_id"]
+                ptag_id = ptag_db["id"]
+                #self._plumlib.delete_endpoint_group(tenant_id, epg_id,
+                #                                    floating_ip,
+                #                                    router_id)
+            except Exception as err_message:
+                raise plum_excep.PLUMgridException(err_msg=err_message)
+
+    def get_policy_tags(self, context, filters=None, fields=None,
+                        sorts=None, limit=None, marker=None,
+                        page_reverse=False):
+        LOG.debug("networking-plumgrid: get_policy_tags() called")
+        return super(NeutronPluginPLUMgridV2,
+                   self).get_policy_tags(context, filters,
+                             fields, sorts, limit, marker, page_reverse)
+
+    def update_policy_tag(self, context, id, policy_tag):
+        LOG.debug("networking-plumgrid: update_policy_tag() called")
+        return
+
+    # Endpoint Group API
+    def create_endpoint_group(self, context, endpoint_group):
+        LOG.debug("networking-plumgrid: create_endpoint_group() called")
+        with context.session.begin(subtransactions=True):
+            ep_grp = super(NeutronPluginPLUMgridV2,
+                        self).create_endpoint_group(context,
+                                                  endpoint_group)
+            try:
+                tenant_id = ep_grp["tenant_id"]
+                #self._plumlib.create_policy_group(tenant_id, ptag,
+                #                                    floatingip)
+            except Exception as err_message:
+                raise plum_excep.PLUMgridException(err_msg=err_message)
+        return ep_grp
+
+    def get_endpoint_group(self, context, id, fields=None):
+        LOG.debug("networking-plumgrid: get_endpoint_group() called")
+        return super(NeutronPluginPLUMgridV2,
+                     self).get_endpoint_group(context, id, fields)
+
+    def delete_endpoint_group(self, context, id):
+        LOG.debug("networking-plumgrid: delete_endpoint_group() called")
+        with context.session.begin(subtransactions=True):
+            super(NeutronPluginPLUMgridV2,
+                  self).delete_endpoint_group(context,
+                                              id)
+            try:
+                LOG.debug("deleting endpoint group()")
+                #self._plumlib.delete_policy_group(tenant_id, epg_id,
+                #                                    floating_ip,
+                #                                    router_id)
+            except Exception as err_message:
+                raise plum_excep.PLUMgridException(err_msg=err_message)
+
+    def get_endpoint_groups(self, context, filters=None, fields=None,
+                        sorts=None, limit=None, marker=None,
+                        page_reverse=False):
+        LOG.debug("networking-plumgrid: get_endpoint_groups() called")
+        return super(NeutronPluginPLUMgridV2,
+                   self).get_endpoint_groups(context, filters,
+                             fields, sorts, limit, marker, page_reverse)
+
+    def update_endpoint_group(self, context, id, endpoint_group):
+        LOG.debug("networking-plumgrid: update_endpoint_group() called")
+        return
+
+    # Endpoint API
+    def create_endpoint(self, context, endpoint):
+        LOG.debug("networking-plumgrid: create_endpoint() called")
+        with context.session.begin(subtransactions=True):
+            ep = super(NeutronPluginPLUMgridV2,
+                       self).create_endpoint(context,
+                                             endpoint)
+            try:
+                tenant_id = None
+                #self._plumlib.create_policy_group(tenant_id, ptag,
+                #                                    floatingip)
+            except Exception as err_message:
+                raise plum_excep.PLUMgridException(err_msg=err_message)
+        return ep
+
+    def get_endpoint(self, context, id, fields=None):
+        LOG.debug("networking-plumgrid: get_endpoint() called")
+        return super(NeutronPluginPLUMgridV2,
+                     self).get_endpoint(context, id, fields)
+
+    def delete_endpoint(self, context, id):
+        LOG.debug("networking-plumgrid: delete_endpoint() called")
+        with context.session.begin(subtransactions=True):
+            super(NeutronPluginPLUMgridV2,
+                  self).delete_endpoint(context,
+                                        id)
+            try:
+                LOG.debug("deleting endpoint()")
+                #self._plumlib.delete_policy_group(tenant_id, epg_id,
+                #                                    floating_ip,
+                #                                    router_id)
+            except Exception as err_message:
+                raise plum_excep.PLUMgridException(err_msg=err_message)
+
+    def get_endpoints(self, context, filters=None, fields=None,
+                      sorts=None, limit=None, marker=None,
+                      page_reverse=False):
+        LOG.debug("networking-plumgrid: get_endpoints() called")
+        return super(NeutronPluginPLUMgridV2,
+                   self).get_endpoints(context, filters,
+                             fields, sorts, limit, marker, page_reverse)
+
+    def update_endpoint(self, context, id, endpoint):
+        LOG.debug("networking-plumgrid: update_endpoint() called")
+        return
+
+    # Policy Service API
+    def create_policy_service(self, context, policy_service):
+        LOG.debug("networking-plumgrid: create_policy_service() called")
+        return
+
+    def get_policy_service(self, context, id, fields=None):
+        LOG.debug("networking-plumgrid: get_policy_service() called")
+        return
+
+    def delete_policy_service(self, context, id):
+        LOG.debug("networking-plumgrid: delete_policy_service() called")
+        return
+
+    def get_policy_services(self, context, filters=None, fields=None,
+                        sorts=None, limit=None, marker=None,
+                        page_reverse=False):
+        LOG.debug("networking-plumgrid: get_policy_services() called")
+        return
+
+    def update_policy_service(self, context, id, policy_service):
+        LOG.debug("networking-plumgrid: update_policy_service() called")
+        return
+
+    # Policy Service Chain API
+    def create_policy_service_chain(self, context, policy_service):
+        LOG.debug("networking-plumgrid: create_policy_service_chain() called")
+        return
+
+    def get_policy_service_chain(self, context, id, fields=None):
+        LOG.debug("networking-plumgrid: get_policy_service_chain() called")
+        return
+
+    def delete_policy_service_chain(self, context, id):
+        LOG.debug("networking-plumgrid: delete_policy_service_chain() called")
+        return
+
+    def get_policy_service_chains(self, context, filters=None, fields=None,
+                        sorts=None, limit=None, marker=None,
+                        page_reverse=False):
+        LOG.debug("networking-plumgrid: get_policy_service_chains() called")
+        return
+
+    def update_policy_service_chain(self, context, id, policy_service_chain):
+        LOG.debug("networking-plumgrid: update_policy_service_chain() called")
+        return
+
+    # Policy Rule API
+    def create_policy_rule(self, context, policy_rule):
+        LOG.debug("networking-plumgrid: create_policy_rule() called")
+        return
+
+    def get_policy_rule(self, context, id, fields=None):
+        LOG.debug("networking-plumgrid: get_policy_rule() called")
+        return
+
+    def delete_policy_rule(self, context, id):
+        LOG.debug("networking-plumgrid: delete_policy_rule() called")
+        return
+
+    def get_policy_rules(self, context, filters=None, fields=None,
+                        sorts=None, limit=None, marker=None,
+                        page_reverse=False):
+        LOG.debug("networking-plumgrid: get_policy_rules() called")
+        return
+
+    def update_policy_rule(self, context, id, policy_rule):
+        LOG.debug("networking-plumgrid: update_policy_rule() called")
+        return
