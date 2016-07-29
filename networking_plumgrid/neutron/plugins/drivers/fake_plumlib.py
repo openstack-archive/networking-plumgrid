@@ -153,3 +153,42 @@ class Plumlib(object):
 
     def get_available_interface(self):
         return "host1", "ifc1"
+
+    def create_policy_tag(self, tenant_id, policy_tag_db):
+        pass
+
+    def delete_policy_tag(self, tenant_id, ptag_id):
+        pass
+
+    def create_endpoint_group(self, tenant_id, ep_grp, ptag_db):
+        pass
+
+    def delete_endpoint_group(self, tenant_id, epg_id, ptag_db):
+        pass
+
+    def update_endpoint_group(self, tenant_id, epg_id, epg_db):
+        pass
+
+    def create_policy_service(self, tenant_id, ps_db, ps_mac_list):
+        pass
+
+    def delete_policy_service(self, tenant_id, ps_id):
+        pass
+
+    def update_policy_service(self, tenant_id, ps_id, ps_db, ps_mac_list):
+        pass 
+
+    def create_policy_rule(self, tenant_id, pr_db):
+        pass
+
+    def delete_policy_rule(self, tenant_id, pr_id):
+        pass
+
+    def create_endpoint(self, tenant_id, ep_db, port_mac=None):
+        pass
+
+    def delete_endpoint(self, tenant_id, ep_id, ep_db, port_mac=None):
+        pass
+
+    def update_endpoint(self, tenant_id, ep_id, ep_db, port_mac=None):
+        pass
