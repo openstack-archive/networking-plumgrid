@@ -161,3 +161,29 @@ class Plumlib(object):
 
     def get_available_interface(self):
         return self.plumlib.get_phyattpoint_available_interface()
+
+    def create_policy_tag(self, tenant_id, policy_tag_db):
+        return self.plumlib.create_policy_tag(tenant_id, policy_tag_db)
+
+    def delete_policy_tag(self, tenant_id, ptag_id):
+        return self.plumlib.delete_policy_tag(tenant_id, ptag_id)
+
+    def create_endpoint_group(self, tenant_id, ep_grp, ptag_db):
+        return self.plumlib.create_endpoint_group(tenant_id, ep_grp,
+                                                  ptag_db)
+
+    def delete_endpoint_group(self, tenant_id, epg_id, ptag_db):
+        return self.plumlib.delete_endpoint_group(tenant_id, epg_id,
+                                                  ptag_db)
+
+    def update_endpoint_group(self, tenant_id, epg_id, epg_db):
+        return self.plumlib.update_endpoint_group(tenant_id, epg_id, epg_db)
+
+    def create_policy_service(self, tenant_id, ps_db, ps_mac_list):
+        self.plumlib.create_policy_service(tenant_id, ps_db, ps_mac_list)
+
+    def delete_policy_service(self, tenant_id, ps_id):
+        self.plumlib.delete_policy_service(tenant_id, ps_id)
+
+    def update_policy_service(self, tenant_id, ps_id, ps_db, ps_mac_list):
+        self.plumlib.update_policy_service(tenant_id, ps_id, ps_db, ps_mac_list)
