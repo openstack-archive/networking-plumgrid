@@ -1408,9 +1408,6 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
                                         physical_attachment_point)
                 self._plumlib.create_physical_attachment_point(pdb)
             except Exception as err_message:
-                if tvd_created:
-                    if tvd_db:
-                        self.delete_transit_domain(context, tvd_db["id"])
                 LOG.error(err_message)
                 raise plum_excep.PLUMgridException(err_msg=err_message)
         return pdb
