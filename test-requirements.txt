@@ -14,6 +14,7 @@ oslotest
 testrepository>=0.0.18
 testtools>=1.4.0
 tempest-lib>=0.10.0
+testresources>=2.0.1
 WebTest>=2.0
 -e git://git.openstack.org/openstack/neutron.git@master#egg=neutron
 -e git://git.openstack.org/openstack/python-neutronclient.git@master#egg=python-neutronclient
