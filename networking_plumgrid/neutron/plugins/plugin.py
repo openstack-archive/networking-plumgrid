@@ -1440,7 +1440,7 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
             except Exception as err_message:
                 if tvd_created:
                     if tvd_db:
-                        self.delete_transit_domain(context, tvd_db["id"])
+                        self._plumlib.delete_transit_domain(tvd_db["id"])
                 LOG.error(err_message)
                 raise plum_excep.PLUMgridException(err_msg=err_message)
         return pdb
