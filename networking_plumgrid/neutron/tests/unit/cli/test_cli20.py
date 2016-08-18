@@ -13,7 +13,6 @@
 #
 
 from mox3 import mox
-from neutronclient.neutron import v2_0
 from neutronclient import shell as neutronshell
 from neutronclient.tests.unit import test_cli20 as neutron_test_cli20
 from neutronclient.v2_0 import client
@@ -75,7 +74,7 @@ class CLITestV20Base(neutron_test_cli20.CLITestV20Base):
         self.client.format = self.format
         resstr = self.client.serialize(ress)
         # url method body to retrieve resource plural from v2_0
-        resource_plural = v2_0._get_resource_plural(cmd_resource, self.client)
+        resource_plural = self.client.get_resource_plural(cmd_resource)
         path = getattr(self.client, resource_plural + "_path")
         if self.format == 'json':
             mox_body = MyComparator(body, self.client)

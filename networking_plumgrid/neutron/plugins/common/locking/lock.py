@@ -63,7 +63,7 @@ class PGLock(object):
         lock_id = lock_object.PGLock.create(self.uuid)
         if lock_id is None:
             LOG.debug("Lock acquired on resource "
-                      "%(resource)s" % {'resource': self.uuid})
+                      "%(resource)s", {'resource': self.uuid})
             return
 
         if (lock_id == self.uuid):
@@ -81,7 +81,7 @@ class PGLock(object):
                 lock_id = lock_object.PGLock.create(self.uuid)
                 if lock_id is None:
                     LOG.debug("Lock acquired on resource "
-                              "%(resource)s" % {'resource': self.uuid})
+                              "%(resource)s", {'resource': self.uuid})
                     return
                 raise exception.TenantResourcesInUse(err_msg=err_msg)
 
@@ -93,7 +93,7 @@ class PGLock(object):
             LOG.warning(_LW("Lock was already released on resource %s!"), uuid)
         else:
             LOG.debug("Resource %(resource)s released "
-                      "lock" % {'resource': self.uuid})
+                      "lock", {'resource': self.uuid})
 
     @contextlib.contextmanager
     def thread_lock(self, uuid):
