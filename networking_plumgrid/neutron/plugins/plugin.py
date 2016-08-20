@@ -528,6 +528,12 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
                         constants.DEVICE_OWNER_ROUTER_GW):
                         device_id = port_db["device_id"]
                         router_db = self._get_router(context, device_id)
+                    elif (port_db["device_owner"] ==
+                          constants.DEVICE_OWNER_ROUTER_INTF):
+                        device_id = port_db["device_id"]
+                        router_db = self._get_router(context, device_id)
+                        port_db["tenant_id"] = router_db["tenant_id"]
+
                     else:
                         router_db = None
                     try:
