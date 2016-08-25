@@ -58,7 +58,8 @@ def _check_floatingip_network(self, context, ptag_db):
     """
     floatingip_db = self.get_floatingip(context,
                                         ptag_db["policy_tag"]["floatingip_id"])
-    router_db = self.get_routers(context)
+    router_db = self.get_routers(context,
+                   filters={"tenant_id": [ptag_db["policy_tag"]["tenant_id"]]})
     floating_net_id = floatingip_db["floating_network_id"]
 
     if floatingip_db.get('port_id') is not None:
