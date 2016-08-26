@@ -322,6 +322,11 @@ def _process_epg_update(self, context, epg_db):
                                " '%s', use an ID to be more"
                                " specific." % epg_db[config])
                 raise plum_excep.PLUMgridException(err_msg=err_message)
+        elif (uuidutils.is_uuid_like(epg_db[config]) and
+              epg_db[config] is not None):
+            ptag_id = epg_db[config]
+            ptag_db = self.get_policy_tag(context,
+                                          ptag_id)
     return (epg_db, ptag_db)
 
 
