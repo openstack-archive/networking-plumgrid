@@ -130,8 +130,6 @@ def args2body(self, parsed_args):
         if parsed_args.description:
             (body['policy_service']
                  ['description']) = parsed_args.description
-        else:
-            body['policy_service']['description'] = ''
         return body
     except KeyError as err:
         raise Exception("KeyError: " + str(err))

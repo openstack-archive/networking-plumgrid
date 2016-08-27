@@ -68,13 +68,20 @@ def args2body(self, parsed_args):
                             " is required for association.")
         if (parsed_args.ep_groups and (not parsed_args.port_id and not
             parsed_args.ip_mask and not parsed_args.ip_port_mask)):
-            raise Exception("Please specify an association criteria.")
+            raise Exception("Please specify an association criteria. "
+                            "Supported criterion are: ['--port', "
+                            "'--ip-mask', '--ip-port']")
         if ((parsed_args.ip_port_mask and parsed_args.ip_mask) or
             (parsed_args.ip_port_mask and parsed_args.port_id) or
             (parsed_args.ip_mask and parsed_args.port_id)):
             raise Exception("Multiple association criterion for endpoint "
                             "specified. Please specify only one criteria "
                             "per endpoint.")
+        if (not parsed_args.port_id and not parsed_args.ip_mask and
+            not parsed_args.ip_port_mask):
+            raise Exception("Please specify an association criteria. "
+                            "Supported criterion are: ['--port', "
+                            "'--ip-mask', '--ip-port']")
         if parsed_args.name:
             ep_name = parsed_args.name
             body = {'endpoint': {'name': ep_name}}

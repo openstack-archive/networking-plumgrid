@@ -155,7 +155,7 @@ RESOURCE_ATTRIBUTE_MAP = {
             'allow_post': True,
             'allow_put': False,
             'is_visible': True,
-            'default': '',
+            'default': None,
             'validate': {'type:values': ep_supported_actions}
         },
         'action_target': {

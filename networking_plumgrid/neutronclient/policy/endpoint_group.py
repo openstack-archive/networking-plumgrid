@@ -36,12 +36,8 @@ def args2body(self, parsed_args):
             body = {'endpoint_group': {}}
         if parsed_args.tag:
             body['endpoint_group']['policy_tag_id'] = parsed_args.tag
-        else:
-            body['endpoint_group']['policy_tag_id'] = None
         if parsed_args.description:
             body['endpoint_group']['description'] = parsed_args.description
-        else:
-            body['endpoint_group']['description'] = ''
         return body
     except KeyError as err:
         raise Exception("KeyError: " + str(err))
@@ -62,7 +58,6 @@ class EndpointGroupCreate(extension.ClientExtensionCreate,
                                'being created.'))
         parser.add_argument('--tag', dest='tag',
                         help=_('policy-tag name/uuid '))
-        #add_known_arguments(self, parser)
 
     def args2body(self, parsed_args):
         body = args2body(self, parsed_args)
@@ -128,8 +123,6 @@ class EndpointGroupUpdate(extension.ClientExtensionUpdate,
                 body = {'endpoint_group': {'name': ep_name}}
             else:
                 body = {'endpoint_group': {}}
-                #raise Exception("--name must be specified for updating "
-                #                "Endpoint Group.")
             if parsed_args.description:
                 (body['endpoint_group'][
                  'description']) = parsed_args.description

@@ -53,7 +53,8 @@ class PolicyServicePortBinding(model_base.BASEV2):
                                   primary_key=True)
 
     direction = sa.Column(sa.Enum(constants.DIRECTION_INGRESS,
-                                 constants.DIRECTION_EGRESS), primary_key=True)
+                                  constants.DIRECTION_EGRESS,
+                                  constants.BIDIRECTIONAL), primary_key=True)
 
     # Add a relationship to the Port model in order to instruct SQLAlchemy to
     # eagerly load policy service bindings
@@ -204,8 +205,9 @@ class PolicyServiceMixin(common_db_mixin.CommonDbMixin):
                                                 ps["add_ingress_ports"])
                 for ingress_port in ps["add_ingress_ports"]:
                     ps_ingress_port_db = PolicyServicePortBinding(
-                                             port_id=ingress_port["id"],
-                                             policy_service_id=ps_db.id)
+                                         port_id=ingress_port["id"],
+                                         policy_service_id=ps_db.id,
+                                         direction=constants.DIRECTION_INGRESS)
 
                     context.session.add(ps_ingress_port_db)
             if 'add_egress_ports' in ps:
@@ -213,8 +215,9 @@ class PolicyServiceMixin(common_db_mixin.CommonDbMixin):
                                                 ps["add_egress_ports"])
                 for egress_port in ps["add_egress_ports"]:
                     ps_egress_port_db = PolicyServicePortBinding(
-                                             port_id=egress_port["id"],
-                                             policy_service_id=ps_db.id)
+                                         port_id=egress_port["id"],
+                                         policy_service_id=ps_db.id,
+                                         direction=constants.DIRECTION_EGRESS)
 
                     context.session.add(ps_egress_port_db)
             if 'remove_ingress_ports' in ps:
@@ -235,7 +238,8 @@ class PolicyServiceMixin(common_db_mixin.CommonDbMixin):
                 for bidirect_port in ps["add_bidirectional_ports"]:
                     ps_bidirect_port_db = PolicyServicePortBinding(
                                              port_id=bidirect_port["id"],
-                                             policy_service_id=ps_db.id)
+                                             policy_service_id=ps_db.id,
+                                             direction=constants.BIDIRECTIONAL)
 
                     context.session.add(ps_bidirect_port_db)
             if 'remove_bidirectional_ports' in ps:

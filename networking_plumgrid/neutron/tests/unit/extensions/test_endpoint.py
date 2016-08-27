@@ -772,7 +772,7 @@ class TestEndpoint(EndpointTestCase):
 
         ep_ref = make_ep_dict(ep_ref)
         ep_actual = make_ep_dict(ep_actual)
-        return self.assertEqual(ep_ref, ep_actual)
+        return self.assertItemsEqual(ep_ref, ep_actual)
 
     def _consolidate_update_config(self, ep_update, ep_update_ret):
         ep_update["endpoint"]["id"] = ep_update_ret["id"]

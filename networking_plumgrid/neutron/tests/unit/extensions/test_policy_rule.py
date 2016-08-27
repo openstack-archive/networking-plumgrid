@@ -15,21 +15,21 @@
 """
 Policy Rule extension unit tests
 """
-#from networking_plumgrid.neutron.plugins.common import \
-#    exceptions as p_excep
-#from networking_plumgrid.neutron.plugins.common import \
-#    policy_exceptions as policy_excep
+from networking_plumgrid.neutron.plugins.common import \
+    exceptions as p_excep
+from networking_plumgrid.neutron.plugins.common import \
+    policy_exceptions as policy_excep
 from networking_plumgrid.neutron.plugins.extensions import \
     policyrule as ext_pr
 from networking_plumgrid.neutron.tests.unit import \
     test_networking_plumgrid as test_pg
 
 from neutron.api import extensions
-#from neutron import context
-#from neutron import manager
+from neutron import context
+from neutron import manager
 from neutron.tests.unit.api import test_extensions as test_ext
 from oslo_log import log as logging
-#import uuid
+import uuid
 
 LOG = logging.getLogger(__name__)
 
@@ -57,121 +57,380 @@ class PolicyRuleTestCase(test_pg.PLUMgridPluginV2TestCase):
 class TestPolicyRule(PolicyRuleTestCase):
 
     def test_create_policy_rule(self):
-        pass
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+
+        pr = self._make_pr_dict()
+
+        pr_ret = plugin.create_policy_rule(admin_context, pr)
+        pr_get_ret = plugin.get_policy_rule(admin_context, pr_ret["id"])
+        self.assertEqual(pr_ret, pr_get_ret)
 
     def test_create_policy_rule_src_grp_epg(self):
-        pass
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+
+        epg = self._make_epg_dict()
+
+        epg_ret = plugin.create_endpoint_group(
+                      admin_context, epg)
+        pr = self._make_pr_dict(src_grp=epg_ret["id"])
+        pr_ret = plugin.create_policy_rule(admin_context, pr)
+        pr_get_ret = plugin.get_policy_rule(admin_context, pr_ret["id"])
+        self.assertEqual(pr_ret, pr_get_ret)
 
     def test_create_policy_rule_dst_grp_epg(self):
-        pass
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+
+        epg = self._make_epg_dict()
+
+        epg_ret = plugin.create_endpoint_group(
+                      admin_context, epg)
+        pr = self._make_pr_dict(dst_grp=epg_ret["id"])
+        pr_ret = plugin.create_policy_rule(admin_context, pr)
+        pr_get_ret = plugin.get_policy_rule(admin_context, pr_ret["id"])
+        self.assertEqual(pr_ret, pr_get_ret)
 
     def test_create_policy_rule_src_grp_epg_invalid(self):
-        pass
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+        pr = self._make_pr_dict(src_grp=str(uuid.uuid4()))
+        self.assertRaises(policy_excep.InvalidPolicyRuleConfig,
+                          plugin.create_policy_rule, admin_context, pr)
 
     def test_create_policy_rule_dst_grp_epg_invalid(self):
-        pass
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+        pr = self._make_pr_dict(dst_grp=str(uuid.uuid4()))
+        self.assertRaises(policy_excep.InvalidPolicyRuleConfig,
+                          plugin.create_policy_rule, admin_context, pr)
 
     def test_create_policy_rule_src_dst_grp_epg(self):
-        pass
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+
+        epg = self._make_epg_dict()
+
+        epg_ret = plugin.create_endpoint_group(
+                      admin_context, epg)
+        pr = self._make_pr_dict(src_grp=epg_ret["id"], dst_grp=epg_ret["id"])
+        pr_ret = plugin.create_policy_rule(admin_context, pr)
+        pr_get_ret = plugin.get_policy_rule(admin_context, pr_ret["id"])
+        self.assertEqual(pr_ret, pr_get_ret)
 
     def test_create_policy_rule_src_grp_sg(self):
-        pass
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+
+        sg = self._fake_sg()
+
+        sg_ret = plugin.create_security_group(
+                          admin_context, sg)
+        pr = self._make_pr_dict(src_grp=sg_ret["id"])
+        pr_ret = plugin.create_policy_rule(admin_context, pr)
+        pr_get_ret = plugin.get_policy_rule(admin_context, pr_ret["id"])
+        self.assertEqual(pr_ret, pr_get_ret)
 
     def test_create_policy_rule_dst_grp_sg(self):
-        pass
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
 
-    def test_create_policy_rule_src_grp_sg_invalid(self):
-        pass
+        sg = self._fake_sg()
 
-    def test_create_policy_rule_dst_grp_sg_invalid(self):
-        pass
+        sg_ret = plugin.create_security_group(
+                          admin_context, sg)
+        pr = self._make_pr_dict(dst_grp=sg_ret["id"])
+        pr_ret = plugin.create_policy_rule(admin_context, pr)
+        pr_get_ret = plugin.get_policy_rule(admin_context, pr_ret["id"])
+        self.assertEqual(pr_ret, pr_get_ret)
 
     def test_create_policy_rule_src_dst_grp_sg(self):
-        pass
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+
+        sg = self._fake_sg()
+
+        sg_ret = plugin.create_security_group(
+                          admin_context, sg)
+        pr = self._make_pr_dict(src_grp=sg_ret["id"], dst_grp=sg_ret["id"])
+        pr_ret = plugin.create_policy_rule(admin_context, pr)
+        pr_get_ret = plugin.get_policy_rule(admin_context, pr_ret["id"])
+        self.assertEqual(pr_ret, pr_get_ret)
 
     def test_create_policy_rule_src_epg_dst_sg(self):
-        pass
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+
+        sg = self._fake_sg()
+
+        sg_ret = plugin.create_security_group(
+                          admin_context, sg)
+        epg = self._make_epg_dict()
+
+        epg_ret = plugin.create_endpoint_group(
+                      admin_context, epg)
+        pr = self._make_pr_dict(src_grp=epg_ret["id"], dst_grp=sg_ret["id"])
+        pr_ret = plugin.create_policy_rule(admin_context, pr)
+        pr_get_ret = plugin.get_policy_rule(admin_context, pr_ret["id"])
+        self.assertEqual(pr_ret, pr_get_ret)
 
     def test_create_policy_rule_src_sg_dst_epg(self):
-        pass
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+
+        sg = self._fake_sg()
+
+        sg_ret = plugin.create_security_group(
+                          admin_context, sg)
+        epg = self._make_epg_dict()
+
+        epg_ret = plugin.create_endpoint_group(
+                      admin_context, epg)
+        pr = self._make_pr_dict(src_grp=sg_ret["id"], dst_grp=epg_ret["id"])
+        pr_ret = plugin.create_policy_rule(admin_context, pr)
+        pr_get_ret = plugin.get_policy_rule(admin_context, pr_ret["id"])
+        self.assertEqual(pr_ret, pr_get_ret)
 
     def test_create_policy_rule_action_allow(self):
-        pass
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+
+        pr = self._make_pr_dict()
+
+        pr_ret = plugin.create_policy_rule(admin_context, pr)
+        pr_get_ret = plugin.get_policy_rule(admin_context, pr_ret["id"])
+        self.assertEqual(pr_ret, pr_get_ret)
 
     def test_create_policy_rule_action_copy(self):
-        pass
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+        ps = self._make_ps_dict()
+
+        ps_ret = plugin.create_policy_service(admin_context, ps)
+        pr = self._make_pr_dict(action="copy", action_target=ps_ret["id"])
+
+        pr_ret = plugin.create_policy_rule(admin_context, pr)
+        pr_get_ret = plugin.get_policy_rule(admin_context, pr_ret["id"])
+        self.assertEqual(pr_ret, pr_get_ret)
 
     def test_create_policy_rule_action_invalid(self):
-        pass
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+        pr = self._make_pr_dict(action="invalid")
+        self.assertRaises(policy_excep.UnsupportedAction,
+                          plugin.create_policy_rule, admin_context, pr)
 
     def test_create_policy_rule_protocol_any(self):
-        pass
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+        pr = self._make_pr_dict(protocol="any")
+
+        pr_ret = plugin.create_policy_rule(admin_context, pr)
+        pr_get_ret = plugin.get_policy_rule(admin_context, pr_ret["id"])
+        self.assertEqual(pr_ret, pr_get_ret)
 
     def test_create_policy_rule_protocol_tcp(self):
-        pass
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+        pr = self._make_pr_dict(protocol="tcp")
+
+        pr_ret = plugin.create_policy_rule(admin_context, pr)
+        pr_get_ret = plugin.get_policy_rule(admin_context, pr_ret["id"])
+        self.assertEqual(pr_ret, pr_get_ret)
 
     def test_create_policy_rule_protocol_udp(self):
-        pass
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+        pr = self._make_pr_dict(protocol="udp")
+
+        pr_ret = plugin.create_policy_rule(admin_context, pr)
+        pr_get_ret = plugin.get_policy_rule(admin_context, pr_ret["id"])
+        self.assertEqual(pr_ret, pr_get_ret)
 
     def test_create_policy_rule_protocol_invalid(self):
-        pass
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+        pr = self._make_pr_dict(protocol="invalid")
+        self.assertRaises(policy_excep.UnsupportedProtocol,
+                          plugin.create_policy_rule, admin_context, pr)
 
     def test_create_policy_rule_icmp_with_range(self):
-        pass
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+        pr = self._make_pr_dict(protocol="icmp", src_port_range="10-10")
+        self.assertRaises(policy_excep.NotSupportedPortRangeICMP,
+                          plugin.create_policy_rule, admin_context, pr)
 
     def test_create_policy_rule_src_port_range(self):
-        pass
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+        pr = self._make_pr_dict(src_port_range="10-10")
+
+        pr_ret = plugin.create_policy_rule(admin_context, pr)
+        pr_get_ret = plugin.get_policy_rule(admin_context, pr_ret["id"])
+        self.assertEqual(pr_ret, pr_get_ret)
 
     def test_create_policy_rule_dst_port_range(self):
-        pass
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+        pr = self._make_pr_dict(dst_port_range="10-10")
+
+        pr_ret = plugin.create_policy_rule(admin_context, pr)
+        pr_get_ret = plugin.get_policy_rule(admin_context, pr_ret["id"])
+        self.assertEqual(pr_ret, pr_get_ret)
 
     def test_create_policy_rule_invalid_src_port_range(self):
-        pass
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+        pr = self._make_pr_dict(src_port_range="x-y")
+        self.assertRaises(ext_pr.PolicyRuleInvalidPortRange,
+                          plugin.create_policy_rule, admin_context, pr)
 
     def test_create_policy_rule_invalid_dst_port_range(self):
-        pass
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+        pr = self._make_pr_dict(dst_port_range="x-y")
+        self.assertRaises(ext_pr.PolicyRuleInvalidPortRange,
+                          plugin.create_policy_rule, admin_context, pr)
 
     def test_create_policy_rule_action_target(self):
-        pass
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+        ps = self._make_ps_dict()
+
+        ps_ret = plugin.create_policy_service(admin_context, ps)
+        pr = self._make_pr_dict(action="copy", action_target=ps_ret["id"])
+
+        pr_ret = plugin.create_policy_rule(admin_context, pr)
+        pr_get_ret = plugin.get_policy_rule(admin_context, pr_ret["id"])
+        self.assertEqual(pr_ret, pr_get_ret)
 
     def test_create_policy_rule_remote_action_target(self):
-        pass
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+        ps = self._make_ps_dict()
+
+        ps_ret = plugin.create_policy_service(admin_context, ps)
+        pr = self._make_pr_dict(action="copy",
+                                action_target=ps_ret["tenant_id"] + ":"
+                                + ps_ret["name"])
+
+        pr_ret = plugin.create_policy_rule(admin_context, pr)
+        pr_get_ret = plugin.get_policy_rule(admin_context, pr_ret["id"])
+        self.assertEqual(pr_ret, pr_get_ret)
 
     def test_create_policy_rule_src_grp_tag(self):
-        pass
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+
+        ptag = self._make_ptag_dict(tag_type="dot1q",
+                                    tag_id="100-200")
+
+        ptag_ret = plugin.create_policy_tag(
+                      admin_context, ptag)
+        epg = self._make_epg_dict(ptag_id=ptag_ret["id"])
+
+        epg_ret = plugin.create_endpoint_group(
+                      admin_context, epg)
+        pr = self._make_pr_dict(src_grp=epg_ret["id"], tag=ptag_ret["id"])
+        pr_ret = plugin.create_policy_rule(admin_context, pr)
+        pr_get_ret = plugin.get_policy_rule(admin_context, pr_ret["id"])
+        self.assertEqual(pr_ret, pr_get_ret)
 
     def test_create_policy_rule_dst_grp_tag(self):
-        pass
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+
+        ptag = self._make_ptag_dict(tag_type="dot1q",
+                                    tag_id="100-200")
+
+        ptag_ret = plugin.create_policy_tag(
+                      admin_context, ptag)
+        epg = self._make_epg_dict(ptag_id=ptag_ret["id"])
+
+        epg_ret = plugin.create_endpoint_group(
+                      admin_context, epg)
+        pr = self._make_pr_dict(dst_grp=epg_ret["id"], tag=ptag_ret["id"])
+        pr_ret = plugin.create_policy_rule(admin_context, pr)
+        pr_get_ret = plugin.get_policy_rule(admin_context, pr_ret["id"])
+        self.assertEqual(pr_ret, pr_get_ret)
 
     def test_create_policy_rule_global_tag(self):
-        pass
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
 
-    def test_create_policy_rule_src_grp_tag_not_associated_with_src_grp(self):
-        pass
+        ptag = self._make_ptag_dict(tag_type="dot1q",
+                                    tag_id="100-200")
 
-    def test_create_policy_rule_dst_grp_tag_not_associated_with_dst_grp(self):
-        pass
+        ptag_ret = plugin.create_policy_tag(
+                      admin_context, ptag)
+        epg = self._make_epg_dict()
+
+        epg_ret = plugin.create_endpoint_group(
+                      admin_context, epg)
+        pr = self._make_pr_dict(dst_grp=epg_ret["id"], tag=ptag_ret["id"])
+        pr_ret = plugin.create_policy_rule(admin_context, pr)
+        pr_get_ret = plugin.get_policy_rule(admin_context, pr_ret["id"])
+        self.assertEqual(pr_ret, pr_get_ret)
 
     def test_create_policy_rule_global_tag_does_not_exist(self):
-        pass
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+        epg = self._make_epg_dict()
 
-    def test_create_policy_rule_action_target_doest_not_exist(self):
-        pass
+        epg_ret = plugin.create_endpoint_group(
+                      admin_context, epg)
+        pr = self._make_pr_dict(src_grp=epg_ret["id"], tag=str(uuid.uuid4()))
+        self.assertRaises(policy_excep.NoPolicyTagFoundEndpointGroup,
+                          plugin.create_policy_rule, admin_context, pr)
+
+    def test_create_policy_rule_action_target_does_not_exist(self):
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+        pr = self._make_pr_dict(action="copy", action_target=str(uuid.uuid4()))
+        self.assertRaises(policy_excep.NoActionTargetFound,
+                          plugin.create_policy_rule, admin_context, pr)
 
     def test_create_policy_rule_remote_action_target_does_not_exist(self):
-        pass
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+        pr = self._make_pr_dict(action="copy",
+                                action_target=str(uuid.uuid4()) + ":" +
+                                str(uuid.uuid4()))
+        self.assertRaises(p_excep.PLUMgridException,
+                          plugin.create_policy_rule, admin_context, pr)
 
     def test_delete_policy_rule(self):
-        pass
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+
+        pr = self._make_pr_dict()
+
+        pr_ret = plugin.create_policy_rule(admin_context, pr)
+        resp = plugin.delete_policy_rule(admin_context, pr_ret["id"])
+        self.assertEqual(None, resp)
 
     def test_delete_policy_rule_does_not_exist(self):
-        pass
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+        self.assertRaises(policy_excep.NoPolicyRuleFound,
+                          plugin.delete_policy_rule, admin_context,
+                          str(uuid.uuid4()))
 
     def test_list_policy_rules(self):
-        pass
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
 
-    def test_create_get_policy_rule(self):
-        pass
+        pr1 = self._make_pr_dict(name="list_pr1")
+        pr_ret1 = plugin.create_policy_rule(admin_context, pr1)
+        pr2 = self._make_pr_dict(name="list_pr2")
+        pr_ret2 = plugin.create_policy_rule(admin_context, pr2)
+        pr3 = self._make_pr_dict(name="list_pr3")
+        pr_ret3 = plugin.create_policy_rule(admin_context, pr3)
+
+        pr_list_ret = plugin.get_policy_rules(admin_context)
+        self.assertItemsEqual(pr_list_ret, [pr_ret1, pr_ret2, pr_ret3])
 
     def _make_epg_dict(self, ptag_id=None,
                        name="test_sg_name"):
@@ -208,10 +467,10 @@ class TestPolicyRule(PolicyRuleTestCase):
                     "bidirectional_ports": bidirect_ports}}
 
     def _make_pr_dict(self, action_target=None, name="test_policy",
-                      src_grp=None, dst_grp=None, action="copy",
+                      src_grp=None, dst_grp=None, action="allow",
                       protocol="any", src_port_range=None,
                       dst_port_range=None, tag=None):
-        return {"endpoint_policy": {
+        return {"policy_rule": {
                    "tenant_id": "test_tenant",
                    "name": name,
                    "src_grp": src_grp,

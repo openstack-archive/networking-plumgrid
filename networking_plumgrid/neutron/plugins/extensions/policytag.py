@@ -36,14 +36,22 @@ class UpdateParametersRequired(nexceptions.InvalidInput):
     message = _("No update parameter specified atleast one needed")
 
 
+class InvalidPolicyTagId(nexceptions.InvalidInput):
+    message = _("Invalid input for Policy Tag ID. Please specify Tag ID "
+                "in range 257-2047")
+
+
 def _validate_tag_id(self, tag_id):
-    #TODO(muawiakhan): Fixme
-    if tag_id is None:
+    if not tag_id:
         return tag_id
     try:
-        lower_bound, upper_bound = tag_id.split('-')
+        tag = int(tag_id)
     except (ValueError, TypeError):
+        raise InvalidPolicyTagId()
+    if tag >= 257 and tag <= 2047:
         return tag_id
+    else:
+        raise InvalidPolicyTagId()
 
 validators.validators['type:validate_tag_id'] = _validate_tag_id
 pt_supported_types = ['fip', 'dot1q', 'nsh']
@@ -76,7 +84,7 @@ RESOURCE_ATTRIBUTE_MAP = {
             'allow_post': True,
             'allow_put': True,
             'is_visible': True,
-            'default': None,
+            'default': '',
             'validate': {
                 'type:validate_tag_id': None
             }
@@ -100,7 +108,7 @@ RESOURCE_ATTRIBUTE_MAP = {
             'allow_post': True,
             'allow_put': True,
             'is_visible': True,
-            'default': ''
+            'default': None,
         },
         'tenant_id': {'allow_post': True,
                       'allow_put': False,
