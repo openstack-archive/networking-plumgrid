@@ -49,16 +49,10 @@ def args2body(self, parsed_args):
                             " 'fip', 'dot1q', 'nsh'")
         if parsed_args.tag_id:
             body['policy_tag']['tag_id'] = parsed_args.tag_id
-        else:
-            body['policy_tag']['tag_id'] = ''
         if parsed_args.router_id:
             body['policy_tag']['router_id'] = parsed_args.router_id
-        else:
-            body['policy_tag']['router_id'] = None
         if parsed_args.floatingip_id:
             body['policy_tag']['floatingip_id'] = parsed_args.floatingip_id
-        else:
-            body['policy_tag']['floatingip_id'] = None
         if (parsed_args.tag_type and parsed_args.tag_type.lower() == 'fip'
             and not parsed_args.floatingip_id):
             raise Exception("Floating IP UUID must be specified when "
@@ -66,11 +60,17 @@ def args2body(self, parsed_args):
         if (parsed_args.tag_type and (parsed_args.tag_type.lower() == 'dot1q'
             or parsed_args.tag_type.lower() == 'nsh')
             and not parsed_args.tag_id):
-            raise Exception("ID in range (xx-yy) must be specified when "
+            raise Exception("ID in range (257-2047) must be specified when "
                             "using tag type=dot1q or type=nsh")
         if (parsed_args.router_id and parsed_args.tag_type.lower() != 'fip'):
             raise Exception("Tag type='fip' must be specified when using "
                             "Router ID")
+        if (parsed_args.tag_type.lower() == 'fip' and parsed_args.tag_id):
+            raise Exception("Tag type=='fip' does not support tag id.")
+        if (parsed_args.floatingip_id and
+            parsed_args.tag_type.lower() != 'fip'):
+            raise Exception('Floating ip cannot be associated with tag type:'
+                            + parsed_args.tag_type.lower())
         return body
     except KeyError as err:
         raise Exception("KeyError: " + str(err))
@@ -93,8 +93,8 @@ class PolicyTagCreate(extension.ClientExtensionCreate,
         parser.add_argument('--floating-ip', dest='floatingip_id',
                         help=_('UUID of Floating IP to associate '
                                ' with the Policy Tag.'))
-        parser.add_argument('--tag_id', dest='tag_id',
-                        help=_('ID in range xx-yy '))
+        parser.add_argument('--tag-id', dest='tag_id',
+                        help=_('ID in range 257-2047 '))
         parser.add_argument('--router-id', dest='router_id',
                         help=_('Router ID to be specified in case '
                                'of multiple External Gateways, when '

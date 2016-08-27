@@ -109,11 +109,15 @@ def args2body(self, parsed_args):
             and not parsed_args.action_target):
             raise Exception("Action Target should be specified with "
                             "the following action(s): ['copy']")
+        if (parsed_args.action_target and
+            str(parsed_args.action).lower() != 'copy'):
+            raise Exception("Action Target should be specified with "
+                            "the following action(s): ['copy']")
         if parsed_args.action_target:
             if(len(parsed_args.action_target.split(":")) > 2):
                 raise Exception("Invalid format for action target. "
                                 "Help: <service_name/id or "
-                                "or tenant_id:service_name/uuid")
+                                "or tenant_id:service_name/uuid>")
             body['policy_rule']['action_target'] \
                 = parsed_args.action_target
         if parsed_args.sgt and parsed_args.dgt:

@@ -53,28 +53,24 @@ class InvalidPolicyRuleConfig(nexceptions.InvalidInput):
                 "destination_epg and service_epg.")
 
 
-def _validate_port_range(self, port_range):
-    if port_range is None:
-        return port_range
+def _validate_port_range(data, valid_values=None):
     try:
-        lower_bound, upper_bound = port_range.split('-')
+        lower_bound, upper_bound = data.split('-')
         lower_bound_val = int(lower_bound)
         upper_bound_val = int(upper_bound)
     except (ValueError, TypeError):
         port_range_min = randint(1, 65535)
         port_range_max = randint(port_range_min, 65535)
-        raise PolicyRuleInvalidPortRange(port=port_range,
+        raise PolicyRuleInvalidPortRange(port=data,
                                          min=str(port_range_min),
                                          max=str(port_range_max))
 
-    if ((lower_bound_val >= 0 and lower_bound_val <= 65535 and
+    if (not (lower_bound_val >= 0 and lower_bound_val <= 65535 and
         upper_bound_val >= 0 and upper_bound_val <= 65535) and
         lower_bound_val <= upper_bound_val):
-        return port_range
-    else:
         port_range_min = randint(1, 65535)
         port_range_max = randint(port_range_min, 65535)
-        raise PolicyRuleInvalidPortRange(port=port_range,
+        raise PolicyRuleInvalidPortRange(port=data,
                                          min=str(port_range_min),
                                          max=str(port_range_max))
 
@@ -155,7 +151,7 @@ RESOURCE_ATTRIBUTE_MAP = {
             'allow_post': True,
             'allow_put': False,
             'is_visible': True,
-            'default': '',
+            'default': None,
             'validate': {'type:values': ep_supported_actions}
         },
         'action_target': {
