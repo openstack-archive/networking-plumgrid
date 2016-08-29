@@ -66,13 +66,13 @@ def upgrade():
     )
 
     op.create_table(
-        'pg_security_endpoint_group_binding',
+        'pg_security_policy_tag_binding',
         sa.Column('security_group_id', sa.String(length=36), nullable=False),
-        sa.Column('endpoint_group_id', sa.String(length=36), nullable=False),
+        sa.Column('policy_tag_id', sa.String(length=36), nullable=False),
         sa.ForeignKeyConstraint(['security_group_id'], ['securitygroups.id'],
                                 ondelete='CASCADE'),
-        sa.ForeignKeyConstraint(['endpoint_group_id'],
-                                ['pg_endpoint_groups.id'])
+        sa.ForeignKeyConstraint(['policy_tag_id'],
+                                ['pg_policy_tags.id'])
     )
 
     op.create_table(

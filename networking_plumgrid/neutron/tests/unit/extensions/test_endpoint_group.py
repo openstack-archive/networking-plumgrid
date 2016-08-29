@@ -151,6 +151,35 @@ class TestEndpointGroup(EndpointGroupTestCase):
         epg_update_dict["endpoint_group"]["id"] = epg_update_ret["id"]
         self.assertEqual(epg_update_dict["endpoint_group"], epg_update_ret)
 
+    def test_create_update_security_group_with_policy_tag(self):
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+
+        ptag = self._fake_policy_tag_dict()
+        ptag_ret = plugin.create_policy_tag(admin_context, ptag)
+        ptag["policy_tag"]["id"] = ptag_ret["id"]
+
+        # Create security group
+        sg = self._fake_sg()
+        sg_ret = plugin.create_security_group(admin_context, sg)
+
+        sg_update_dict = self._make_sg_update_dict(
+                                             add_tag=ptag["policy_tag"]["id"])
+
+        sg_update_ret = plugin.update_endpoint_group(admin_context,
+                                                     sg_ret["id"],
+                                                     sg_update_dict)
+
+        sg_update_dict["endpoint_group"]["id"] = sg_update_ret["id"]
+        sg_update_dict["endpoint_group"]["description"] = sg_update_ret["description"]
+        sg_update_dict["endpoint_group"]["name"] = sg_update_ret["name"]
+        (sg_update_dict["endpoint_group"]
+         ["is_security_group"]) = sg_update_ret["is_security_group"]
+        (sg_update_dict["endpoint_group"]
+         ["policy_tag_id"]) = sg_update_ret["policy_tag_id"]
+        sg_update_dict["endpoint_group"]["remove_tag"] = sg_update_ret["remove_tag"]
+        self.assertEqual(sg_update_dict["endpoint_group"], sg_update_ret)
+
     def test_list_all_endpoint_groups(self):
         plugin = manager.NeutronManager.get_plugin()
         admin_context = context.get_admin_context()
@@ -201,6 +230,16 @@ class TestEndpointGroup(EndpointGroupTestCase):
                    "is_security_group": False,
                    "policy_tag_id": None}}
 
+    def _make_sg_update_dict(self, add_tag=[],
+                             remove_tag=[]):
+        sg_dict = {"endpoint_group": {
+                   "tenant_id": "test_tenant"}}
+        if len(add_tag) != 0:
+            sg_dict["endpoint_group"]["add_tag"] = add_tag
+        if len(remove_tag) != 0:
+            sg_dict["endpoint_group"]["remove_tag"] = remove_tag
+        return sg_dict
+
     def _fake_policy_tag_dict(self):
         return {"policy_tag": {
                                "tenant_id": "test_tenant",
@@ -213,5 +252,5 @@ class TestEndpointGroup(EndpointGroupTestCase):
 
     def _fake_sg(self):
         return {"security_group": {"name": "fake-sg",
-                                   "description": "sample-description",
-                                   "tenant_id": "test-tenant"}}
+                                   "description": "test_description",
+                                   "tenant_id": "test_tenant"}}
