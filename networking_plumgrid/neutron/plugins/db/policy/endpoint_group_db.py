@@ -20,6 +20,7 @@ from neutron.db import common_db_mixin
 from neutron.db import model_base
 from neutron.db import models_v2
 from neutron.db import securitygroups_db
+from neutron.db.securitygroups_db import SecurityGroup
 from oslo_log import log as logging
 import sqlalchemy as sa
 from sqlalchemy import orm
@@ -43,6 +44,29 @@ class EndpointGroup(model_base.BASEV2, models_v2.HasId,
     ptags = orm.relationship(PolicyTag,
                              backref=orm.backref('p_tag'),
                     primaryjoin="PolicyTag.id==EndpointGroup.policy_tag_id")
+
+
+class SecurityPolicyTagBinding(model_base.BASEV2):
+    """
+    DB definition for storing Security Groups and
+    Policy Tag mapping
+    """
+    __tablename__ = "pg_security_policy_tag_binding"
+
+    security_group_id = sa.Column(sa.String(length=36),
+                                  sa.ForeignKey("securitygroups.id",
+                                                ondelete='CASCADE'),
+                                  primary_key=True)
+    policy_tag_id = sa.Column(sa.String(length=36),
+                              sa.ForeignKey("pg_policy_tags.id",
+                                            ondelete='RESTRICT'),
+                              nullable=False)
+
+    ep = orm.relationship(SecurityGroup,
+              backref=orm.backref("sg_binding",
+                                  lazy="joined",
+                                  cascade="all,delete"),
+  primaryjoin="SecurityGroup.id==SecurityPolicyTagBinding.security_group_id")
 
 
 class EndpointGroupMixin(common_db_mixin.CommonDbMixin):
@@ -139,6 +163,7 @@ class EndpointGroupMixin(common_db_mixin.CommonDbMixin):
                    id : uuid of endpoint group
         """
         epg = endpoint_group["endpoint_group"]
+        is_security_group = False
         if not epg:
             raise epgroup.UpdateParametersRequired()
 
@@ -147,21 +172,52 @@ class EndpointGroupMixin(common_db_mixin.CommonDbMixin):
                 query = self._model_query(context, EndpointGroup)
                 epg_db = query.filter_by(id=epg_id).one()
             except exc.NoResultFound:
-                raise epgroup.NoEndpointGroupFound(id=epg_id)
-            if 'name' in epg:
-                epg_db.update({"name": epg["name"]})
-            if 'description' in epg:
-                epg_db.update({"description": epg["description"]})
-            if 'add_tag' in epg:
-                epg_db.update({"policy_tag_id": epg["add_tag"]})
-            if 'remove_tag' in epg:
-                if epg_db["policy_tag_id"]:
-                    epg_db["policy_tag_id"] = None
+                is_security_group = self._is_security_group(context, epg_id)
+                if is_security_group is True:
+                    query = self._model_query(context,
+                                              securitygroups_db.SecurityGroup)
+                    ep_grp_db = query.filter_by(id=epg_id).one()
                 else:
-                    raise p_excep.NoPolicyTagAssociation(id=epg['remove_tag'],
+                    raise epgroup.NoEndpointGroupFound(id=epg_id)
+            if is_security_group is True:
+                if 'name' in epg or 'description' in epg:
+                    raise epgroup.SGUpdateDisallowed()
+                if 'add_tag' in epg:
+                    sg_grp_db = SecurityPolicyTagBinding(
+                                            security_group_id=epg_id,
+                                            policy_tag_id=epg["add_tag"])
+                    context.session.add(sg_grp_db)
+                if 'remove_tag' in epg:
+                    try:
+                        query = self._model_query(context,
+                                                  SecurityPolicyTagBinding)
+                        query.filter_by(policy_tag_id=epg["remove_tag"]).one()
+                    except exc.NoResultFound:
+                        raise p_excep.NoPolicyTagAssociation(
+                                                         id=epg['remove_tag'],
                                                          epg_id=epg_id)
-
-        return self._make_ep_grp_dict(epg_db)
+                    query = self._model_query(context,
+                                              SecurityPolicyTagBinding)
+                    query.filter_by(security_group_id=epg_id,
+                                    policy_tag_id=epg["remove_tag"]).delete()
+            else:
+                if 'name' in epg:
+                    epg_db.update({"name": epg["name"]})
+                if 'description' in epg:
+                    epg_db.update({"description": epg["description"]})
+                if 'add_tag' in epg:
+                    epg_db.update({"policy_tag_id": epg["add_tag"]})
+                if 'remove_tag' in epg:
+                    if epg_db["policy_tag_id"]:
+                        epg_db["policy_tag_id"] = None
+                    else:
+                        raise p_excep.NoPolicyTagAssociation(
+                                                         id=epg['remove_tag'],
+                                                         epg_id=epg_id)
+        if is_security_group is True:
+            return self._make_ep_grp_dict_from_sec_grp_obj(context, ep_grp_db)
+        else:
+            return self._make_ep_grp_dict(epg_db)
 
     def _make_ep_grp_dict(self, epg, fields=None):
         ep_grp_dict = {"id": epg.id,
@@ -173,16 +229,16 @@ class EndpointGroupMixin(common_db_mixin.CommonDbMixin):
         return self._fields(ep_grp_dict, fields)
 
     def _make_ep_grp_dict_from_sec_grp_obj(self, context, sec_grp_obj):
-        sec_grp_port_binding = self._get_port_security_group_bindings(context)
-        epg_ports = []
-        for port in sec_grp_port_binding:
-            epg_ports.append(port["port_id"])
+        sg_map = self._get_security_policy_tag_binding(context,
+                                                       sec_grp_obj["id"])
         epg_dict = {"id": sec_grp_obj["id"],
                     "name": sec_grp_obj["name"],
                     "description": sec_grp_obj["description"],
                     "policy_tag_id": None,
                     "tenant_id": sec_grp_obj["tenant_id"],
                     "is_security_group": True}
+        if sg_map and sg_map["security_group_id"] == sec_grp_obj["id"]:
+            epg_dict["policy_tag_id"] = sg_map["policy_tag_id"]
         return epg_dict
 
     def _make_security_group_to_epg_dict(self, context, secgrp_collection,
@@ -197,12 +253,16 @@ class EndpointGroupMixin(common_db_mixin.CommonDbMixin):
             if "name" not in sec_grp:
                 sec_grp = self._make_security_group_dict(
                               self._get_security_group(context, sec_grp['id']))
+            sg_map = self._get_security_policy_tag_binding(context,
+                                                           sec_grp["id"])
             epg_dict = {"id": sec_grp["id"],
                         "name": sec_grp["name"],
                         "description": sec_grp["description"],
                         "policy_tag_id": None,
                         "tenant_id": sec_grp["tenant_id"],
                         "is_security_group": True}
+            if sg_map and sg_map["security_group_id"] == sec_grp["id"]:
+                epg_dict["policy_tag_id"] = sg_map["policy_tag_id"]
             epg_collection.append(epg_dict)
         return epg_collection
 
@@ -221,4 +281,31 @@ class EndpointGroupMixin(common_db_mixin.CommonDbMixin):
                 raise p_excep.PolicyTagAlreadyInUse(ptag_id=ptag_id,
                                                     epg_id=ptag.id)
         except exc.NoResultFound:
-            pass
+            try:
+                query = self._model_query(context,
+                                          SecurityPolicyTagBinding)
+                sg_map = query.filter_by(policy_tag_id=ptag_id).one()
+                if sg_map:
+                    raise p_excep.PolicyTagAlreadyInUseSG(ptag_id=ptag_id,
+                                              sg_id=sg_map.security_group_id)
+            except exc.NoResultFound:
+                pass
+
+    def _is_security_group(self, context, epg_id):
+        epg_id_list = self.get_endpoint_groups(context,
+                                               filters={'id': [epg_id]},
+                                               fields=["id"])
+        if len(epg_id_list) == 1:
+            if ("is_security_group" in epg_id_list[0]
+                and epg_id_list[0]["is_security_group"]):
+                return True
+
+    def _get_security_policy_tag_binding(self, context, sg_id):
+        query = self._model_query(context,
+                                  SecurityPolicyTagBinding)
+        sg_map = {}
+        try:
+            sg_map = query.filter_by(security_group_id=sg_id).one()
+            return sg_map
+        except exc.NoResultFound:
+            return sg_map

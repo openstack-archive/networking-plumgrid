@@ -44,6 +44,11 @@ class PolicyTagAlreadyInUse(exceptions.InUse):
                 "group: '%(epg_id)s'.")
 
 
+class PolicyTagAlreadyInUseSG(exceptions.InUse):
+    message = _("Policy Tag '%(ptag_id)s' already in use by security "
+                "group: '%(sg_id)s'.")
+
+
 class InvalidDataProvidedEndpointGroup(exceptions.InvalidInput):
     message = _("Invalid data provided for Endpoint Group.")
 
