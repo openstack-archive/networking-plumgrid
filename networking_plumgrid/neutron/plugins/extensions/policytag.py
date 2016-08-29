@@ -42,6 +42,8 @@ class InvalidPolicyTagId(nexceptions.InvalidInput):
 
 
 def _validate_tag_id(data, valid_values=None):
+    if not data:
+        return
     try:
         tag = int(data)
     except (ValueError, TypeError):
@@ -80,7 +82,7 @@ RESOURCE_ATTRIBUTE_MAP = {
             'allow_post': True,
             'allow_put': True,
             'is_visible': True,
-            'default': '',
+            'default': None,
             'validate': {
                 'type:validate_tag_id': None
             }

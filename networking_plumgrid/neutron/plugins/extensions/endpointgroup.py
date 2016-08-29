@@ -34,6 +34,10 @@ class NoEndpointGroupFound(nexceptions.NotFound):
 class UpdateParametersRequired(nexceptions.InvalidInput):
     message = _("No update parameter specified atleast one needed")
 
+
+class SGUpdateDisallowed(nexceptions.InvalidInput):
+    message = _("Update for Security Group parameters is not allowed.")
+
 RESOURCE_ATTRIBUTE_MAP = {
     'endpoint_group': {
         'id': {

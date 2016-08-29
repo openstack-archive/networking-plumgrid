@@ -335,12 +335,12 @@ def _check_policy_service_in_use(self, context, id):
     Helper function to check policy service is in use by
     any policy rule
     """
-    pr_id_list = self.get_policy_rules(context,
-                              filters={'action_target': [id]},
-                              fields=["id"])
-    if pr_id_list:
+    pr_list = self.get_policy_rules(context,
+                              fields=["id", "action_target"])
+    in_use_list = filter(lambda x: x["action_target"] == id, pr_list)
+    if len(in_use_list) > 0:
         raise policy_exc.PolicyServiceInUsePolicyRule(id=id,
-                                                      rule=str(pr_id_list))
+                                                      rule=str(in_use_list))
 
 
 def _recursive_delete_endpoints(self, context, id):
