@@ -1043,9 +1043,24 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
                                                              filters):
                 raise sec_grp.SecurityGroupInUse(id=sec_grp_ip)
 
+            # Check if security group has policy tag
+            # associated with it.
+            sg_map = self._get_security_policy_tag_binding(context, sg_id)
+
             sec_db = super(NeutronPluginPLUMgridV2,
                            self).delete_security_group(context, sg_id)
             try:
+                if sg_map:
+                    ptag_db = self.get_policy_tag(context,
+                                                  sg_map["policy_tag_id"])
+                    epg_db = sg
+                    epg_db["remove_tag"] = [ptag_db["id"]]
+                    epg_db["is_security_group"] = True
+                    LOG.debug("PLUMgrid library update_endpoint_group() "
+                              "called")
+                    self._plumlib.update_endpoint_group(tenant_id, sg_id,
+                                                        epg_db, ptag_db)
+
                 LOG.debug("PLUMgrid Library: delete_security_group()"
                           " called")
                 self._plumlib.delete_security_group(sg)
