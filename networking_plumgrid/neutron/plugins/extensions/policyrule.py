@@ -54,6 +54,8 @@ class InvalidPolicyRuleConfig(nexceptions.InvalidInput):
 
 
 def _validate_port_range(data, valid_values=None):
+    if not data:
+        return
     try:
         lower_bound, upper_bound = data.split('-')
         lower_bound_val = int(lower_bound)
