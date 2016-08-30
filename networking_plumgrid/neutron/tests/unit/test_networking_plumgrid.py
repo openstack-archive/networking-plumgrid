@@ -226,6 +226,7 @@ class TestPlumgridProvidernet(PLUMgridPluginV2TestCase):
                    "transit_domain_id": self._create_transit_domain(
                                         admin_context, plugin),
                    "lacp": True,
+                   "active_standby": False,
                    "interfaces": []}}
 
         pap_ret = plugin.create_physical_attachment_point(
@@ -255,6 +256,7 @@ class TestPlumgridProvidernet(PLUMgridPluginV2TestCase):
                    "transit_domain_id": self._create_transit_domain(
                                         admin_context, plugin),
                    "lacp": True,
+                   "active_standby": False,
                    "interfaces": []}}
 
         pap_ret = plugin.create_physical_attachment_point(

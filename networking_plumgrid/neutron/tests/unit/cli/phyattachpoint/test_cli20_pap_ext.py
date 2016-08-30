@@ -50,13 +50,16 @@ class CLITestV20ExtensionPhyAttPJSON(test_cli20.CLITestV20Base):
                    phyattp.PhysicalAttachmentPointShow}
         self.assertDictContainsSubset(ext_cmd, shell.COMMANDS['2.0'])
 
-    def _create_physical_attachment_point(self, args, name, lacp, hash_mode,
+    def _create_physical_attachment_point(self, args, name, lacp,
+                                          active_standby,
+                                          hash_mode,
                                           interface):
         resource = 'physical_attachment_point'
         cmd = phyattp.PhysicalAttachmentPointCreate(test_cli20.MyApp(
                                                     sys.stdout), None)
-        position_names = ['name', 'lacp', 'hash_mode', 'interfaces']
-        position_values = [name, lacp, hash_mode, interface]
+        position_names = ['name', 'lacp', 'active_standby',
+                          'hash_mode', 'interfaces']
+        position_values = [name, lacp, active_standby, hash_mode, interface]
         self._test_create_resource(resource, cmd, name, 'myid', args,
                                    position_names, position_values)
 
@@ -72,11 +75,14 @@ class CLITestV20ExtensionPhyAttPJSON(test_cli20.CLITestV20Base):
 
         name = 'phyattpoint1'
         lacp = 'True'
+        active_standby = 'False'
         hash_mode = 'L3'
-        args = [name, '--lacp', lacp, '--hash_mode', hash_mode,
-                '--interface', 'hostname=u1,interface_name=i1']
+        args = [name, '--lacp', lacp, '--active_standby', active_standby,
+                '--hash_mode', hash_mode, '--interface',
+                'hostname=u1,interface_name=i1']
         interface = [{"hostname": "u1", "interface": "i1"}]
         self._create_physical_attachment_point(args, name, lacp,
+                                               active_standby,
                                                hash_mode, interface)
 
     def test_create_physical_attachment_point_with_multiple_interfaces(self):
@@ -84,13 +90,16 @@ class CLITestV20ExtensionPhyAttPJSON(test_cli20.CLITestV20Base):
 
         name = 'phyattpoint1'
         lacp = 'True'
+        active_standby = 'False'
         hash_mode = 'L3'
-        args = [name, '--lacp', lacp, '--hash_mode', hash_mode, '--interface',
+        args = [name, '--lacp', lacp, '--active_standby', active_standby,
+                '--hash_mode', hash_mode, '--interface',
                 'hostname=u1,interface_name=i1', '--interface',
                 'hostname=u2,interface_name=i2']
         interface = [{"hostname": "u1", "interface": "i1"},
                      {"hostname": "u2", "interface": "i2"}]
         self._create_physical_attachment_point(args, name, lacp,
+                                               active_standby,
                                                hash_mode, interface)
 
     def test_create_physical_attachment_point_lacp_off(self):
@@ -98,11 +107,44 @@ class CLITestV20ExtensionPhyAttPJSON(test_cli20.CLITestV20Base):
 
         name = 'phyattpoint1'
         lacp = 'False'
+        active_standby = 'False'
         hash_mode = 'L2'
-        args = [name, '--lacp', lacp, '--hash_mode', hash_mode,
+        args = [name, '--lacp', lacp, '--active_standby', active_standby,
+                '--hash_mode', hash_mode,
                 '--interface', 'hostname=u1,interface_name=i1']
         interface = [{"hostname": "u1", "interface": "i1"}]
         self._create_physical_attachment_point(args, name, lacp,
+                                               active_standby,
+                                               hash_mode, interface)
+
+    def test_create_physical_attachment_point_as_false(self):
+        """Test Create physical attachment point."""
+
+        name = 'phyattpoint1'
+        lacp = 'False'
+        active_standby = 'False'
+        hash_mode = 'L2'
+        args = [name, '--lacp', lacp, '--active_standby', active_standby,
+                '--hash_mode', hash_mode,
+                '--interface', 'hostname=u1,interface_name=i1']
+        interface = [{"hostname": "u1", "interface": "i1"}]
+        self._create_physical_attachment_point(args, name, lacp,
+                                               active_standby,
+                                               hash_mode, interface)
+
+    def test_create_physical_attachment_point_as_true(self):
+        """Test Create physical attachment point."""
+
+        name = 'phyattpoint1'
+        lacp = 'False'
+        active_standby = 'True'
+        hash_mode = 'L2'
+        args = [name, '--lacp', lacp, '--active_standby', active_standby,
+                '--hash_mode', hash_mode,
+                '--interface', 'hostname=u1,interface_name=i1']
+        interface = [{"hostname": "u1", "interface": "i1"}]
+        self._create_physical_attachment_point(args, name, lacp,
+                                               active_standby,
                                                hash_mode, interface)
 
     def test_list_physical_attachment_points(self):
