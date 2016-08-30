@@ -315,10 +315,8 @@ class TestPolicyRule(PolicyRuleTestCase):
         pr = self._make_pr_dict(action="copy",
                                 action_target=ps_ret["tenant_id"] + ":"
                                 + ps_ret["name"])
-
-        pr_ret = plugin.create_policy_rule(admin_context, pr)
-        pr_get_ret = plugin.get_policy_rule(admin_context, pr_ret["id"])
-        self.assertEqual(pr_ret, pr_get_ret)
+        self.assertRaises(p_excep.PLUMgridException,
+                          plugin.create_policy_rule, admin_context, pr)
 
     def test_create_policy_rule_src_grp_tag(self):
         plugin = manager.NeutronManager.get_plugin()
