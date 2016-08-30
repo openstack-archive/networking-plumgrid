@@ -2015,13 +2015,19 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
         LOG.debug("networking-plumgrid: delete_policy_rule() called")
         pr_db = super(NeutronPluginPLUMgridV2,
                       self).get_policy_rule(context, id)
+        is_remote_action_target = pg_helper._check_remote_action_target(pr_db)
         with context.session.begin(subtransactions=True):
             super(NeutronPluginPLUMgridV2,
                   self).delete_policy_rule(context, id)
             try:
                 LOG.debug("deleting policy rule()")
-                self._plumlib.delete_policy_rule(pr_db["tenant_id"],
-                                                 pr_db["id"])
+                if is_remote_action_target:
+                    self._plumlib.delete_policy_rule(pr_db["tenant_id"],
+                                         pr_db["id"],
+                                         remote_target=pr_db["action_target"])
+                else:
+                    self._plumlib.delete_policy_rule(pr_db["tenant_id"],
+                                                     pr_db["id"])
             except Exception as err_message:
                 raise plum_excep.PLUMgridException(err_msg=err_message)
 
@@ -2179,6 +2185,12 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
             if len(action_target_db) == 2:
                 tenant_id = action_target_db[0]
                 action_target = action_target_db[1]
+                if tenant_id == pr_db["tenant_id"]:
+                    err_message = ("Only remote tenant is supported"
+                                   " for tenant_id:service_name/uuid format."
+                                   " Specified action target '%s' points to "
+                                   "the same tenant." % pr_db['action_target'])
+                    raise plum_excep.PLUMgridException(err_msg=err_message)
             else:
                 action_target = action_target_db[0]
                 tenant_id = None

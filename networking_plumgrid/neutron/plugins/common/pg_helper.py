@@ -335,12 +335,17 @@ def _check_policy_service_in_use(self, context, id):
     Helper function to check policy service is in use by
     any policy rule
     """
-    pr_id_list = self.get_policy_rules(context,
-                              filters={'action_target': [id]},
-                              fields=["id"])
-    if pr_id_list:
-        raise policy_exc.PolicyServiceInUsePolicyRule(id=id,
-                                                      rule=str(pr_id_list))
+    pr_list = self.get_policy_rules(context,
+                              fields=["id", "action_target"])
+    action_target_list = []
+    for rule in pr_list:
+        if _check_remote_action_target(rule):
+            action_target_list.append((rule["action_target"].split(":"))[1])
+        else:
+            action_target_list.append(rule["action_target"])
+    in_use_list = filter(lambda x: x == id, action_target_list)
+    if len(in_use_list) > 0:
+        raise policy_exc.PolicyServiceInUsePolicyRule(id=id)
 
 
 def _recursive_delete_endpoints(self, context, id):
@@ -354,3 +359,16 @@ def _recursive_delete_endpoints(self, context, id):
         if ((len(endpoint["ep_groups"]) == 1) and
             endpoint["ep_groups"][0]["id"] == id):
             self.delete_endpoint(context, endpoint["id"])
+
+
+def _check_remote_action_target(pr_db):
+    """
+    Helper function to check if action target for policy rule
+    is for a tenant id
+    """
+    if "action_target" in pr_db and pr_db["action_target"]:
+        action_target_db = pr_db["action_target"].split(":")
+        if len(action_target_db) == 2:
+            return True
+        else:
+            return False

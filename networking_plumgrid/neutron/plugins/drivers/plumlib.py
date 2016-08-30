@@ -193,8 +193,9 @@ class Plumlib(object):
     def create_policy_rule(self, tenant_id, pr_db):
         self.plumlib.create_policy_rule(tenant_id, pr_db)
 
-    def delete_policy_rule(self, tenant_id, pr_id):
-        self.plumlib.delete_policy_rule(tenant_id, pr_id)
+    def delete_policy_rule(self, tenant_id, pr_id, remote_target=None):
+        self.plumlib.delete_policy_rule(tenant_id, pr_id,
+                                        remote_target=remote_target)
 
     def create_endpoint(self, tenant_id, ep_db, port_mac=None):
         self.plumlib.create_endpoint(tenant_id, ep_db, port_mac=port_mac)

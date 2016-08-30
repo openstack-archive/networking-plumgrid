@@ -98,8 +98,7 @@ class PolicyServiceInUse(exceptions.InUse):
 
 
 class PolicyServiceInUsePolicyRule(exceptions.InUse):
-    message = _("Policy Service %(id)s %(reason)s with policy rule(s):"
-                " %(rule)s")
+    message = _("Policy Service %(id)s %(reason)s with policy rule(s).")
 
     def __init__(self, **kwargs):
         if 'reason' not in kwargs:
