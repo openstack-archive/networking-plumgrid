@@ -17,8 +17,6 @@ Endpoint Group extension unit tests
 """
 from networking_plumgrid.neutron.plugins.common import \
     exceptions as p_excep
-from networking_plumgrid.neutron.plugins.common import \
-    policy_exceptions as policy_excep
 from networking_plumgrid.neutron.plugins.extensions import \
     endpointgroup
 from networking_plumgrid.neutron.tests.unit import \
@@ -109,8 +107,11 @@ class TestEndpointGroup(EndpointGroupTestCase):
 
         # Create a second endpoint group with same policy tag
         epg2 = self._make_epg_dict(ptag_id=ptag_ret["id"])
-        self.assertRaises(policy_excep.PolicyTagAlreadyInUse,
-                          plugin.create_endpoint_group, admin_context, epg2)
+        epg_ret2 = plugin.create_endpoint_group(
+                      admin_context, epg2)
+        epg2["endpoint_group"]["id"] = epg_ret2["id"]
+        self.assertEqual(epg_ret1, epg1["endpoint_group"])
+        self.assertEqual(epg_ret2, epg2["endpoint_group"])
 
     def test_create_delete_endpoint_group(self):
         plugin = manager.NeutronManager.get_plugin()
