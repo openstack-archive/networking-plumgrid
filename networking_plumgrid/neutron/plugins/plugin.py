@@ -1772,9 +1772,6 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
 
     def update_endpoint_group(self, context, id, endpoint_group):
         LOG.debug("networking-plumgrid: update_endpoint_group() called")
-        #if "is_security_group" in orig_epg_db and
-        # orig_epg_db["is_security_group"] is True:
-        # raise policy_excep.OperationNotAllowed(operation="Update", id=id)
         epg_db = endpoint_group["endpoint_group"]
         (endpoint_group["endpoint_group"],
          ptag_db) = pg_helper._process_epg_update(self,

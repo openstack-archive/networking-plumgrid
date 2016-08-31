@@ -109,8 +109,11 @@ class TestEndpointGroup(EndpointGroupTestCase):
 
         # Create a second endpoint group with same policy tag
         epg2 = self._make_epg_dict(ptag_id=ptag_ret["id"])
-        self.assertRaises(policy_excep.PolicyTagAlreadyInUse,
-                          plugin.create_endpoint_group, admin_context, epg2)
+        epg_ret2 = plugin.create_endpoint_group(
+                      admin_context, epg2)
+        epg2["endpoint_group"]["id"] = epg_ret2["id"]
+        self.assertEqual(epg_ret, epg["endpoint_group"])
+        self.assertEqual(epg_ret2, epg2["endpoint_group"])
 
     def test_create_delete_endpoint_group(self):
         plugin = manager.NeutronManager.get_plugin()
