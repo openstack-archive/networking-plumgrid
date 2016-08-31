@@ -49,6 +49,16 @@ class PolicyTagAlreadyInUseSG(exceptions.InUse):
                 "group: '%(sg_id)s'.")
 
 
+class PolicyTagAlreadyInUseMultipleEPG(exceptions.InUse):
+    message = _("Policy Tag '%(ptag_id)s' is in use by multiple "
+                "endpoint groups.")
+
+
+class PolicyTagAlreadyInUseMultipleSG(exceptions.InUse):
+    message = _("Policy Tag '%(ptag_id)s' is in use by multiple "
+                "security groups.")
+
+
 class SGInUseWithPolicyTag(exceptions.InUse):
     message = _("Security Group '%(sg_id)s' is in use by policy tag "
                 ": '%(ptag_id)s'.")
