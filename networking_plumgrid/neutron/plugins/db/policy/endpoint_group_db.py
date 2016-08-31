@@ -18,9 +18,9 @@ from networking_plumgrid.neutron.plugins.extensions import \
 from neutron.api.v2 import attributes
 from neutron.db import common_db_mixin
 from neutron.db import model_base
+from neutron.db.models.securitygroup import SecurityGroup
 from neutron.db import models_v2
 from neutron.db import securitygroups_db
-from neutron.db.securitygroups_db import SecurityGroup
 from oslo_log import log as logging
 import sqlalchemy as sa
 from sqlalchemy import orm
@@ -86,10 +86,11 @@ class EndpointGroupMixin(common_db_mixin.CommonDbMixin):
 
         if "policy_tag_id" in ep_group and ep_group["policy_tag_id"]:
             # Check policy tag exists
-            self._check_policy_tag(context, ep_group["policy_tag_id"])
+            ptag = self._check_policy_tag(context, ep_group["policy_tag_id"])
 
             # Check policy tag is not already in use
-            self._check_ptag_in_use(context, ep_group["policy_tag_id"])
+            if ptag["tag_type"].lower() == "fip":
+                self._check_ptag_in_use(context, ep_group["policy_tag_id"])
         else:
             ep_group["policy_tag_id"] = None
 
@@ -167,6 +168,14 @@ class EndpointGroupMixin(common_db_mixin.CommonDbMixin):
         if not epg:
             raise epgroup.UpdateParametersRequired()
 
+        if "add_tag" in epg and len(epg["add_tag"]) != 0:
+            # Check policy tag exists
+            ptag = self._check_policy_tag(context, epg["add_tag"])
+
+            # Check policy tag is not already in use
+            if ptag["tag_type"].lower() == "fip":
+                self._check_ptag_in_use(context, epg["add_tag"])
+
         with context.session.begin(subtransactions=True):
             try:
                 query = self._model_query(context, EndpointGroup)
@@ -175,7 +184,7 @@ class EndpointGroupMixin(common_db_mixin.CommonDbMixin):
                 is_security_group = self._is_security_group(context, epg_id)
                 if is_security_group is True:
                     query = self._model_query(context,
-                                              securitygroups_db.SecurityGroup)
+                                              SecurityGroup)
                     ep_grp_db = query.filter_by(id=epg_id).one()
                 else:
                     raise epgroup.NoEndpointGroupFound(id=epg_id)
@@ -269,9 +278,10 @@ class EndpointGroupMixin(common_db_mixin.CommonDbMixin):
     def _check_policy_tag(self, context, ptag_id):
         query = context.session.query(PolicyTag)
         try:
-            query.filter_by(id=ptag_id).one()
+            ptag = query.filter_by(id=ptag_id).one()
         except exc.NoResultFound:
             raise p_excep.NoPolicyTagFound(id=ptag_id)
+        return ptag
 
     def _check_ptag_in_use(self, context, ptag_id):
         query = context.session.query(EndpointGroup)
@@ -280,6 +290,10 @@ class EndpointGroupMixin(common_db_mixin.CommonDbMixin):
             if ptag:
                 raise p_excep.PolicyTagAlreadyInUse(ptag_id=ptag_id,
                                                     epg_id=ptag.id)
+        except exc.MultipleResultsFound:
+            ptag = query.filter_by(policy_tag_id=ptag_id)
+            if ptag:
+                raise p_excep.PolicyTagAlreadyInUseMultipleEPG(ptag_id=ptag_id)
         except exc.NoResultFound:
             try:
                 query = self._model_query(context,
@@ -288,6 +302,11 @@ class EndpointGroupMixin(common_db_mixin.CommonDbMixin):
                 if sg_map:
                     raise p_excep.PolicyTagAlreadyInUseSG(ptag_id=ptag_id,
                                               sg_id=sg_map.security_group_id)
+            except exc.MultipleResultsFound:
+                sg_map = query.filter_by(policy_tag_id=ptag_id)
+                if sg_map:
+                    raise p_excep.PolicyTagAlreadyInUseMultipleSG(
+                                                              ptag_id=ptag_id)
             except exc.NoResultFound:
                 pass
 
