@@ -41,7 +41,7 @@ class ClientBase(rest_client.RestClient):
                        "received not-int read_code %(read_code)r" %
                        {'expected_code': expected_code,
                         'read_code': read_code})
-            LOG.warn(message)
+            LOG.warning(message)
         return super(ClientBase, self).expected_success(
             expected_code=expected_code, read_code=int(read_code),
         )
