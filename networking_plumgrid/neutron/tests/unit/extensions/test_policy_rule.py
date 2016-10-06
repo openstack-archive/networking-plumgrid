@@ -434,6 +434,7 @@ class TestPolicyRule(PolicyRuleTestCase):
                        name="test_sg_name"):
         epg_dict = {"endpoint_group": {
                    "tenant_id": "test_tenant",
+                   "project_id": "test_tenant",
                    "name": name,
                    "description": "test_description",
                    "is_security_group": False}}
@@ -447,6 +448,7 @@ class TestPolicyRule(PolicyRuleTestCase):
                               remove_tag=[]):
         return {"endpoint_group": {
                    "tenant_id": "test_tenant",
+                   "project_id": "test_tenant",
                    "name": name,
                    "description": description,
                    "add_tag": add_tag,
@@ -458,6 +460,7 @@ class TestPolicyRule(PolicyRuleTestCase):
                       bidirect_ports=[]):
         return {"policy_service": {
                     "tenant_id": "test_tenant",
+                    "project_id": "test_tenant",
                     "description": "test-ps",
                     "name": name,
                     "ingress_ports": inports,
@@ -470,6 +473,7 @@ class TestPolicyRule(PolicyRuleTestCase):
                       dst_port_range=None, tag=None):
         return {"policy_rule": {
                    "tenant_id": "test_tenant",
+                   "project_id": "test_tenant",
                    "name": name,
                    "src_grp": src_grp,
                    "dst_grp": dst_grp,
@@ -485,6 +489,7 @@ class TestPolicyRule(PolicyRuleTestCase):
                         router_id=None):
         return {"policy_tag": {
                                "tenant_id": "test_tenant",
+                               "project_id": "test_tenant",
                                "name": "test_name",
                                "tag_type": tag_type,
                                "tag_id": tag_id,
@@ -495,4 +500,5 @@ class TestPolicyRule(PolicyRuleTestCase):
     def _fake_sg(self):
         return {"security_group": {"name": "fake-sg",
                                    "description": "sample-description",
-                                   "tenant_id": "test-tenant"}}
+                                   "tenant_id": "test-tenant",
+                                   "project_id": "test_tenant"}}

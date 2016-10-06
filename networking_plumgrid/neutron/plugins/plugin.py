@@ -76,6 +76,7 @@ from neutron.extensions import providernet as provider
 from neutron.extensions import securitygroup as sec_grp
 from neutron.plugins.common import constants as svc_constants
 from neutron.plugins.common import utils as svc_utils
+from neutron_lib.api import validators
 
 LOG = logging.getLogger(__name__)
 
@@ -1240,9 +1241,9 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
         physical_network = attrs.get(provider.PHYSICAL_NETWORK)
         segmentation_id = attrs.get(provider.SEGMENTATION_ID)
 
-        network_type_set = attributes.is_attr_set(network_type)
-        physical_network_set = attributes.is_attr_set(physical_network)
-        segmentation_id_set = attributes.is_attr_set(segmentation_id)
+        network_type_set = validators.is_attr_set(network_type)
+        physical_network_set = validators.is_attr_set(physical_network)
+        segmentation_id_set = validators.is_attr_set(segmentation_id)
 
         if not (network_type_set or physical_network_set or
                 segmentation_id_set):
