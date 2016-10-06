@@ -12,17 +12,17 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-"""active_standby_pap
+"""add label sec grp to endpoint
 
-Revision ID: 85d77526e1f6
-Revises: 351c4f5710e7
-Create Date: 2016-08-14 11:07:32.564472
+Revision ID: 1b5eb4d4f7d3
+Revises: 1ae50f04cdd5, 85d77526e1f6
+Create Date: 2016-10-27 01:59:31.893201
 
 """
 
 # revision identifiers, used by Alembic.
-revision = '85d77526e1f6'
-down_revision = '1ae50f04cdd5'
+revision = '1b5eb4d4f7d3'
+down_revision = ('1ae50f04cdd5', '85d77526e1f6')
 
 from alembic import op
 import sqlalchemy as sa
@@ -30,6 +30,16 @@ import sqlalchemy as sa
 
 def upgrade():
     op.add_column(
-        'pg_physical_attachment_points',
-        sa.Column('active_standby', sa.Boolean(), nullable=False),
+        'pg_endpoints',
+        sa.Column('label', sa.String(length=255), nullable=True)
+    )
+
+    op.create_table(
+        'pg_security_group_endpoint_binding',
+        sa.Column('security_group_id', sa.String(length=36), nullable=False),
+        sa.Column('endpoint_id', sa.String(length=36), nullable=False),
+        sa.ForeignKeyConstraint(['security_group_id'], ['securitygroups.id'],
+                                ondelete='CASCADE'),
+        sa.ForeignKeyConstraint(['endpoint_id'],
+                                ['pg_endpoints.id'])
     )
