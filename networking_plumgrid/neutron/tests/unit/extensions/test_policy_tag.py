@@ -252,6 +252,7 @@ class TestPolicyTag(PolicyTagTestCase):
                         router_id=None):
         return {"policy_tag": {
                                "tenant_id": "test_tenant",
+                               "project_id": "test_tenant",
                                "name": "test_name",
                                "tag_type": tag_type,
                                "tag_id": tag_id,
@@ -285,9 +286,11 @@ class TestPolicyTag(PolicyTagTestCase):
     def _make_floatingip_dict(self, network):
         return {"floatingip": {"floating_network_id": network["id"],
                                "tenant_id": network["tenant_id"],
+                               "project_id": network["project_id"],
                                "router_id": "testrouter"}}
 
     def _make_ptag_update_dict(self, name="test_tenant"):
         return {"policy_tag": {
                                "tenant_id": "test_tenant",
+                               "project_id": "test_tenant",
                                "name": name}}
