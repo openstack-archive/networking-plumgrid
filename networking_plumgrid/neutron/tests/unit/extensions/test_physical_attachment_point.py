@@ -376,6 +376,7 @@ class TestPhysicalAttachmentPoint(PhysicalAttachmentPointTestCase):
                        interfaces=[]):
         return {"physical_attachment_point": {
                    "tenant_id": "test_tenant",
+                   "project_id": "test_tenant",
                    "name": "test_name",
                    "hash_mode": hash_mode,
                    "lacp": lacp,
@@ -390,6 +391,7 @@ class TestPhysicalAttachmentPoint(PhysicalAttachmentPointTestCase):
                               add_interfaces=[], remove_interfaces=[]):
         return {"physical_attachment_point": {
                    "tenant_id": "test_tenant",
+                   "project_id": "test_tenant",
                    "name": "test_name",
                    "hash_mode": hash_mode,
                    "lacp": lacp,
@@ -402,6 +404,7 @@ class TestPhysicalAttachmentPoint(PhysicalAttachmentPointTestCase):
     def _create_transit_domain(self, admin_context, plugin):
         td = {"transit_domain": {
                   "tenant_id": "test_tenant",
+                  "project_id": "test_tenant",
                   "name": "td",
                   "implicit": False}}
         res = plugin.create_transit_domain(admin_context, td)

@@ -37,7 +37,6 @@ class PolicyTag(model_base.BASEV2, models_v2.HasId,
                                 name='policy_tag_type'))
     floatingip_address = sa.Column(sa.String(255))
     tag_id = sa.Column(sa.String(255))
-    tenant_id = sa.Column(sa.String(36))
     router_id = sa.Column(sa.String(36))
     floatingip_id = sa.Column(sa.String(36),
                             sa.ForeignKey("floatingips.id",
