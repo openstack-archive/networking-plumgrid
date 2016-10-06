@@ -112,5 +112,6 @@ class TestTransitDomain(TransitDomainTestCase):
     def _make_tvd_dict(self, name="test"):
         return {"transit_domain": {
                    "tenant_id": "test_tenant",
+                   "project_id": "test_tenant",
                    "name": name,
                    "implicit": False}}
