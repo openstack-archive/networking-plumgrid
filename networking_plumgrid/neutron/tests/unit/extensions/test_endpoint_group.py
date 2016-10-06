@@ -213,6 +213,7 @@ class TestEndpointGroup(EndpointGroupTestCase):
 
         epg_dict = {"endpoint_group": {
                    "tenant_id": "test_tenant",
+                   "project_id": "test_tenant",
                    "name": name,
                    "description": "test_description",
                    "is_security_group": False}}
@@ -226,6 +227,7 @@ class TestEndpointGroup(EndpointGroupTestCase):
                               remove_tag=[]):
         return {"endpoint_group": {
                    "tenant_id": "test_tenant",
+                   "project_id": "test_tenant",
                    "name": name,
                    "description": description,
                    "add_tag": add_tag,
@@ -246,6 +248,7 @@ class TestEndpointGroup(EndpointGroupTestCase):
     def _fake_policy_tag_dict(self):
         return {"policy_tag": {
                                "tenant_id": "test_tenant",
+                               "project_id": "test_tenant",
                                "name": "test_name",
                                "tag_type": "dot1q",
                                "tag_id": "10-20",
@@ -256,4 +259,5 @@ class TestEndpointGroup(EndpointGroupTestCase):
     def _fake_sg(self):
         return {"security_group": {"name": "fake-sg",
                                    "description": "test_description",
-                                   "tenant_id": "test_tenant"}}
+                                   "tenant_id": "test_tenant",
+                                   "project_id": "test_tenant"}}

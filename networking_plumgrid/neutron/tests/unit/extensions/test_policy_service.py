@@ -816,6 +816,7 @@ class TestPolicyService(PolicyServiceTestCase):
                       bidirect_ports=[]):
         return {"policy_service": {
                     "tenant_id": "test_tenant",
+                    "project_id": "test_tenant",
                     "description": "test-ps",
                     "name": name,
                     "ingress_ports": inports,
@@ -880,6 +881,7 @@ class TestPolicyService(PolicyServiceTestCase):
                          'device_id': 'fake_device_id',
                          'device_owner': device_owner,
                          'tenant_id': "fake_tenant",
+                         'project_id': 'fake_tenant',
                          'security_group': security_groups}}
 
     def assertEqualUpdate(self, ps_update_dict, ps_update_ret):
