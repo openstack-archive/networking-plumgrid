@@ -13,8 +13,8 @@
 # under the License.
 
 import netaddr
-from neutron.api.v2 import attributes
 from neutron.common import exceptions
+from neutron_lib.api import validators
 
 from networking_plumgrid._i18n import _
 from networking_plumgrid.neutron.plugins.common import constants
@@ -49,7 +49,7 @@ def validate_gwdevice_list(data, valid_values=None):
                 msg = _("Cannot create a gateway with an empty interface")
                 return msg
             for int_dict in interface_data:
-                err_msg = attributes._validate_dict(int_dict, None)
+                err_msg = validators.validate_dict(int_dict, None)
                 if not int_dict.get('name'):
                     msg = _("Cannot create a gateway with an empty"
                             "interface name")
