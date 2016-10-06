@@ -15,14 +15,14 @@
 """policy
 
 Revision ID: 1ae50f04cdd5
-Revises: 351c4f5710e7
+Revises: 85d77526e1f6
 Create Date: 2016-07-29 15:35:12.194948
 
 """
 
 # revision identifiers, used by Alembic.
 revision = '1ae50f04cdd5'
-down_revision = '351c4f5710e7'
+down_revision = '85d77526e1f6'
 
 from alembic import op
 import sqlalchemy as sa

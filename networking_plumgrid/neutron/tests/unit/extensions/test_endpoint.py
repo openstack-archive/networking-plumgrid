@@ -701,6 +701,7 @@ class TestEndpoint(EndpointTestCase):
     def _make_epg_dict(self, name="test_name"):
         return {"endpoint_group": {
                    "tenant_id": "test_tenant",
+                   "project_id": "test_tenant",
                    "name": name,
                    "description": "test_description"}}
 
@@ -709,6 +710,7 @@ class TestEndpoint(EndpointTestCase):
         return {"endpoint": {
                     "name": name,
                     "tenant_id": "test_tenant",
+                    "project_id": "test_tenant",
                     "port_id": port,
                     "ip_mask": ip_mask,
                     "ip_port": ip_port,
@@ -718,6 +720,7 @@ class TestEndpoint(EndpointTestCase):
                              add_ep_groups=[], remove_ep_groups=[]):
         return {"endpoint": {
                    "tenant_id": "test_tenant",
+                   "project_id": "test_tenant",
                    "name": name,
                    "add_endpoint_groups": add_ep_groups,
                    "remove_endpoint_groups": remove_ep_groups}}
@@ -760,7 +763,8 @@ class TestEndpoint(EndpointTestCase):
     def _fake_sg(self):
         return {"security_group": {"name": "fake-sg",
                                    "description": "sample-description",
-                                   "tenant_id": "test-tenant"}}
+                                   "tenant_id": "test-tenant",
+                                   "project_id": "test_tenant"}}
 
     def assertEqualUpdate(self, ep_ref, ep_actual):
         def make_ep_dict(ep_db):
