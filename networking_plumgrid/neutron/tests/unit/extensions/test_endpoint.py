@@ -273,8 +273,9 @@ class TestEndpoint(EndpointTestCase):
         sg_ret = plugin.create_security_group(admin_context, sg)
         ep = self._make_ep_dict(ip_mask='0.0.0.0/0',
                                 ep_groups=[{'id': sg_ret['id']}])
-        self.assertRaises(policy_excep.OperationNotAllowed,
-                          plugin.create_endpoint, admin_context, ep)
+        ep_ret = plugin.create_endpoint(admin_context, ep)
+        ep["endpoint"]["id"] = ep_ret["id"]
+        self.assertEqual(ep_ret, ep["endpoint"])
 
     def test_create_endpoint_non_existent_port(self):
         plugin = manager.NeutronManager.get_plugin()
@@ -609,9 +610,10 @@ class TestEndpoint(EndpointTestCase):
         sg_ret = plugin.create_security_group(admin_context, sg)
         ep_update = self._make_ep_update_dict(add_ep_groups=
                                               [{"id": sg_ret['id']}])
-        self.assertRaises(policy_excep.OperationNotAllowed,
-                          plugin.update_endpoint, admin_context,
-                          ep_ret["id"], ep_update)
+        ep_update_ret = plugin.update_endpoint(admin_context, ep_ret["id"],
+                                               ep_update)
+        self._consolidate_update_config(ep_update, ep_update_ret)
+        self.assertEqual(ep_update["endpoint"], ep_update_ret)
 
     def test_create_update_endpoint_remove_sg(self):
         plugin = manager.NeutronManager.get_plugin()
@@ -629,9 +631,10 @@ class TestEndpoint(EndpointTestCase):
         sg_ret = plugin.create_security_group(admin_context, sg)
         ep_update = self._make_ep_update_dict(remove_ep_groups=
                                               [{"id": sg_ret['id']}])
-        self.assertRaises(policy_excep.OperationNotAllowed,
-                          plugin.update_endpoint, admin_context,
-                          ep_ret["id"], ep_update)
+        ep_update_ret = plugin.update_endpoint(admin_context, ep_ret["id"],
+                                               ep_update)
+        self._consolidate_update_config(ep_update, ep_update_ret)
+        self.assertEqual(ep_update["endpoint"], ep_update_ret)
 
     def test_create_update_endpoint_delete_port_bw(self):
         plugin = manager.NeutronManager.get_plugin()

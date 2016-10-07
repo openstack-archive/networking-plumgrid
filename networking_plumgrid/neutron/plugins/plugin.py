@@ -1806,8 +1806,6 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
             raise policy_excep.InvalidDataProvidedEndpoint()
         pg_helper._validate_ep_config(endpoint["endpoint"])
         pg_helper._check_duplicates_endpoint_config(endpoint["endpoint"])
-        pg_helper._is_security_group(context, self, endpoint["endpoint"],
-                                     "ep_groups")
         with context.session.begin(subtransactions=True):
             if endpoint["endpoint"]["port_id"]:
                 port_id = endpoint["endpoint"]["port_id"]
@@ -1821,7 +1819,6 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
                 if not pg_helper._validate_port_owner(port_db):
                     raise policy_excep.InvalidPortForEndpoint(id=port_id)
                 port_mac_address = port_db["mac_address"]
-
             ep = super(NeutronPluginPLUMgridV2,
                        self).create_endpoint(context,
                                              endpoint)
@@ -1879,10 +1876,6 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
         except (ValueError, TypeError, KeyError):
             raise policy_excep.InvalidDataProvidedEndpoint()
         pg_helper._check_duplicates_endpoint_config(endpoint["endpoint"])
-        pg_helper._is_security_group(context, self, endpoint["endpoint"],
-                                     "add_endpoint_groups")
-        pg_helper._is_security_group(context, self, endpoint["endpoint"],
-                                     "remove_endpoint_groups")
         ep_db = super(NeutronPluginPLUMgridV2,
                       self).get_endpoint(context, id)
         with context.session.begin(subtransactions=True):
@@ -2298,13 +2291,6 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
                                  filters={'name': [epg['id']]},
                                  fields=["id"])
                 if len(epg_id_list) == 1:
-                    if ("is_security_group" in epg_id_list[0]
-                        and epg_id_list[0]["is_security_group"]):
-                        err_message = ("UnsupportedOperation: Endpoint "
-                                       "group '%s' is a security group. "
-                                       "Cannot use security groups "
-                                       "for endpoint association." % epg['id'])
-                        raise plum_excep.PLUMgridException(err_msg=err_message)
                     epg['id'] = epg_id_list[0]["id"]
                 elif len(epg_id_list) == 0:
                     err_message = ("No endpoint group"

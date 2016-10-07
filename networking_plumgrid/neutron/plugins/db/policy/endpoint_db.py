@@ -14,10 +14,11 @@ from networking_plumgrid.neutron.plugins.common import \
 from networking_plumgrid.neutron.plugins.db.policy.endpoint_group_db \
     import EndpointGroup
 from networking_plumgrid.neutron.plugins.extensions import \
-    endpoint
+    endpoint as ext_ep
 from neutron.api.v2 import attributes
 from neutron.db import common_db_mixin
 from neutron.db import model_base
+from neutron.db.models.securitygroup import SecurityGroup
 from neutron.db import models_v2
 from oslo_log import log as logging
 import sqlalchemy as sa
@@ -80,6 +81,36 @@ class EndpointGroupMemberBinding(model_base.BASEV2):
   primaryjoin="EndpointGroup.id==EndpointGroupMemberBinding.endpoint_group_id")
 
 
+class SecurityGroupEndpointBinding(model_base.BASEV2):
+    """
+    DB definition for storing Security Groups and
+    endpoint mapping
+    """
+    __tablename__ = "pg_security_group_endpoint_binding"
+
+    security_group_id = sa.Column(sa.String(length=36),
+                                  sa.ForeignKey("securitygroups.id",
+                                                ondelete='CASCADE'),
+                                  primary_key=True)
+    endpoint_id = sa.Column(sa.String(length=36),
+                            sa.ForeignKey("pg_endpoints.id",
+                                          ondelete='CASCADE'),
+                            nullable=False)
+
+    ep = orm.relationship(Endpoint,
+              backref=orm.backref("ep_sg_binding",
+                                  lazy="joined",
+                                  cascade="all,delete"),
+    primaryjoin="Endpoint.id==SecurityGroupEndpointBinding.endpoint_id")
+
+    sec_grp = orm.relationship(SecurityGroup,
+              backref=orm.backref("sg_ep_binding",
+                                  lazy="joined",
+                                  cascade="all,delete"),
+  primaryjoin="SecurityGroup.id==SecurityGroupEndpointBinding."
+      "security_group_id")
+
+
 class EndpointMixin(common_db_mixin.CommonDbMixin):
     def create_endpoint(self, context, endpoint):
         """
@@ -104,11 +135,20 @@ class EndpointMixin(common_db_mixin.CommonDbMixin):
             context.session.add(ep_db)
 
             for epg in ep["ep_groups"]:
-                self._check_ep_exists(context, epg["id"])
-                ep_grp_db = EndpointGroupMemberBinding(endpoint_id=ep_db.id,
-                                            endpoint_group_id=epg["id"],
-                                            ep=ep_db)
-                context.session.add(ep_grp_db)
+                if self._check_ep_exists(context, epg["id"]):
+                    ep_grp_db = EndpointGroupMemberBinding(
+                                                endpoint_id=ep_db.id,
+                                                endpoint_group_id=epg["id"],
+                                                ep=ep_db)
+                    context.session.add(ep_grp_db)
+                elif self._check_sec_grp_exists(context, epg["id"]):
+                    ep_grp_db = SecurityGroupEndpointBinding(
+                                                endpoint_id=ep_db.id,
+                                                security_group_id=epg["id"],
+                                                ep=ep_db)
+                    context.session.add(ep_grp_db)
+                else:
+                    raise ext_ep.NoEndpointGroupFound(id=epg["id"])
         return self._make_ep_dict(ep_db)
 
     def get_endpoint(self, context, ep_id, fields=None):
@@ -121,7 +161,7 @@ class EndpointMixin(common_db_mixin.CommonDbMixin):
             query = self._model_query(context, Endpoint)
             ep_db = query.filter_by(id=ep_id).one()
         except exc.NoResultFound:
-            raise endpoint.NoEndpointFound(id=ep_id)
+            raise ext_ep.NoEndpointFound(id=ep_id)
         return self._make_ep_dict(ep_db, fields)
 
     def get_endpoints(self, context, filters=None, fields=None,
@@ -145,7 +185,7 @@ class EndpointMixin(common_db_mixin.CommonDbMixin):
             query = context.session.query(Endpoint)
             ep_db = query.filter_by(id=ep_id).one()
         except exc.NoResultFound:
-            raise endpoint.NoEndpointFound(id=ep_id)
+            raise ext_ep.NoEndpointFound(id=ep_id)
         with context.session.begin(subtransactions=True):
             context.session.delete(ep_db)
 
@@ -163,13 +203,13 @@ class EndpointMixin(common_db_mixin.CommonDbMixin):
         """
         ep = endpoint["endpoint"]
         if not ep:
-            raise endpoint.UpdateParametersRequired()
+            raise ext_ep.UpdateParametersRequired()
         with context.session.begin(subtransactions=True):
             try:
                 query = self._model_query(context, Endpoint)
                 ep_db = query.filter_by(id=ep_id).one()
             except exc.NoResultFound:
-                raise endpoint.NoEndpointFound(id=ep_id)
+                raise ext_ep.NoEndpointFound(id=ep_id)
 
             if 'name' in ep:
                 ep_db.update({"name": ep["name"]})
@@ -177,11 +217,20 @@ class EndpointMixin(common_db_mixin.CommonDbMixin):
                 self._check_existing_epg_association(context,
                                                      ep["add_endpoint_groups"])
                 for epg in ep["add_endpoint_groups"]:
-                    ep_grp_db = EndpointGroupMemberBinding(
-                                            endpoint_id=ep_db.id,
-                                            endpoint_group_id=epg["id"],
-                                            ep=ep_db)
-                    context.session.add(ep_grp_db)
+                    if self._check_ep_exists(context, epg["id"]):
+                        ep_grp_db = EndpointGroupMemberBinding(
+                                                endpoint_id=ep_db.id,
+                                                endpoint_group_id=epg["id"],
+                                                ep=ep_db)
+                        context.session.add(ep_grp_db)
+                    elif self._check_sec_grp_exists(context, epg["id"]):
+                        ep_grp_db = SecurityGroupEndpointBinding(
+                                                endpoint_id=ep_db.id,
+                                                security_group_id=epg["id"],
+                                                ep=ep_db)
+                        context.session.add(ep_grp_db)
+                    else:
+                        raise ext_ep.NoEndpointGroupFound(id=epg["id"])
             if 'remove_endpoint_groups' in ep:
                 self._check_epg(context, ep_id, ep["remove_endpoint_groups"])
                 for epg in ep["remove_endpoint_groups"]:
@@ -199,7 +248,7 @@ class EndpointMixin(common_db_mixin.CommonDbMixin):
                 ep = query.filter_by(endpoint_id=ep_id,
                                      endpoint_group_id=epg_id).one()
                 if not ep:
-                    raise endpoint.NoEndpointGroupFound(id=epg_id)
+                    raise ext_ep.NoEndpointGroupFound(id=epg_id)
             except exc.NoResultFound:
                 pass
 
@@ -208,7 +257,7 @@ class EndpointMixin(common_db_mixin.CommonDbMixin):
         try:
             port_in_use = query.filter_by(port_id=port_id).one()
             if port_in_use:
-                raise endpoint.PortInUse(port=port_id,
+                raise ext_ep.PortInUse(port=port_id,
                           id=port_in_use.port_id)
         except exc.NoResultFound:
             pass
@@ -216,14 +265,27 @@ class EndpointMixin(common_db_mixin.CommonDbMixin):
     def _check_ep_exists(self, context, epg_id):
         query = context.session.query(EndpointGroup)
         try:
-            query.filter_by(id=epg_id).one()
+            epg_db = query.filter_by(id=epg_id).one()
+            if epg_db["id"] == epg_id:
+                return True
         except exc.NoResultFound:
-            raise endpoint.NoEndpointGroupFound(id=epg_id)
+            return False
+
+    def _check_sec_grp_exists(self, context, sec_grp_id):
+        query = context.session.query(SecurityGroup)
+        try:
+            sec_grp_db = query.filter_by(id=sec_grp_id).one()
+            if sec_grp_db["id"] == sec_grp_id:
+                return True
+        except exc.NoResultFound:
+            return False
 
     def _make_ep_dict(self, ep, fields=None):
         epg_list = []
         for epg in ep.ep_binding:
             epg_list.append({"id": epg.endpoint_group_id})
+        for epg in ep.ep_sg_binding:
+            epg_list.append({"id": epg.security_group_id})
         ep_dict = {"id": ep.id,
                    "name": ep.name,
                    "ep_groups": epg_list,
