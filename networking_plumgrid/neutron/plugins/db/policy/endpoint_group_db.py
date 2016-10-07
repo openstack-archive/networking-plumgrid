@@ -20,7 +20,6 @@ from neutron.db import common_db_mixin
 from neutron.db import model_base
 from neutron.db.models.securitygroup import SecurityGroup
 from neutron.db import models_v2
-from neutron.db import securitygroups_db
 from oslo_log import log as logging
 import sqlalchemy as sa
 from sqlalchemy import orm
@@ -114,7 +113,7 @@ class EndpointGroupMixin(common_db_mixin.CommonDbMixin):
         except exc.NoResultFound:
             try:
                 query = self._model_query(context,
-                                          securitygroups_db.SecurityGroup)
+                                          SecurityGroup)
                 ep_grp_db = query.filter_by(id=ep_grp_id).one()
             except exc.NoResultFound:
                 raise epgroup.NoEndpointGroupFound(id=ep_grp_id)
