@@ -61,11 +61,6 @@ class InvalidEndpointGroupFormat(nexceptions.InvalidInput):
         self.msg = self.message + error
 
 
-class InvalidIPMaskFormat(nexceptions.InvalidInput):
-    message = _("Invalid format for ip_mask. Please specify "
-                "correct CIDR: Format ('X.X.X.X/Y')")
-
-
 class InvalidIPPortFormat(nexceptions.InvalidInput):
     message = _("Invalid entry for ip_port. Please specify "
                 "correct ip_port. ")
@@ -82,18 +77,6 @@ class EndpointInUse(nexceptions.InUse):
         if 'reason' not in kwargs:
             kwargs['reason'] = _("is in use")
         super(EndpointInUse, self).__init__(**kwargs)
-
-
-def _validate_ip_mask(data, valid_values=None):
-    if data is not None:
-        valid_ip_mask = re.findall("(?:\d{1,3}\.){3}\d{1,3}(?:/\d\d?)?", data)
-        if valid_ip_mask:
-            try:
-                netaddr.IPNetwork(data)
-            except netaddr.core.AddrFormatError:
-                raise InvalidIPMaskFormat()
-        else:
-            raise InvalidIPMaskFormat()
 
 
 def _validate_ip_port(data, valid_values=None):
@@ -126,7 +109,6 @@ def _validate_epg_list(data, valid_values=None):
             raise InvalidEndpointGroupFormat("id field is required")
 
 
-validators.validators['type:validate_ip_mask'] = _validate_ip_mask
 validators.validators['type:validate_ip_port'] = _validate_ip_port
 validators.validators['type:validate_epg_list'] = _validate_epg_list
 
@@ -153,15 +135,6 @@ RESOURCE_ATTRIBUTE_MAP = {
             'allow_put': False,
             'is_visible': True,
             'default': None
-        },
-        'ip_mask': {
-            'allow_post': True,
-            'allow_put': False,
-            'is_visible': True,
-            'default': None,
-            'validate': {
-                'type:validate_ip_mask': None
-            }
         },
         'ep_groups': {
             'allow_post': True,

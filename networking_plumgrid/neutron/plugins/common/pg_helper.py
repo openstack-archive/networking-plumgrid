@@ -236,9 +236,7 @@ def _is_security_group(context, ep_obj, ep_db, config):
 
 
 def _validate_ep_config(ep_db):
-    if ((ep_db["ip_mask"] and ep_db["ip_port"]) or
-        (ep_db["ip_mask"]and ep_db["port_id"]) or
-        (ep_db["ip_port"] and ep_db["port_id"])):
+    if (ep_db["ip_port"] and ep_db["port_id"]):
         raise policy_exc.MultipleAssociationForEndpoint()
 
 

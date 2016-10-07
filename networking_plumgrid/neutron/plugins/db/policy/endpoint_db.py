@@ -34,7 +34,6 @@ class Endpoint(model_base.BASEV2, models_v2.HasId,
     __tablename__ = "pg_endpoints"
 
     name = sa.Column(sa.String(attributes.NAME_MAX_LEN))
-    ip_mask = sa.Column(sa.String(255))
     ip_port = sa.Column(sa.String(255))
 
     port_id = sa.Column(sa.String(36),
@@ -99,7 +98,6 @@ class EndpointMixin(common_db_mixin.CommonDbMixin):
             ep_db = Endpoint(tenant_id=ep["tenant_id"],
                              name=ep["name"],
                              port_id=ep["port_id"],
-                             ip_mask=ep["ip_mask"],
                              ip_port=ep["ip_port"])
             context.session.add(ep_db)
 
@@ -227,7 +225,6 @@ class EndpointMixin(common_db_mixin.CommonDbMixin):
         ep_dict = {"id": ep.id,
                    "name": ep.name,
                    "ep_groups": epg_list,
-                   "ip_mask": ep.ip_mask,
                    "port_id": ep.port_id,
                    "ip_port": ep.ip_port,
                    "tenant_id": ep.tenant_id}

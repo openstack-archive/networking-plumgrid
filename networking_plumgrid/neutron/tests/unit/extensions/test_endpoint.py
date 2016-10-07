@@ -56,20 +56,6 @@ class EndpointTestCase(test_pg.PLUMgridPluginV2TestCase):
 
 
 class TestEndpoint(EndpointTestCase):
-    def test_create_endpoint_with_ip_mask(self):
-        plugin = manager.NeutronManager.get_plugin()
-        admin_context = context.get_admin_context()
-
-        epg = self._make_epg_dict()
-
-        epg_ret = plugin.create_endpoint_group(
-                      admin_context, epg)
-        ep = self._make_ep_dict(ip_mask='0.0.0.0/0',
-                                ep_groups=[{'id': epg_ret['id']}])
-        ep_ret = plugin.create_endpoint(admin_context, ep)
-        ep["endpoint"]["id"] = ep_ret["id"]
-        self.assertEqual(ep_ret, ep["endpoint"])
-
     def test_create_endpoint_with_ip_port_mask(self):
         plugin = manager.NeutronManager.get_plugin()
         admin_context = context.get_admin_context()
@@ -103,20 +89,6 @@ class TestEndpoint(EndpointTestCase):
                       admin_context, epg)
         ep = self._make_ep_dict(port=port_ret["id"],
                                 ep_groups=[{'id': epg_ret['id']}])
-        ep_ret = plugin.create_endpoint(admin_context, ep)
-        ep["endpoint"]["id"] = ep_ret["id"]
-        self.assertEqual(ep_ret, ep["endpoint"])
-
-    def test_create_endpoint_with_ip_mask_epg_name(self):
-        plugin = manager.NeutronManager.get_plugin()
-        admin_context = context.get_admin_context()
-
-        epg = self._make_epg_dict()
-
-        epg_ret = plugin.create_endpoint_group(
-                      admin_context, epg)
-        ep = self._make_ep_dict(ip_mask='0.0.0.0/0',
-                                ep_groups=[{'id': epg_ret['name']}])
         ep_ret = plugin.create_endpoint(admin_context, ep)
         ep["endpoint"]["id"] = ep_ret["id"]
         self.assertEqual(ep_ret, ep["endpoint"])
@@ -181,42 +153,6 @@ class TestEndpoint(EndpointTestCase):
         ep["endpoint"]["id"] = ep_ret["id"]
         self.assertEqual(ep_ret, ep["endpoint"])
 
-    def test_create_endpoint_with_ip_mask_and_ip_port(self):
-        plugin = manager.NeutronManager.get_plugin()
-        admin_context = context.get_admin_context()
-
-        epg = self._make_epg_dict()
-
-        epg_ret = plugin.create_endpoint_group(
-                      admin_context, epg)
-        ep = self._make_ep_dict(ip_mask='0.0.0.0/0',
-                                ip_port="1.1.1.1_100_8",
-                                ep_groups=[{'id': epg_ret['id']}])
-        self.assertRaises(policy_excep.MultipleAssociationForEndpoint,
-                          plugin.create_endpoint, admin_context, ep)
-
-    def test_create_endpoint_with_port_and_ip_mask(self):
-        plugin = manager.NeutronManager.get_plugin()
-        admin_context = context.get_admin_context()
-        tenant_context = context.Context('', 'not_admin')
-
-        network = self._fake_network()
-        network["network"]["tenant_id"] = tenant_context.tenant_id
-        network_ret = plugin.create_network(tenant_context, network)
-
-        port = self._fake_port(network_ret["id"])
-        port_ret = plugin.create_port(
-                      admin_context, port)
-
-        epg = self._make_epg_dict()
-
-        epg_ret = plugin.create_endpoint_group(
-                      admin_context, epg)
-        ep = self._make_ep_dict(port=port_ret["id"],
-                                ip_mask='0.0.0.0/0',
-                                ep_groups=[{'id': epg_ret['id']}])
-        self.assertRaises(policy_excep.MultipleAssociationForEndpoint,
-                          plugin.create_endpoint, admin_context, ep)
 
     def test_create_endpoint_with_port_and_ip_port(self):
         plugin = manager.NeutronManager.get_plugin()
@@ -268,10 +204,18 @@ class TestEndpoint(EndpointTestCase):
         plugin = manager.NeutronManager.get_plugin()
         admin_context = context.get_admin_context()
 
+        network = self._fake_network()
+        network["network"]["tenant_id"] = tenant_context.tenant_id
+        network_ret = plugin.create_network(tenant_context, network)
+
+        port = self._fake_port(network_ret["id"])
+        port_ret = plugin.create_port(
+                      admin_context, port)
+
         sg = self._fake_sg()
 
         sg_ret = plugin.create_security_group(admin_context, sg)
-        ep = self._make_ep_dict(ip_mask='0.0.0.0/0',
+        ep = self._make_ep_dict(port=port_ret['id'],
                                 ep_groups=[{'id': sg_ret['id']}])
         self.assertRaises(policy_excep.OperationNotAllowed,
                           plugin.create_endpoint, admin_context, ep)
@@ -354,19 +298,6 @@ class TestEndpoint(EndpointTestCase):
         self.assertRaises(ext_ep.NoEndpointGroupFound,
                           plugin.create_endpoint, admin_context, ep)
 
-    def test_delete_endpoint_ip_mask(self):
-        plugin = manager.NeutronManager.get_plugin()
-        admin_context = context.get_admin_context()
-
-        epg = self._make_epg_dict()
-
-        epg_ret = plugin.create_endpoint_group(
-                      admin_context, epg)
-        ep = self._make_ep_dict(ip_mask='0.0.0.0/0',
-                                ep_groups=[{'id': epg_ret['id']}])
-        ep_ret = plugin.create_endpoint(admin_context, ep)
-        resp = plugin.delete_endpoint(admin_context, ep_ret["id"])
-        self.assertEqual(None, resp)
 
     def test_delete_endpoint_ip_port(self):
         plugin = manager.NeutronManager.get_plugin()
@@ -416,17 +347,33 @@ class TestEndpoint(EndpointTestCase):
         plugin = manager.NeutronManager.get_plugin()
         admin_context = context.get_admin_context()
 
+        network = self._fake_network()
+        network["network"]["tenant_id"] = tenant_context.tenant_id
+        network_ret = plugin.create_network(tenant_context, network)
+
+        port1 = self._fake_port(network_ret["id"])
+        port1_ret = plugin.create_port(
+                      admin_context, port1)
+
+        port2 = self._fake_port(network_ret["id"])
+        port2_ret = plugin.create_port(
+                      admin_context, port2)
+
+        port3 = self._fake_port(network_ret["id"])
+        port3_ret = plugin.create_port(
+                      admin_context, port3)
+
         epg = self._make_epg_dict()
 
         epg_ret = plugin.create_endpoint_group(
                       admin_context, epg)
-        ep1 = self._make_ep_dict(ip_mask='0.0.0.0/0',
+        ep1 = self._make_ep_dict(port=port1_ret['id'],
                                  ep_groups=[{'id': epg_ret['id']}])
         ep_ret1 = plugin.create_endpoint(admin_context, ep1)
-        ep2 = self._make_ep_dict(ip_mask='1.0.0.0/0',
+        ep2 = self._make_ep_dict(port=port2_ret['id'],
                                  ep_groups=[{'id': epg_ret['id']}])
         ep_ret2 = plugin.create_endpoint(admin_context, ep2)
-        ep3 = self._make_ep_dict(ip_mask='2.0.0.0/0',
+        ep3 = self._make_ep_dict(port=port3_ret['id'],
                                  ep_groups=[{'id': epg_ret['id']}])
         ep_ret3 = plugin.create_endpoint(admin_context, ep3)
 
@@ -437,11 +384,19 @@ class TestEndpoint(EndpointTestCase):
         plugin = manager.NeutronManager.get_plugin()
         admin_context = context.get_admin_context()
 
+        network = self._fake_network()
+        network["network"]["tenant_id"] = tenant_context.tenant_id
+        network_ret = plugin.create_network(tenant_context, network)
+
+        port = self._fake_port(network_ret["id"])
+        port_ret = plugin.create_port(
+                      admin_context, port)
+
         epg = self._make_epg_dict()
 
         epg_ret = plugin.create_endpoint_group(
                       admin_context, epg)
-        ep = self._make_ep_dict(ip_mask='0.0.0.0/0',
+        ep = self._make_ep_dict(port=port_ret['id'],
                                 ep_groups=[{'id': epg_ret['id']}])
         ep_ret = plugin.create_endpoint(admin_context, ep)
         ep_update = self._make_ep_update_dict(name="update_ep_name")
@@ -454,11 +409,19 @@ class TestEndpoint(EndpointTestCase):
         plugin = manager.NeutronManager.get_plugin()
         admin_context = context.get_admin_context()
 
+        network = self._fake_network()
+        network["network"]["tenant_id"] = tenant_context.tenant_id
+        network_ret = plugin.create_network(tenant_context, network)
+
+        port = self._fake_port(network_ret["id"])
+        port_ret = plugin.create_port(
+                      admin_context, port)
+
         epg1 = self._make_epg_dict()
 
         epg_ret1 = plugin.create_endpoint_group(
                       admin_context, epg1)
-        ep = self._make_ep_dict(ip_mask='0.0.0.0/0',
+        ep = self._make_ep_dict(port=port_ret['id'],
                                 ep_groups=[{'id': epg_ret1['id']}])
         epg2 = self._make_epg_dict(name="test_epg2")
 
@@ -476,11 +439,19 @@ class TestEndpoint(EndpointTestCase):
         plugin = manager.NeutronManager.get_plugin()
         admin_context = context.get_admin_context()
 
+        network = self._fake_network()
+        network["network"]["tenant_id"] = tenant_context.tenant_id
+        network_ret = plugin.create_network(tenant_context, network)
+
+        port = self._fake_port(network_ret["id"])
+        port_ret = plugin.create_port(
+                      admin_context, port)
+
         epg1 = self._make_epg_dict()
 
         epg_ret1 = plugin.create_endpoint_group(
                       admin_context, epg1)
-        ep = self._make_ep_dict(ip_mask='0.0.0.0/0',
+        ep = self._make_ep_dict(port=port_ret['id'],
                                 ep_groups=[{'id': epg_ret1['id']}])
         ep_ret = plugin.create_endpoint(admin_context, ep)
         ep_update = self._make_ep_update_dict(remove_ep_groups=
@@ -494,11 +465,19 @@ class TestEndpoint(EndpointTestCase):
         plugin = manager.NeutronManager.get_plugin()
         admin_context = context.get_admin_context()
 
+        network = self._fake_network()
+        network["network"]["tenant_id"] = tenant_context.tenant_id
+        network_ret = plugin.create_network(tenant_context, network)
+
+        port = self._fake_port(network_ret["id"])
+        port_ret = plugin.create_port(
+                      admin_context, port)
+
         epg1 = self._make_epg_dict()
 
         epg_ret1 = plugin.create_endpoint_group(
                       admin_context, epg1)
-        ep = self._make_ep_dict(ip_mask='0.0.0.0/0',
+        ep = self._make_ep_dict(port=port_ret['id'],
                                 ep_groups=[{'id': epg_ret1['id']}])
         epg2 = self._make_epg_dict(name="test_epg2")
 
@@ -516,11 +495,19 @@ class TestEndpoint(EndpointTestCase):
         plugin = manager.NeutronManager.get_plugin()
         admin_context = context.get_admin_context()
 
+        network = self._fake_network()
+        network["network"]["tenant_id"] = tenant_context.tenant_id
+        network_ret = plugin.create_network(tenant_context, network)
+
+        port = self._fake_port(network_ret["id"])
+        port_ret = plugin.create_port(
+                      admin_context, port)
+
         epg1 = self._make_epg_dict()
 
         epg_ret1 = plugin.create_endpoint_group(
                       admin_context, epg1)
-        ep = self._make_ep_dict(ip_mask='0.0.0.0/0',
+        ep = self._make_ep_dict(port=port_ret['id'],
                                 ep_groups=[{'id': epg_ret1['id']}])
         ep_ret = plugin.create_endpoint(admin_context, ep)
         ep_update = self._make_ep_update_dict(remove_ep_groups=
@@ -534,11 +521,19 @@ class TestEndpoint(EndpointTestCase):
         plugin = manager.NeutronManager.get_plugin()
         admin_context = context.get_admin_context()
 
+        network = self._fake_network()
+        network["network"]["tenant_id"] = tenant_context.tenant_id
+        network_ret = plugin.create_network(tenant_context, network)
+
+        port = self._fake_port(network_ret["id"])
+        port_ret = plugin.create_port(
+                      admin_context, port)
+
         epg1 = self._make_epg_dict()
 
         epg_ret1 = plugin.create_endpoint_group(
                       admin_context, epg1)
-        ep = self._make_ep_dict(ip_mask='0.0.0.0/0',
+        ep = self._make_ep_dict(port=port_ret['id'],
                                 ep_groups=[{'id': epg_ret1['id']}])
         epg2 = self._make_epg_dict(name="test_epg2")
 
@@ -556,11 +551,19 @@ class TestEndpoint(EndpointTestCase):
         plugin = manager.NeutronManager.get_plugin()
         admin_context = context.get_admin_context()
 
+        network = self._fake_network()
+        network["network"]["tenant_id"] = tenant_context.tenant_id
+        network_ret = plugin.create_network(tenant_context, network)
+
+        port = self._fake_port(network_ret["id"])
+        port_ret = plugin.create_port(
+                      admin_context, port)
+
         epg1 = self._make_epg_dict()
 
         epg_ret1 = plugin.create_endpoint_group(
                       admin_context, epg1)
-        ep = self._make_ep_dict(ip_mask='0.0.0.0/0',
+        ep = self._make_ep_dict(port=port_ret['id'],
                                 ep_groups=[{'id': epg_ret1['id']}])
         ep_ret = plugin.create_endpoint(admin_context, ep)
         ep_update = self._make_ep_update_dict(remove_ep_groups=
@@ -574,11 +577,19 @@ class TestEndpoint(EndpointTestCase):
         plugin = manager.NeutronManager.get_plugin()
         admin_context = context.get_admin_context()
 
+        network = self._fake_network()
+        network["network"]["tenant_id"] = tenant_context.tenant_id
+        network_ret = plugin.create_network(tenant_context, network)
+
+        port = self._fake_port(network_ret["id"])
+        port_ret = plugin.create_port(
+                      admin_context, port)
+
         epg1 = self._make_epg_dict()
 
         epg_ret1 = plugin.create_endpoint_group(
                       admin_context, epg1)
-        ep = self._make_ep_dict(ip_mask='0.0.0.0/0',
+        ep = self._make_ep_dict(port=port_ret['id'],
                                 ep_groups=[{'id': epg_ret1['id']}])
         epg2 = self._make_epg_dict(name="test_epg2")
 
@@ -597,11 +608,19 @@ class TestEndpoint(EndpointTestCase):
         plugin = manager.NeutronManager.get_plugin()
         admin_context = context.get_admin_context()
 
+        network = self._fake_network()
+        network["network"]["tenant_id"] = tenant_context.tenant_id
+        network_ret = plugin.create_network(tenant_context, network)
+
+        port = self._fake_port(network_ret["id"])
+        port_ret = plugin.create_port(
+                      admin_context, port)
+
         epg1 = self._make_epg_dict()
 
         epg_ret1 = plugin.create_endpoint_group(
                       admin_context, epg1)
-        ep = self._make_ep_dict(ip_mask='0.0.0.0/0',
+        ep = self._make_ep_dict(port=port_ret['id'],
                                 ep_groups=[{'id': epg_ret1['id']}])
         ep_ret = plugin.create_endpoint(admin_context, ep)
         sg = self._fake_sg()
@@ -617,11 +636,19 @@ class TestEndpoint(EndpointTestCase):
         plugin = manager.NeutronManager.get_plugin()
         admin_context = context.get_admin_context()
 
+        network = self._fake_network()
+        network["network"]["tenant_id"] = tenant_context.tenant_id
+        network_ret = plugin.create_network(tenant_context, network)
+
+        port = self._fake_port(network_ret["id"])
+        port_ret = plugin.create_port(
+                      admin_context, port)
+
         epg1 = self._make_epg_dict()
 
         epg_ret1 = plugin.create_endpoint_group(
                       admin_context, epg1)
-        ep = self._make_ep_dict(ip_mask='0.0.0.0/0',
+        ep = self._make_ep_dict(port=port_ret['id'],
                                 ep_groups=[{'id': epg_ret1['id']}])
         ep_ret = plugin.create_endpoint(admin_context, ep)
         sg = self._fake_sg()
@@ -663,11 +690,19 @@ class TestEndpoint(EndpointTestCase):
         plugin = manager.NeutronManager.get_plugin()
         admin_context = context.get_admin_context()
 
+        network = self._fake_network()
+        network["network"]["tenant_id"] = tenant_context.tenant_id
+        network_ret = plugin.create_network(tenant_context, network)
+
+        port = self._fake_port(network_ret["id"])
+        port_ret = plugin.create_port(
+                      admin_context, port)
+
         epg = self._make_epg_dict()
 
         epg_ret = plugin.create_endpoint_group(
                       admin_context, epg)
-        ep = self._make_ep_dict(ip_mask='0.0.0.0/0',
+        ep = self._make_ep_dict(port=port_ret['id'],
                                 ep_groups=[{'id': epg_ret['id']}])
         ep_ret = plugin.create_endpoint(admin_context, ep)
         ep_update = self._make_ep_update_dict(name="update_ep_name")
@@ -680,11 +715,19 @@ class TestEndpoint(EndpointTestCase):
         plugin = manager.NeutronManager.get_plugin()
         admin_context = context.get_admin_context()
 
+        network = self._fake_network()
+        network["network"]["tenant_id"] = tenant_context.tenant_id
+        network_ret = plugin.create_network(tenant_context, network)
+
+        port = self._fake_port(network_ret["id"])
+        port_ret = plugin.create_port(
+                      admin_context, port)
+
         epg1 = self._make_epg_dict()
 
         epg_ret1 = plugin.create_endpoint_group(
                       admin_context, epg1)
-        ep = self._make_ep_dict(ip_mask='0.0.0.0/0',
+        ep = self._make_ep_dict(port=port_ret['id'],
                                 ep_groups=[{'id': epg_ret1['id']}])
         epg2 = self._make_epg_dict(name="test_epg2")
 
@@ -705,12 +748,11 @@ class TestEndpoint(EndpointTestCase):
                    "description": "test_description"}}
 
     def _make_ep_dict(self, name="test_endpoint", port=None,
-                      ip_mask=None, ip_port=None, ep_groups=[]):
+                      ip_port=None, ep_groups=[]):
         return {"endpoint": {
                     "name": name,
                     "tenant_id": "test_tenant",
                     "port_id": port,
-                    "ip_mask": ip_mask,
                     "ip_port": ip_port,
                     "ep_groups": ep_groups}}
 
@@ -778,5 +820,4 @@ class TestEndpoint(EndpointTestCase):
         ep_update["endpoint"]["id"] = ep_update_ret["id"]
         ep_update["endpoint"]["ep_groups"] = ep_update_ret["ep_groups"]
         ep_update["endpoint"]["ip_port"] = ep_update_ret["ip_port"]
-        ep_update["endpoint"]["ip_mask"] = ep_update_ret["ip_mask"]
         ep_update["endpoint"]["port_id"] = ep_update_ret["port_id"]

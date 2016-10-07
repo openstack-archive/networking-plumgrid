@@ -61,27 +61,25 @@ def args2body(self, parsed_args):
                 ip_port_mask = ip_port["ip"] + "_" + ip_port["port"] \
                                + "_" + ip_port["mask"]
 
-        if ((parsed_args.port_id or parsed_args.ip_mask or
+        if ((parsed_args.port_id or
              parsed_args.ip_port_mask) and not
             parsed_args.ep_groups):
             raise Exception("Atleast one endpoint group(--endpoint-group)"
                             " is required for association.")
-        if (parsed_args.ep_groups and (not parsed_args.port_id and not
-            parsed_args.ip_mask and not parsed_args.ip_port_mask)):
+        if (parsed_args.ep_groups and (not parsed_args.port_id
+            and not parsed_args.ip_port_mask)):
             raise Exception("Please specify an association criteria. "
                             "Supported criterion are: ['--port', "
-                            "'--ip-mask', '--ip-port']")
-        if ((parsed_args.ip_port_mask and parsed_args.ip_mask) or
-            (parsed_args.ip_port_mask and parsed_args.port_id) or
-            (parsed_args.ip_mask and parsed_args.port_id)):
+                            "'--ip-port']")
+        if (parsed_args.ip_port_mask and parsed_args.port_id):
             raise Exception("Multiple association criterion for endpoint "
                             "specified. Please specify only one criteria "
                             "per endpoint.")
-        if (not parsed_args.port_id and not parsed_args.ip_mask and
-            not parsed_args.ip_port_mask):
+        if (not parsed_args.port_id
+            and not parsed_args.ip_port_mask):
             raise Exception("Please specify an association criteria. "
                             "Supported criterion are: ['--port', "
-                            "'--ip-mask', '--ip-port']")
+                            "'--ip-port']")
         if parsed_args.name:
             ep_name = parsed_args.name
             body = {'endpoint': {'name': ep_name}}
@@ -91,8 +89,6 @@ def args2body(self, parsed_args):
             body['endpoint']['ep_groups'] = epg_dict
         if parsed_args.ip_port_mask:
             body['endpoint']['ip_port'] = ip_port_mask
-        if parsed_args.ip_mask:
-            body['endpoint']['ip_mask'] = parsed_args.ip_mask
         if parsed_args.port_id:
             body['endpoint']['port_id'] = parsed_args.port_id
         return body
@@ -113,8 +109,6 @@ class EndpointCreate(extension.ClientExtensionCreate,
         parser.add_argument('--port', dest='port_id',
                         metavar='PORT UUID/NAME',
                         help=_('Port UUID/NAME'))
-        parser.add_argument('--ip-mask', dest='ip_mask',
-                        help=_('IP Address/Mask'))
         parser.add_argument(
                    '--ip-port',
                    metavar='ip=IP-ADDRESS, port=PORT-NUMBER, mask=PORT-MASK',
@@ -141,7 +135,7 @@ class EndpointList(extension.ClientExtensionList,
     """List endpoints that belong to a given tenant."""
 
     shell_command = 'endpoint-list'
-    list_columns = ['id', 'name', 'ep_groups', 'port_id', 'ip_mask',
+    list_columns = ['id', 'name', 'ep_groups', 'port_id',
                     'ip_port']
     pagination_support = True
     sorting_support = True
