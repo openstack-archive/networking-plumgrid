@@ -372,3 +372,11 @@ def _check_remote_action_target(pr_db):
             return True
         else:
             return False
+
+
+def _update_port_description(port_db, port_data):
+    """
+    Helper function to update port description
+    """
+    if "description" in port_data:
+        port_db["description"] = port_data["description"]
