@@ -207,3 +207,6 @@ class Plumlib(object):
     def update_endpoint(self, tenant_id, ep_id, ep_db, port_mac=None):
         self.plumlib.update_endpoint(tenant_id, ep_id, ep_db,
                                      port_mac=port_mac)
+
+    def get_ext_links(self, tenant_id):
+        return self.plumlib.get_ext_links(tenant_id)

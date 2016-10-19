@@ -701,6 +701,20 @@ class TestEndpoint(EndpointTestCase):
         ep_get_ret = plugin.get_endpoint(admin_context, ep_ret["id"])
         self.assertEqualUpdate(ep_get_ret, ep_update_ret)
 
+    def test_create_endpoint_with_label(self):
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+
+        epg = self._make_epg_dict()
+
+        epg_ret = plugin.create_endpoint_group(
+                      admin_context, epg)
+        ep = self._make_ep_dict(label='wire',
+                                ep_groups=[{'id': epg_ret['id']}])
+        ep_ret = plugin.create_endpoint(admin_context, ep)
+        ep["endpoint"]["id"] = ep_ret["id"]
+        self.assertEqual(ep_ret, ep["endpoint"])
+
     def _make_epg_dict(self, name="test_name"):
         return {"endpoint_group": {
                    "tenant_id": "test_tenant",
@@ -708,13 +722,14 @@ class TestEndpoint(EndpointTestCase):
                    "description": "test_description"}}
 
     def _make_ep_dict(self, name="test_endpoint", port=None,
-                      ip_mask=None, ip_port=None, ep_groups=[]):
+                      ip_mask=None, ip_port=None, ep_groups=[], label=None):
         return {"endpoint": {
                     "name": name,
                     "tenant_id": "test_tenant",
                     "port_id": port,
                     "ip_mask": ip_mask,
                     "ip_port": ip_port,
+                    "label": label,
                     "ep_groups": ep_groups}}
 
     def _make_ep_update_dict(self, name="test_endpoint",
@@ -783,3 +798,4 @@ class TestEndpoint(EndpointTestCase):
         ep_update["endpoint"]["ip_port"] = ep_update_ret["ip_port"]
         ep_update["endpoint"]["ip_mask"] = ep_update_ret["ip_mask"]
         ep_update["endpoint"]["port_id"] = ep_update_ret["port_id"]
+        ep_update["endpoint"]["label"] = ep_update_ret["label"]
