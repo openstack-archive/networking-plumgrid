@@ -37,7 +37,7 @@ class Endpoint(model_base.BASEV2, models_v2.HasId,
     name = sa.Column(sa.String(attributes.NAME_MAX_LEN))
     ip_mask = sa.Column(sa.String(255))
     ip_port = sa.Column(sa.String(255))
-
+    label = sa.Column(sa.String(255))
     port_id = sa.Column(sa.String(36),
                         sa.ForeignKey("ports.id",
                                       ondelete='CASCADE'),
@@ -131,7 +131,8 @@ class EndpointMixin(common_db_mixin.CommonDbMixin):
                              name=ep["name"],
                              port_id=ep["port_id"],
                              ip_mask=ep["ip_mask"],
-                             ip_port=ep["ip_port"])
+                             ip_port=ep["ip_port"],
+                             label=ep["label"])
             context.session.add(ep_db)
 
             for epg in ep["ep_groups"]:
@@ -292,6 +293,7 @@ class EndpointMixin(common_db_mixin.CommonDbMixin):
                    "ip_mask": ep.ip_mask,
                    "port_id": ep.port_id,
                    "ip_port": ep.ip_port,
+                   "label": ep.label,
                    "tenant_id": ep.tenant_id}
         return self._fields(ep_dict, fields)
 

@@ -178,6 +178,12 @@ RESOURCE_ATTRIBUTE_MAP = {
                 'type:validate_ip_port': None
             }
         },
+        'label': {
+            'allow_post': True,
+            'allow_put': False,
+            'is_visible': True,
+            'default': None,
+        },
         'add_endpoint_groups': {
             'allow_post': False,
             'allow_put': True,

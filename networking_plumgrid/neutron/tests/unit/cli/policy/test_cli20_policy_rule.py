@@ -309,8 +309,9 @@ class CLITestV20ExtensionPolicyRuleJSON(test_cli20.CLITestV20Base):
         args = [name, '--src-port-range', src_port_range]
         position_names = ['name', 'src_port_range']
         position_values = [name, src_port_range]
-        self._test_create_resource(resource, cmd, name, 'myid', args,
-                                   position_names, position_values)
+        self.assertRaises(Exception, self._test_create_resource, resource,
+                          cmd, name, 'myid', args,
+                          position_names, position_values)
 
     def test_create_policy_rule_dst_port_range(self):
         resource = 'policy_rule'
@@ -318,11 +319,12 @@ class CLITestV20ExtensionPolicyRuleJSON(test_cli20.CLITestV20Base):
                                   sys.stdout), None)
         name = 'pr1'
         dst_port_range = '1-65535'
-        args = [name, '--dst-port-range', dst_port_range]
+        args = [name, '--dest-port-range', dst_port_range]
         position_names = ['name', 'dst_port_range']
         position_values = [name, dst_port_range]
-        self._test_create_resource(resource, cmd, name, 'myid', args,
-                                   position_names, position_values)
+        self.assertRaises(Exception, self._test_create_resource, resource,
+                          cmd, name, 'myid', args,
+                          position_names, position_values)
 
     def test_list_policy_rules(self):
         # list policy rules: -D.
