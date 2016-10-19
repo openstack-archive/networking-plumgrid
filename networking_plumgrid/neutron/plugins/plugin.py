@@ -35,6 +35,7 @@ from networking_plumgrid.neutron.plugins.common import \
     policy_exceptions as policy_exc
 from networking_plumgrid.neutron.plugins.common import \
     policy_validators as p_valid
+from networking_plumgrid.neutron.plugins.db.extlink import ext_link_db
 from networking_plumgrid.neutron.plugins.db.physical_attachment_point import \
     physical_attachment_point_db as pap_db
 from networking_plumgrid.neutron.plugins.db.policy import endpoint_db
@@ -142,6 +143,7 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
                               endpoint_db.EndpointMixin,
                               policy_service_db.PolicyServiceMixin,
                               policy_rule_db.PolicyRuleMixin,
+                              ext_link_db.ExtLinkMixin,
                               l2gw_db.L2GatewayMixin):
 
     supported_extension_aliases = ["agent", "binding", "external-net",
@@ -152,7 +154,8 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
                                    "subnet_allocation",
                                    "transit-domain", "policy-tag",
                                    "endpoint-group", "endpoint",
-                                   "policy-rule", "policy-service"]
+                                   "policy-rule", "policy-service",
+                                   "ext-link"]
 
     binding_view = "extension:port_binding:view"
     binding_set = "extension:port_binding:set"
@@ -2043,6 +2046,23 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
         return super(NeutronPluginPLUMgridV2,
                    self).get_policy_rules(context, filters,
                              fields, sorts, limit, marker, page_reverse)
+
+    def get_ext_links(self, context, filters=None, fields=None,
+                      sorts=None, limit=None, marker=None,
+                      page_reverse=False):
+        LOG.debug("networking-plumgrid: get_ext_links() called")
+        if ('tenant_id' in filters and (len(filters['tenant_id']) > 0)):
+            tenant_id = filters['tenant_id'][0]
+        else:
+            tenant_id = context.tenant_id
+        try:
+            ext_list = self._plumlib.get_ext_links(tenant_id)
+        except Exception as err_message:
+            raise plum_excep.PLUMgridException(err_msg=err_message)
+        link_list = super(NeutronPluginPLUMgridV2,
+                       self).get_ext_links(context, ext_list, filters,
+                                 fields, sorts, limit, marker, page_reverse)
+        return link_list
 
     def _process_ps(self, context, ps_db):
         self._process_ports(context, ps_db['ingress_ports'])

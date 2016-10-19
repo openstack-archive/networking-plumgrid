@@ -82,6 +82,7 @@ def upgrade():
         sa.Column('ip_mask', sa.String(length=36), nullable=True),
         sa.Column('port_id', sa.String(length=36), nullable=True),
         sa.Column('ip_port', sa.String(length=255), nullable=True),
+        sa.Column('label', sa.String(length=255), nullable=True),
         sa.Column('tenant_id', sa.String(length=36), nullable=True),
         sa.ForeignKeyConstraint(['port_id'], ['ports.id'], ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('id')

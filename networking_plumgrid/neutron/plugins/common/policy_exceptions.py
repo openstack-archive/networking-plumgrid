@@ -209,3 +209,7 @@ class InvalidInputActionTarget(exceptions.InvalidInput):
 
 class EndpointGroupAlreadyInUse(exceptions.InUse):
     message = ("Endpoint group '%(epg)s' already in use by Endpoint '%(ep)s'")
+
+
+class ProtocolNotSpecified(exceptions.InvalidInput):
+    message = ("Must also specify protocol if port range is given")
