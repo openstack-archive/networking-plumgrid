@@ -62,23 +62,27 @@ def args2body(self, parsed_args):
                                + "_" + ip_port["mask"]
 
         if ((parsed_args.port_id or parsed_args.ip_mask or
-             parsed_args.ip_port_mask) and not
+             parsed_args.ip_port_mask or parsed_args.label) and not
             parsed_args.ep_groups):
             raise Exception("Atleast one endpoint group(--endpoint-group)"
                             " is required for association.")
         if (parsed_args.ep_groups and (not parsed_args.port_id and not
-            parsed_args.ip_mask and not parsed_args.ip_port_mask)):
+            parsed_args.ip_mask and not parsed_args.ip_port_mask and
+            not parsed_args.label)):
             raise Exception("Please specify an association criteria. "
                             "Supported criterion are: ['--port', "
                             "'--ip-mask', '--ip-port']")
         if ((parsed_args.ip_port_mask and parsed_args.ip_mask) or
             (parsed_args.ip_port_mask and parsed_args.port_id) or
-            (parsed_args.ip_mask and parsed_args.port_id)):
+            (parsed_args.ip_port_mask and parsed_args.label) or
+            (parsed_args.ip_mask and parsed_args.port_id) or
+            (parsed_args.ip_mask and parsed_args.label) or
+            (parsed_args.label and parsed_args.port_id)):
             raise Exception("Multiple association criterion for endpoint "
                             "specified. Please specify only one criteria "
                             "per endpoint.")
         if (not parsed_args.port_id and not parsed_args.ip_mask and
-            not parsed_args.ip_port_mask):
+            not parsed_args.ip_port_mask and not parsed_args.label):
             raise Exception("Please specify an association criteria. "
                             "Supported criterion are: ['--port', "
                             "'--ip-mask', '--ip-port']")
@@ -95,6 +99,8 @@ def args2body(self, parsed_args):
             body['endpoint']['ip_mask'] = parsed_args.ip_mask
         if parsed_args.port_id:
             body['endpoint']['port_id'] = parsed_args.port_id
+        if parsed_args.label:
+            body['endpoint']['label'] = parsed_args.label
         return body
     except KeyError as err:
         raise Exception("KeyError: " + str(err))
@@ -120,6 +126,8 @@ class EndpointCreate(extension.ClientExtensionCreate,
                    metavar='ip=IP-ADDRESS, port=PORT-NUMBER, mask=PORT-MASK',
                    action='append', dest='ip_port_mask', type=utils.str2dict,
                    help=_('IP Address and Port Mask to specify port range'))
+        parser.add_argument('--label', dest='label',
+                        help=_('Label/Context of network function.'))
         parser.add_argument(
                    '--endpoint-group',
                    metavar='id=ENPOINT-GROUP-UUID, name=ENDPOINT-GROUP-NAME',
@@ -142,7 +150,7 @@ class EndpointList(extension.ClientExtensionList,
 
     shell_command = 'endpoint-list'
     list_columns = ['id', 'name', 'ep_groups', 'port_id', 'ip_mask',
-                    'ip_port']
+                    'ip_port', 'label']
     pagination_support = True
     sorting_support = True
 

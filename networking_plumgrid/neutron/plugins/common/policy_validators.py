@@ -28,6 +28,10 @@ def _validate_policy_rule_config(pr_db):
     if "protocol" in pr_db:
         if not _validate_policy_rule_protocol(pr_db):
             raise p_excep.UnsupportedProtocol(protocol=pr_db["protocol"])
+        if pr_db["protocol"] == "any":
+            if (("src_port_range" in pr_db or "dst_port_range" in pr_db)
+                and (pr_db["src_port_range"] or pr_db["dst_port_range"])):
+                raise p_excep.ProtocolNotSpecified()
     if "action" in pr_db:
         if not _validate_policy_rule_action(pr_db):
             raise p_excep.UnsupportedAction(action=pr_db["action"])
