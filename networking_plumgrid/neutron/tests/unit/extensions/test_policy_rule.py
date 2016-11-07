@@ -154,9 +154,8 @@ class TestPolicyRule(PolicyRuleTestCase):
         sg_ret = plugin.create_security_group(
                           admin_context, sg)
         pr = self._make_pr_dict(src_grp=sg_ret["id"], dst_grp=sg_ret["id"])
-        pr_ret = plugin.create_policy_rule(admin_context, pr)
-        pr_get_ret = plugin.get_policy_rule(admin_context, pr_ret["id"])
-        self.assertEqual(pr_ret, pr_get_ret)
+        self.assertRaises(policy_excep.OperationNotAllowed,
+                          plugin.create_policy_rule, admin_context, pr)
 
     def test_create_policy_rule_src_epg_dst_sg(self):
         plugin = manager.NeutronManager.get_plugin()

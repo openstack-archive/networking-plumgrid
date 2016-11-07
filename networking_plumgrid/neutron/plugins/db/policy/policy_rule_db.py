@@ -13,7 +13,7 @@
 from networking_plumgrid.neutron.plugins.common import \
     policy_exceptions as p_excep
 from networking_plumgrid.neutron.plugins.db.policy.endpoint_group_db \
-    import EndpointGroup
+    import EndpointGroup, SecurityPolicyTagBinding
 from networking_plumgrid.neutron.plugins.db.policy.policy_service_db \
     import PolicyService
 from networking_plumgrid.neutron.plugins.db.policy.policy_tag_db \
@@ -121,6 +121,7 @@ class PolicyRuleMixin(common_db_mixin.CommonDbMixin):
         self._validate_dst_grp_policy_rule_config(context, pr)
         self._configure_policy_rule_endpoint_groups(pr)
         self._validate_action_target(context, pr)
+        self._validate_security_group_config(context, pr)
         if "tag" in pr:
             self._configure_policy_tag(context, pr)
         with context.session.begin(subtransactions=True):
@@ -337,3 +338,53 @@ class PolicyRuleMixin(common_db_mixin.CommonDbMixin):
                     pr["tag"] = epg_db["policy_tag_id"]
                 except exc.NoResultFound:
                     raise p_excep.NoPolicyTagFoundEndpointGroup(epg=ep_grp)
+
+    def _get_security_policy_tag_binding(self, context, sg_id):
+        query = self._model_query(context,
+                                  SecurityPolicyTagBinding)
+        sg_map = {}
+        try:
+            sg_map = query.filter_by(security_group_id=sg_id).one()
+            return sg_map
+        except exc.NoResultFound:
+            return sg_map
+
+    def _validate_security_group_config(self, context, pr):
+        action = pr['action']
+        src_grp_tag = False
+        dst_grp_tag = False
+        is_src_security_group = False
+        is_dst_security_group = False
+        if action == 'allow':
+            if 'src_grp' in pr:
+                src_grp = pr['src_grp']
+                try:
+                    sg_map = self._get_security_policy_tag_binding(context,
+                                                                   src_grp)
+                    if sg_map:
+                        src_grp_tag = True
+                except Exception:
+                    pass
+            if 'dst_grp' in pr:
+                dst_grp = pr['dst_grp']
+                try:
+                    sg_map = self._get_security_policy_tag_binding(context,
+                                                                   dst_grp)
+                    if sg_map:
+                        dst_grp_tag = True
+                except Exception:
+                    pass
+
+            if self._check_security_group_for_policy_rule(context,
+                                                          pr["src_grp"]):
+                is_src_security_group = True
+
+            if self._check_security_group_for_policy_rule(context,
+                                                          pr["dst_grp"]):
+                is_dst_security_group = True
+
+            if ((is_src_security_group and is_dst_security_group) and
+               (not src_grp_tag and not dst_grp_tag)):
+                operation = "Policy Rule creation"
+                raise p_excep.OperationNotAllowed(operation=operation,
+                                                  id=src_grp)
