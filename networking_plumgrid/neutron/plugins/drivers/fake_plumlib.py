@@ -44,28 +44,31 @@ class Plumlib(object):
             net_db["network"][key] = network["network"][key]
         return net_db
 
-    def update_network(self, tenant_id, net_id, network, orig_net_db):
+    def update_network(self, tenant_id, net_id, network, orig_net_db,
+                       transit_domain=None):
         pass
 
-    def delete_network(self, net_db, net_id):
+    def delete_network(self, net_db, net_id, transit_domain_id=None):
         pass
 
-    def create_subnet(self, sub_db, net_db, ipnet):
+    def create_subnet(self, sub_db, net_db, ipnet, transit_domain=None):
         pass
 
-    def update_subnet(self, orig_sub_db, new_sub_db, ipnet, net_db):
+    def update_subnet(self, orig_sub_db, new_sub_db, ipnet, net_db,
+                      transit_domain=None):
         pass
 
-    def delete_subnet(self, tenant_id, net_db, net_id, sub_db):
+    def delete_subnet(self, tenant_id, net_db, net_id, sub_db,
+                      transit_domain=None):
         pass
 
-    def create_port(self, port_db, router_db, subnet_db):
+    def create_port(self, port_db, router_db, subnet_db, transit_domain=None):
         pass
 
-    def update_port(self, port_db, router_db, subnet_db):
+    def update_port(self, port_db, router_db, subnet_db, transit_domain=None):
         pass
 
-    def delete_port(self, port_db, router_db):
+    def delete_port(self, port_db, router_db, transit_domain=None):
         pass
 
     def create_router(self, tenant_id, router_db):
@@ -78,10 +81,11 @@ class Plumlib(object):
         pass
 
     def add_router_interface(self, tenant_id, router_id, port_db, ipnet,
-                             ip_version):
+                             ip_version, transit_domain=None):
         pass
 
-    def remove_router_interface(self, tenant_id, net_id, router_id):
+    def remove_router_interface(self, tenant_id, net_id, router_id,
+                                transit_domain=None):
         pass
 
     def create_floatingip(self, floating_ip):

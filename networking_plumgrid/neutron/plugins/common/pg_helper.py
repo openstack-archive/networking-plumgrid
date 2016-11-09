@@ -380,3 +380,35 @@ def _update_port_description(port_db, port_data):
     """
     if "description" in port_data:
         port_db["description"] = port_data["description"]
+
+
+def _check_l3_gateway_network(net_db):
+    if (net_db.get("provider:network_type").lower() ==
+        net_pg_const.L3_GATEWAY_NET):
+        return True
+    else:
+        return False
+
+
+def _check_provider_network(net_db):
+    if net_db.get("provider:physical_network"):
+        return True
+    else:
+        return False
+
+
+def _get_tvd_from_net_id(self, context, net_id, l3_gw=False):
+    net_db = self.get_network(context, net_id)
+    if _check_provider_network(net_db):
+        if not _check_l3_gateway_network(net_db):
+            pap_db = self.get_physical_attachment_point(context,
+                    net_db["provider:physical_network"],
+                    fields=None)
+            return pap_db["transit_domain_id"]
+        else:
+            if l3_gw:
+                return net_db["provider:physical_network"]
+            else:
+                return None
+    else:
+        return None
