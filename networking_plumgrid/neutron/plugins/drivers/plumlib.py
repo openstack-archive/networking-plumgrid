@@ -50,8 +50,9 @@ class Plumlib(object):
     def delete_network(self, net_db, net_id):
         self.plumlib.delete_network(net_db, net_id)
 
-    def create_subnet(self, sub_db, net_db, ipnet):
-        self.plumlib.create_subnet(sub_db, net_db, ipnet)
+    def create_subnet(self, sub_db, net_db, ipnet, transit_domain=None):
+        self.plumlib.create_subnet(sub_db, net_db, ipnet,
+                                   transit_domain=transit_domain)
 
     def update_subnet(self, orig_sub_db, new_sub_db, ipnet, net_db):
         self.plumlib.update_subnet(orig_sub_db, new_sub_db, ipnet, net_db)
@@ -59,8 +60,9 @@ class Plumlib(object):
     def delete_subnet(self, tenant_id, net_db, net_id, sub_db):
         self.plumlib.delete_subnet(tenant_id, net_db, net_id, sub_db)
 
-    def create_port(self, port_db, router_db, subnet_db):
-        self.plumlib.create_port(port_db, router_db, subnet_db)
+    def create_port(self, port_db, router_db, subnet_db, transit_domain=None):
+        self.plumlib.create_port(port_db, router_db, subnet_db,
+                                 transit_domain=transit_domain)
 
     def update_port(self, port_db, router_db, subnet_db):
         self.plumlib.update_port(port_db, router_db, subnet_db)

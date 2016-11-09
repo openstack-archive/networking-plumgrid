@@ -388,6 +388,7 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
         lock = pg_lock.PGLock(context, lo, ds_lock)
         with lock.thread_lock(lo):
             try:
+                tvd_id = None
                 with context.session.begin(subtransactions=True):
                     # Plugin DB - Port Create and Return port
                     port_db = super(NeutronPluginPLUMgridV2,
@@ -409,6 +410,15 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
                     if (port_db["device_owner"] ==
                         constants.DEVICE_OWNER_ROUTER_GW):
                         router_db = self._get_router(context, device_id)
+                        net_db = super(NeutronPluginPLUMgridV2, self). \
+                            get_network(context, port_db["network_id"])
+                        if (net_db.get("provider:network_type").lower() !=
+                            net_pg_const.L3_GATEWAY_NET):
+                            pap_db = super(NeutronPluginPLUMgridV2, self). \
+                                get_physical_attachment_point(context,
+                                   net_db["provider:physical_network"],
+                                   fields=None)
+                            tvd_id = pap_db["transit_domain_id"]
                     else:
                         router_db = None
 
@@ -418,7 +428,8 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
                     try:
                         LOG.debug("PLUMgrid Library: create_port() called")
                         self._plumlib.create_port(port_db, router_db,
-                                                  subnet_db)
+                                                  subnet_db,
+                                                  transit_domain=tvd_id)
 
                     except Exception as err:
                         raise plum_excep.PLUMgridException(err_msg=err)
@@ -577,6 +588,7 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
             # Plugin DB - Subnet Create
             s = subnet['subnet']
             ipnet = None
+            tvd_id = None
             if self._validate_network(s['cidr']):
                 ipnet = netaddr.IPNetwork(s['cidr'])
                 # PLUMgrid reserves the last IP address for GW
@@ -618,11 +630,21 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
 
             sub_db = super(NeutronPluginPLUMgridV2, self).create_subnet(
                 context, subnet)
+            if (('router:external' in net_db and net_db['router:external']) or
+                ('shared' in net_db and net_db['shared'])):
+                if ("provider:physical_network" in net_db and
+                    net_db["provider:physical_network"]):
+                    pap_db = super(NeutronPluginPLUMgridV2,
+                                 self).get_physical_attachment_point(context,
+                                 net_db["provider:physical_network"],
+                                 fields=None)
+                    tvd_id = pap_db["transit_domain_id"]
             try:
                 if not ipnet:
                     ipnet = netaddr.IPNetwork(sub_db['cidr'])
                 LOG.debug("PLUMgrid Library: create_subnet() called")
-                self._plumlib.create_subnet(sub_db, net_db, ipnet)
+                self._plumlib.create_subnet(sub_db, net_db, ipnet,
+                                            transit_domain=tvd_id)
             except Exception as err_message:
                 raise plum_excep.PLUMgridException(err_msg=err_message)
 
