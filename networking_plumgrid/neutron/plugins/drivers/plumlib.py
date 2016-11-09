@@ -44,29 +44,41 @@ class Plumlib(object):
     def create_network(self, tenant_id, net_db, network, **kwargs):
         self.plumlib.create_network(tenant_id, net_db, network, **kwargs)
 
-    def update_network(self, tenant_id, net_id, network, orig_net_db):
-        self.plumlib.update_network(tenant_id, net_id, network, orig_net_db)
+    def update_network(self, tenant_id, net_id, network, orig_net_db,
+                       transit_domain=None):
+        self.plumlib.update_network(tenant_id, net_id, network, orig_net_db,
+                                    transit_domain=transit_domain)
 
-    def delete_network(self, net_db, net_id):
-        self.plumlib.delete_network(net_db, net_id)
+    def delete_network(self, net_db, net_id, transit_domain_id=None):
+        self.plumlib.delete_network(net_db, net_id,
+                                    transit_domain_id=transit_domain_id)
 
-    def create_subnet(self, sub_db, net_db, ipnet):
-        self.plumlib.create_subnet(sub_db, net_db, ipnet)
+    def create_subnet(self, sub_db, net_db, ipnet, transit_domain=None):
+        self.plumlib.create_subnet(sub_db, net_db, ipnet,
+                                   transit_domain=transit_domain)
 
-    def update_subnet(self, orig_sub_db, new_sub_db, ipnet, net_db):
-        self.plumlib.update_subnet(orig_sub_db, new_sub_db, ipnet, net_db)
+    def update_subnet(self, orig_sub_db, new_sub_db, ipnet, net_db,
+                      transit_domain=None):
+        self.plumlib.update_subnet(orig_sub_db, new_sub_db, ipnet, net_db,
+                                   transit_domain=transit_domain)
 
-    def delete_subnet(self, tenant_id, net_db, net_id, sub_db):
-        self.plumlib.delete_subnet(tenant_id, net_db, net_id, sub_db)
+    def delete_subnet(self, tenant_id, net_db, net_id, sub_db,
+                      transit_domain=None):
+        self.plumlib.delete_subnet(tenant_id, net_db, net_id, sub_db,
+                                   transit_domain=transit_domain)
 
-    def create_port(self, port_db, router_db, subnet_db):
-        self.plumlib.create_port(port_db, router_db, subnet_db)
+    def create_port(self, port_db, router_db, subnet_db, transit_domain=None):
+        self.plumlib.create_port(port_db, router_db, subnet_db,
+                                 transit_domain=transit_domain)
 
-    def update_port(self, port_db, router_db, subnet_db):
-        self.plumlib.update_port(port_db, router_db, subnet_db)
+    def update_port(self, port_db, router_db, subnet_db,
+                    transit_domain=None):
+        self.plumlib.update_port(port_db, router_db, subnet_db,
+                                 transit_domain=None)
 
-    def delete_port(self, port_db, router_db):
-        self.plumlib.delete_port(port_db, router_db)
+    def delete_port(self, port_db, router_db, transit_domain=None):
+        self.plumlib.delete_port(port_db, router_db,
+                                 transit_domain=transit_domain)
 
     def create_router(self, tenant_id, router_db):
         self.plumlib.create_router(tenant_id, router_db)
@@ -78,12 +90,15 @@ class Plumlib(object):
         self.plumlib.delete_router(tenant_id, router_id)
 
     def add_router_interface(self, tenant_id, router_id, port_db, ipnet,
-                             ip_version):
+                             ip_version, transit_domain=None):
         self.plumlib.add_router_interface(tenant_id, router_id, port_db, ipnet,
-                                          ip_version)
+                                          ip_version,
+                                          transit_domain=transit_domain)
 
-    def remove_router_interface(self, tenant_id, net_id, router_id):
-        self.plumlib.remove_router_interface(tenant_id, net_id, router_id)
+    def remove_router_interface(self, tenant_id, net_id, router_id,
+                                transit_domain=None):
+        self.plumlib.remove_router_interface(tenant_id, net_id, router_id,
+                                             transit_domain=transit_domain)
 
     def create_floatingip(self, floating_ip):
         self.plumlib.create_floatingip(floating_ip)
