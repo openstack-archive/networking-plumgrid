@@ -176,6 +176,10 @@ class EndpointGroupMixin(common_db_mixin.CommonDbMixin):
             if ptag["tag_type"].lower() == "fip":
                 self._check_ptag_in_use(context, epg["add_tag"])
 
+            # Check EPG/SG does not already have a tag
+            # associated with it
+            self._check_epg_ptag_association(context, epg_id)
+
         with context.session.begin(subtransactions=True):
             try:
                 query = self._model_query(context, EndpointGroup)
@@ -328,3 +332,21 @@ class EndpointGroupMixin(common_db_mixin.CommonDbMixin):
             return sg_map
         except exc.NoResultFound:
             return sg_map
+
+    def _check_epg_ptag_association(self, context, epg_id):
+        if self._is_security_group(context, epg_id):
+            # If EPG is an OS security group, check SG-PolicyTag
+            # binding
+            sg_map = self._get_security_policy_tag_binding(context, epg_id)
+            if sg_map:
+                raise p_excep.SGInUseWithPolicyTag(sg_id=epg_id,
+                                              ptag_id=sg_map.policy_tag_id)
+        else:
+            query = context.session.query(EndpointGroup)
+            try:
+                epg_info = query.filter_by(id=epg_id).one()
+                if epg_info and epg_info['policy_tag_id']:
+                    raise p_excep.SGInUseWithPolicyTag(sg_id=epg_id,
+                                              ptag_id=epg_info.policy_tag_id)
+            except exc.NoResultFound:
+                raise epgroup.NoEndpointGroupFound(id=epg_id)
