@@ -393,6 +393,10 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
                     # Plugin DB - Port Create and Return port
                     port_db = super(NeutronPluginPLUMgridV2,
                                     self).create_port(context, port)
+
+                    # Update port description
+                    pg_helper._update_port_description(port_db, port_data)
+
                     # Update port security
                     port_data.update(port_db)
 
