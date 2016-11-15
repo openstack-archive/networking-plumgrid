@@ -17,9 +17,9 @@ from networking_plumgrid.neutron.plugins.extensions import \
     endpoint as ext_ep
 from neutron.api.v2 import attributes
 from neutron.db import common_db_mixin
-from neutron.db import model_base
 from neutron.db.models.securitygroup import SecurityGroup
 from neutron.db import models_v2
+from neutron_lib.db import model_base
 from oslo_log import log as logging
 import sqlalchemy as sa
 from sqlalchemy import orm

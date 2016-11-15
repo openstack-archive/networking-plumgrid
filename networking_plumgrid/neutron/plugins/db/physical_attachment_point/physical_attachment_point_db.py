@@ -13,8 +13,8 @@
 from networking_plumgrid.neutron.plugins.extensions import \
     physical_attachment_point as ext_pap
 from neutron.db import common_db_mixin
-from neutron.db import model_base
 from neutron.db import models_v2
+from neutron_lib.db import model_base
 from oslo_log import log as logging
 import sqlalchemy as sa
 from sqlalchemy import orm
