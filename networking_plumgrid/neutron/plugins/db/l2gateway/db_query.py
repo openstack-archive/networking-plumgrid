@@ -13,10 +13,10 @@
 # under the License.
 
 from networking_plumgrid._i18n import _
-from neutron.common import exceptions
 from neutron.db import models_v2
 from neutron.plugins.ml2 import driver_api as api
 from neutron.plugins.ml2 import models
+from neutron_lib import exceptions
 
 import six
 import sqlalchemy as sa

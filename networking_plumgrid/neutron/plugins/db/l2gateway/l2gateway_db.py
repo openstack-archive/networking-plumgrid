@@ -12,7 +12,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-from neutron.common import exceptions
+from neutron_lib import exceptions
 
 from networking_plumgrid._i18n import _
 from networking_plumgrid.neutron.plugins.common import (l2_exceptions

@@ -16,7 +16,7 @@
 """Neutron PLUMgrid Plugin exceptions"""
 
 from networking_plumgrid._i18n import _
-from neutron.common import exceptions as base_exec
+from neutron_lib import exceptions as base_exec
 
 
 class PLUMgridException(base_exec.NeutronException):

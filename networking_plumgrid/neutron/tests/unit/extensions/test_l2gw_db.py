@@ -12,9 +12,9 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-from neutron.common import exceptions as exc
 from neutron import context
 from neutron.tests.unit import testlib_api
+from neutron_lib import exceptions as exc
 
 from networking_plumgrid.neutron.plugins.common import (l2_exceptions
      as exceptions)

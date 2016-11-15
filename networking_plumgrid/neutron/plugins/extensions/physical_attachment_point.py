@@ -17,8 +17,8 @@ from networking_plumgrid._i18n import _
 from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
 from neutron.api.v2 import base
-from neutron.common import exceptions as nexceptions
 from neutron import manager
+from neutron_lib import exceptions as nexceptions
 
 
 PG_PAP = 'physical_attachment_point'

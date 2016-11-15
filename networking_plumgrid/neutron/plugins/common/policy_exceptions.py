@@ -13,7 +13,7 @@
 # under the License.
 
 from networking_plumgrid._i18n import _
-from neutron.common import exceptions
+from neutron_lib import exceptions
 
 
 class InvalidPortForEndpoint(exceptions.InvalidInput):

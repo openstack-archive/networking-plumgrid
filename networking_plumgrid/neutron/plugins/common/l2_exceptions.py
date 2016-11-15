@@ -14,7 +14,7 @@
 
 from networking_plumgrid._i18n import _
 from neutron.api.v2 import base
-from neutron.common import exceptions
+from neutron_lib import exceptions
 
 from webob import exc as web_exc
 
