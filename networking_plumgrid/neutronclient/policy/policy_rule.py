@@ -126,6 +126,11 @@ def args2body(self, parsed_args):
         if (parsed_args.tag and (parsed_args.sgt or parsed_args.dgt)):
             raise Exception("You cannot enable global policy tag with sgt or "
                             "dgt for a policy_rule.")
+
+        if ((parsed_args.src_port_range or parsed_args.dst_port_range) and
+            not parsed_args.protocol):
+            raise Exception("Must also specify protocol if port range"
+                            " is given")
         if parsed_args.sgt:
             if not parsed_args.src_grp:
                 raise Exception("Please specify source group with "

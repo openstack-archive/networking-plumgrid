@@ -329,3 +329,45 @@ class CLITestV20ExtensionEndpointJSON(test_cli20.CLITestV20Base):
         args = ['--fields', 'id', '--fields', 'name', self.test_id]
         self._test_show_resource(resource, cmd, self.test_id, args,
                                  ['id', 'name'])
+
+    def test_create_endpoint_label(self):
+        # Create endpoint: ep1.
+        resource = 'endpoint'
+        cmd = ep.EndpointCreate(test_cli20.MyApp(
+                                sys.stdout), None)
+        name = 'ep1'
+        label = 'mylabel'
+        args = [name, '--label', label]
+        position_names = ['name', 'label']
+        position_values = [name, label]
+        self.assertRaises(Exception, self._test_create_resource, resource,
+                          cmd, name, 'myid', args,
+                          position_names, position_values)
+
+    def test_create_endpoint_label_epg(self):
+        # Create endpoint: ep1.
+        resource = 'endpoint'
+        cmd = ep.EndpointCreate(test_cli20.MyApp(
+                                sys.stdout), None)
+        name = 'ep1'
+        label = 'mylabel'
+        epg = [{'id': 'epgid'}]
+        args = [name, '--label', label, '--endpoint-group', 'id=epgid']
+        position_names = ['name', 'label', 'ep_groups']
+        position_values = [name, label, epg]
+        self._test_create_resource(resource, cmd, name, 'myid', args,
+                                   position_names, position_values)
+
+    def test_create_endpoint_label_epg_name(self):
+        # Create endpoint: ep1.
+        resource = 'endpoint'
+        cmd = ep.EndpointCreate(test_cli20.MyApp(
+                                sys.stdout), None)
+        name = 'ep1'
+        label = 'mylabel'
+        epg = [{'id': 'epgid'}]
+        args = [name, '--label', label, '--endpoint-group', 'name=epgid']
+        position_names = ['name', 'label', 'ep_groups']
+        position_values = [name, label, epg]
+        self._test_create_resource(resource, cmd, name, 'myid', args,
+                                   position_names, position_values)

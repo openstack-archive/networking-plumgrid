@@ -265,7 +265,7 @@ class TestPolicyRule(PolicyRuleTestCase):
     def test_create_policy_rule_src_port_range(self):
         plugin = manager.NeutronManager.get_plugin()
         admin_context = context.get_admin_context()
-        pr = self._make_pr_dict(src_port_range="10-10")
+        pr = self._make_pr_dict(src_port_range="10-10", protocol="tcp")
 
         pr_ret = plugin.create_policy_rule(admin_context, pr)
         pr_get_ret = plugin.get_policy_rule(admin_context, pr_ret["id"])
@@ -274,7 +274,7 @@ class TestPolicyRule(PolicyRuleTestCase):
     def test_create_policy_rule_dst_port_range(self):
         plugin = manager.NeutronManager.get_plugin()
         admin_context = context.get_admin_context()
-        pr = self._make_pr_dict(dst_port_range="10-10")
+        pr = self._make_pr_dict(dst_port_range="10-10", protocol="tcp")
 
         pr_ret = plugin.create_policy_rule(admin_context, pr)
         pr_get_ret = plugin.get_policy_rule(admin_context, pr_ret["id"])
@@ -283,15 +283,29 @@ class TestPolicyRule(PolicyRuleTestCase):
     def test_create_policy_rule_invalid_src_port_range(self):
         plugin = manager.NeutronManager.get_plugin()
         admin_context = context.get_admin_context()
-        pr = self._make_pr_dict(src_port_range="x-y")
+        pr = self._make_pr_dict(src_port_range="x-y", protocol="tcp")
         self.assertRaises(ext_pr.PolicyRuleInvalidPortRange,
                           plugin.create_policy_rule, admin_context, pr)
 
     def test_create_policy_rule_invalid_dst_port_range(self):
         plugin = manager.NeutronManager.get_plugin()
         admin_context = context.get_admin_context()
-        pr = self._make_pr_dict(dst_port_range="x-y")
+        pr = self._make_pr_dict(dst_port_range="x-y", protocol="tcp")
         self.assertRaises(ext_pr.PolicyRuleInvalidPortRange,
+                          plugin.create_policy_rule, admin_context, pr)
+
+    def test_create_policy_rule_src_port_range_no_protocol(self):
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+        pr = self._make_pr_dict(dst_port_range="10-10")
+        self.assertRaises(policy_excep.ProtocolNotSpecified,
+                          plugin.create_policy_rule, admin_context, pr)
+
+    def test_create_policy_rule_dst_port_range_no_protocol(self):
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+        pr = self._make_pr_dict(dst_port_range="10-10")
+        self.assertRaises(policy_excep.ProtocolNotSpecified,
                           plugin.create_policy_rule, admin_context, pr)
 
     def test_create_policy_rule_action_target(self):
