@@ -13,9 +13,9 @@
 # under the License.
 
 from neutron.api import extensions
-from neutron.api.v2 import attributes
 from neutron.api.v2 import base
 from neutron import manager
+from neutron_lib.api import validators
 
 from networking_plumgrid.neutron.plugins.common import constants
 from networking_plumgrid.neutron.plugins.common import l2gw_validators
@@ -45,7 +45,7 @@ RESOURCE_ATTRIBUTE_MAP = {
 }
 
 validator_func = l2gw_validators.validate_gwdevice_list
-attributes.validators['type:l2gwdevice_list'] = validator_func
+validators.validators['type:l2gwdevice_list'] = validator_func
 
 
 class L2gateway(extensions.ExtensionDescriptor):
