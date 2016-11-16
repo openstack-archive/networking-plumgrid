@@ -15,10 +15,10 @@
 import networking_plumgrid
 from networking_plumgrid._i18n import _
 from neutron.api import extensions
-from neutron.api.v2 import attributes as attr
 from neutron.api.v2 import base
 from neutron.common import exceptions as nexceptions
 from neutron import manager
+from neutron_lib.api import validators as attr
 
 
 PG_PAP = 'physical_attachment_point'

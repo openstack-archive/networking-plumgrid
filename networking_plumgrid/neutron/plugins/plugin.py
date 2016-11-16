@@ -61,7 +61,6 @@ from networking_plumgrid.neutron.plugins.extensions import portbindings\
 from networking_plumgrid.neutron.plugins import plugin_ver
 from neutron.api import extensions as n_ext
 from neutron.api.v2 import attributes
-from neutron.common import constants
 from neutron.common import exceptions as n_exc
 from neutron.common import utils
 from neutron.db import agents_db
@@ -78,6 +77,7 @@ from neutron.extensions import securitygroup as sec_grp
 from neutron.plugins.common import constants as svc_constants
 from neutron.plugins.common import utils as svc_utils
 from neutron_lib.api import validators
+from neutron_lib import constants
 
 LOG = logging.getLogger(__name__)
 
