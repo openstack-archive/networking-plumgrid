@@ -216,6 +216,7 @@ class EndpointMixin(common_db_mixin.CommonDbMixin):
                 ep_db.update({"name": ep["name"]})
             if 'add_endpoint_groups' in ep:
                 self._check_existing_epg_association(context,
+                                                     ep_id,
                                                      ep["add_endpoint_groups"])
                 for epg in ep["add_endpoint_groups"]:
                     if self._check_ep_exists(context, epg["id"]):
@@ -297,12 +298,13 @@ class EndpointMixin(common_db_mixin.CommonDbMixin):
                    "tenant_id": ep.tenant_id}
         return self._fields(ep_dict, fields)
 
-    def _check_existing_epg_association(self, context, endpoint_groups):
+    def _check_existing_epg_association(self, context, ep_id, endpoint_groups):
         for epg in endpoint_groups:
             query = self._model_query(context, EndpointGroupMemberBinding)
             epg_id = epg["id"]
             try:
-                epg_in_use = query.filter_by(endpoint_group_id=epg_id).one()
+                epg_in_use = query.filter_by(endpoint_group_id=epg_id,
+                                             endpoint_id=ep_id).one()
                 if epg_in_use:
                     raise p_excep.EndpointGroupAlreadyInUse(epg=epg_id,
                               ep=epg_in_use.endpoint_id)

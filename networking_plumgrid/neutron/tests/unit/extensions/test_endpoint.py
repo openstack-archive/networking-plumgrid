@@ -715,6 +715,36 @@ class TestEndpoint(EndpointTestCase):
         ep["endpoint"]["id"] = ep_ret["id"]
         self.assertEqual(ep_ret, ep["endpoint"])
 
+    def test_create_update_endpoint_readd_epg(self):
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+
+        epg1 = self._make_epg_dict()
+
+        epg_ret1 = plugin.create_endpoint_group(
+                      admin_context, epg1)
+        ep = self._make_ep_dict(ip_mask='0.0.0.0/0',
+                                ep_groups=[{'id': epg_ret1['id']}])
+        plugin.create_endpoint(admin_context, ep)
+
+        # Create a second endpoint EP-2 and classify EPG-2 in it
+        epg2 = self._make_epg_dict()
+
+        epg_ret2 = plugin.create_endpoint_group(
+                      admin_context, epg2)
+        ep2 = self._make_ep_dict(ip_mask='1.1.1.0/24',
+                                ep_groups=[{'id': epg_ret2['id']}])
+        ep_ret2 = plugin.create_endpoint(admin_context, ep2)
+
+        # Re-add the first EPG to the second endpoint
+
+        ep_update2 = self._make_ep_update_dict(add_ep_groups=
+                                              [{"id": epg_ret1['id']}])
+        ep_update_ret2 = plugin.update_endpoint(admin_context,
+                                               ep_ret2["id"], ep_update2)
+        self._consolidate_update_config(ep_update2, ep_update_ret2)
+        self.assertEqual(ep_update2["endpoint"], ep_update_ret2)
+
     def _make_epg_dict(self, name="test_name"):
         return {"endpoint_group": {
                    "tenant_id": "test_tenant",
