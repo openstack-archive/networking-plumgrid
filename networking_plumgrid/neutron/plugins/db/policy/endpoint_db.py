@@ -95,7 +95,7 @@ class SecurityGroupEndpointBinding(model_base.BASEV2):
     endpoint_id = sa.Column(sa.String(length=36),
                             sa.ForeignKey("pg_endpoints.id",
                                           ondelete='CASCADE'),
-                            nullable=False)
+                            primary_key=True)
 
     ep = orm.relationship(Endpoint,
               backref=orm.backref("ep_sg_binding",
