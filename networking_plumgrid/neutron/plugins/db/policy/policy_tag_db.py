@@ -13,10 +13,10 @@ from networking_plumgrid.neutron.plugins.common import \
     policy_exceptions as p_excep
 from networking_plumgrid.neutron.plugins.extensions import \
     policytag
-from neutron.api.v2 import attributes
 from neutron.db import common_db_mixin
 from neutron.db.l3_db import FloatingIP
 from neutron.db import models_v2
+from neutron_lib.db import constants as db_const
 from neutron_lib.db import model_base
 from oslo_log import log as logging
 import sqlalchemy as sa
@@ -32,7 +32,7 @@ class PolicyTag(model_base.BASEV2, models_v2.HasId,
 
     __tablename__ = "pg_policy_tags"
 
-    name = sa.Column(sa.String(attributes.NAME_MAX_LEN))
+    name = sa.Column(sa.String(db_const.NAME_FIELD_SIZE))
     tag_type = sa.Column(sa.Enum('fip', 'dot1q', 'nsh',
                                 name='policy_tag_type'))
     floatingip_address = sa.Column(sa.String(255))

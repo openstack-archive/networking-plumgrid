@@ -14,9 +14,9 @@ from networking_plumgrid.neutron.plugins.common import \
     constants
 from networking_plumgrid.neutron.plugins.common import \
     policy_exceptions as p_excep
-from neutron.api.v2 import attributes
 from neutron.db import common_db_mixin
 from neutron.db import models_v2
+from neutron_lib.db import constants as db_const
 from neutron_lib.db import model_base
 from oslo_log import log as logging
 import sqlalchemy as sa
@@ -32,7 +32,7 @@ class PolicyService(model_base.BASEV2, models_v2.HasId,
 
     __tablename__ = "pg_policy_services"
 
-    name = sa.Column(sa.String(attributes.NAME_MAX_LEN))
+    name = sa.Column(sa.String(db_const.NAME_FIELD_SIZE))
     description = sa.Column(sa.String(255))
 
 

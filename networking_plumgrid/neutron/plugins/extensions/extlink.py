@@ -12,9 +12,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.db import constants as db_const
+
 import networking_plumgrid
 from neutron.api import extensions
-from neutron.api.v2 import attributes as attr
 from neutron.api.v2 import base
 from neutron import manager
 
@@ -78,7 +79,8 @@ RESOURCE_ATTRIBUTE_MAP = {
         'tenant_id': {'allow_post': False,
                       'allow_put': False,
                       'required_by_policy': True,
-                      'validate': {'type:string': attr.TENANT_ID_MAX_LEN},
+                      'validate': {
+                          'type:string': db_const.PROJECT_ID_FIELD_SIZE},
                       'is_visible': True},
     }
 }

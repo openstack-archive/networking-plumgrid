@@ -15,10 +15,10 @@ from networking_plumgrid.neutron.plugins.db.policy.endpoint_group_db \
     import EndpointGroup
 from networking_plumgrid.neutron.plugins.extensions import \
     endpoint as ext_ep
-from neutron.api.v2 import attributes
 from neutron.db import common_db_mixin
 from neutron.db.models.securitygroup import SecurityGroup
 from neutron.db import models_v2
+from neutron_lib.db import constants as db_const
 from neutron_lib.db import model_base
 from oslo_log import log as logging
 import sqlalchemy as sa
@@ -34,7 +34,7 @@ class Endpoint(model_base.BASEV2, models_v2.HasId,
 
     __tablename__ = "pg_endpoints"
 
-    name = sa.Column(sa.String(attributes.NAME_MAX_LEN))
+    name = sa.Column(sa.String(db_const.NAME_FIELD_SIZE))
     ip_mask = sa.Column(sa.String(255))
     ip_port = sa.Column(sa.String(255))
     label = sa.Column(sa.String(255))

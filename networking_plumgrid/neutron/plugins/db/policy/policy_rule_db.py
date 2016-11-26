@@ -18,10 +18,10 @@ from networking_plumgrid.neutron.plugins.db.policy.policy_service_db \
     import PolicyService
 from networking_plumgrid.neutron.plugins.db.policy.policy_tag_db \
     import PolicyTag
-from neutron.api.v2 import attributes
 from neutron.db import common_db_mixin
 from neutron.db.models.securitygroup import SecurityGroup
 from neutron.db import models_v2
+from neutron_lib.db import constants as db_const
 from neutron_lib.db import model_base
 from oslo_log import log as logging
 import sqlalchemy as sa
@@ -37,7 +37,7 @@ class PolicyRule(model_base.BASEV2, models_v2.HasId,
 
     __tablename__ = "pg_policy_rules"
 
-    name = sa.Column(sa.String(attributes.NAME_MAX_LEN))
+    name = sa.Column(sa.String(db_const.NAME_FIELD_SIZE))
     src_grp_epg = sa.Column(sa.String(36),
                         sa.ForeignKey("pg_endpoint_groups.id",
                                       ondelete="CASCADE"),
@@ -58,8 +58,8 @@ class PolicyRule(model_base.BASEV2, models_v2.HasId,
 
     protocol = sa.Column(sa.Enum('any', 'icmp', 'tcp', 'udp',
                                  name='pg_policy_rules_protocol'))
-    src_port_range = sa.Column(sa.String(attributes.NAME_MAX_LEN))
-    dst_port_range = sa.Column(sa.String(attributes.NAME_MAX_LEN))
+    src_port_range = sa.Column(sa.String(db_const.NAME_FIELD_SIZE))
+    dst_port_range = sa.Column(sa.String(db_const.NAME_FIELD_SIZE))
     action = sa.Column(sa.Enum('copy', 'allow',
                                name='pg_policies_rules_action'))
     action_target_service = sa.Column(sa.String(36),

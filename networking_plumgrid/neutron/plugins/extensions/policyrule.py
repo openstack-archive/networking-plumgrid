@@ -15,10 +15,10 @@
 import networking_plumgrid
 from networking_plumgrid._i18n import _
 from neutron.api import extensions
-from neutron.api.v2 import attributes as attr
 from neutron.api.v2 import base
 from neutron import manager
 from neutron_lib.api import validators
+from neutron_lib.db import constants as db_const
 from neutron_lib import exceptions as nexceptions
 from random import randint
 
@@ -169,7 +169,7 @@ RESOURCE_ATTRIBUTE_MAP = {
             'allow_post': True,
             'allow_put': False,
             'required_by_policy': True,
-            'validate': {'type:string': attr.TENANT_ID_MAX_LEN},
+            'validate': {'type:string': db_const.PROJECT_ID_FIELD_SIZE},
             'is_visible': True
         }
     }

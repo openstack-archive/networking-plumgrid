@@ -15,10 +15,10 @@ from networking_plumgrid.neutron.plugins.db.policy.policy_tag_db \
     import PolicyTag
 from networking_plumgrid.neutron.plugins.extensions import \
     endpointgroup as epgroup
-from neutron.api.v2 import attributes
 from neutron.db import common_db_mixin
 from neutron.db.models.securitygroup import SecurityGroup
 from neutron.db import models_v2
+from neutron_lib.db import constants as db_const
 from neutron_lib.db import model_base
 from oslo_log import log as logging
 import sqlalchemy as sa
@@ -34,7 +34,7 @@ class EndpointGroup(model_base.BASEV2, models_v2.HasId,
 
     __tablename__ = "pg_endpoint_groups"
 
-    name = sa.Column(sa.String(attributes.NAME_MAX_LEN))
+    name = sa.Column(sa.String(db_const.NAME_FIELD_SIZE))
     description = sa.Column(sa.String(255))
     policy_tag_id = sa.Column(sa.String(36),
                               sa.ForeignKey("pg_policy_tags.id",
