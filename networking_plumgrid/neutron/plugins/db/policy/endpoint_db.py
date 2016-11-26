@@ -28,8 +28,8 @@ from sqlalchemy.orm import exc
 LOG = logging.getLogger(__name__)
 
 
-class Endpoint(model_base.BASEV2, models_v2.HasId,
-               models_v2.HasTenant):
+class Endpoint(model_base.BASEV2, model_base.HasId,
+               model_base.HasProject):
     """DB definition for PLUMgrid endpoint object"""
 
     __tablename__ = "pg_endpoints"

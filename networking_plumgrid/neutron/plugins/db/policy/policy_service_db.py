@@ -26,8 +26,8 @@ from sqlalchemy.orm import exc
 LOG = logging.getLogger(__name__)
 
 
-class PolicyService(model_base.BASEV2, models_v2.HasId,
-                    models_v2.HasTenant):
+class PolicyService(model_base.BASEV2, model_base.HasId,
+                    model_base.HasProject):
     """DB definition for PLUMgrid policy service object"""
 
     __tablename__ = "pg_policy_services"

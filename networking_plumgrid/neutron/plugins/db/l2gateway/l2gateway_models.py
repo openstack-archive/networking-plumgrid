@@ -12,15 +12,13 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-from neutron.db import models_v2
 from neutron_lib.db import model_base
-
 import sqlalchemy as sa
 from sqlalchemy import orm
 
 
-class PGL2GatewayConnection(model_base.BASEV2, models_v2.HasTenant,
-                          models_v2.HasId):
+class PGL2GatewayConnection(model_base.BASEV2, model_base.HasProject,
+                            model_base.HasId):
     """Define an l2 gateway connection between a l2 gateway and a network."""
     l2_gateway_id = sa.Column(sa.String(36),
                               sa.ForeignKey('pgl2gateways.id',
@@ -32,7 +30,7 @@ class PGL2GatewayConnection(model_base.BASEV2, models_v2.HasTenant,
                                           network_id),)
 
 
-class PGL2GatewayInterface(model_base.BASEV2, models_v2.HasId):
+class PGL2GatewayInterface(model_base.BASEV2, model_base.HasId):
     """Define an l2 gateway interface."""
     interface_name = sa.Column(sa.String(255))
     device_id = sa.Column(sa.String(36),
@@ -41,7 +39,7 @@ class PGL2GatewayInterface(model_base.BASEV2, models_v2.HasId):
     segmentation_id = sa.Column(sa.Integer)
 
 
-class PGL2GatewayDevice(model_base.BASEV2, models_v2.HasId):
+class PGL2GatewayDevice(model_base.BASEV2, model_base.HasId):
     """Define an l2 gateway device."""
     device_name = sa.Column(sa.String(255))
     device_ip = sa.Column(sa.String(255))
@@ -53,8 +51,8 @@ class PGL2GatewayDevice(model_base.BASEV2, models_v2.HasId):
                                             ondelete='CASCADE'))
 
 
-class PGL2Gateway(model_base.BASEV2, models_v2.HasId,
-                models_v2.HasTenant):
+class PGL2Gateway(model_base.BASEV2, model_base.HasId,
+                  model_base.HasProject):
     """Define an l2 gateway."""
     name = sa.Column(sa.String(255))
     vtep_ifc = sa.Column(sa.String(255))

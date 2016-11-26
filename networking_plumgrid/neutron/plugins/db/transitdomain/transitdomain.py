@@ -15,7 +15,6 @@ from networking_plumgrid.neutron.plugins.db.physical_attachment_point import \
 from networking_plumgrid.neutron.plugins.extensions import \
     transitdomain as ext_tvd
 from neutron.db import common_db_mixin
-from neutron.db import models_v2
 from neutron_lib.db import model_base
 from oslo_log import log as logging
 import sqlalchemy as sa
@@ -24,8 +23,8 @@ from sqlalchemy.orm import exc
 LOG = logging.getLogger(__name__)
 
 
-class TransitDomain(model_base.BASEV2, models_v2.HasId,
-                    models_v2.HasTenant):
+class TransitDomain(model_base.BASEV2, model_base.HasId,
+                    model_base.HasProject):
     """DB definition for Transit Domain"""
 
     __tablename__ = "pg_transit_domains"

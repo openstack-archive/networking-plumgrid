@@ -18,7 +18,6 @@ from networking_plumgrid.neutron.plugins.extensions import \
 from neutron.api.v2 import attributes
 from neutron.db import common_db_mixin
 from neutron.db.models.securitygroup import SecurityGroup
-from neutron.db import models_v2
 from neutron_lib.db import model_base
 from oslo_log import log as logging
 import sqlalchemy as sa
@@ -28,8 +27,8 @@ from sqlalchemy.orm import exc
 LOG = logging.getLogger(__name__)
 
 
-class EndpointGroup(model_base.BASEV2, models_v2.HasId,
-                    models_v2.HasTenant):
+class EndpointGroup(model_base.BASEV2, model_base.HasId,
+                    model_base.HasProject):
     """DB definition for PLUMgrid endpoint group object"""
 
     __tablename__ = "pg_endpoint_groups"

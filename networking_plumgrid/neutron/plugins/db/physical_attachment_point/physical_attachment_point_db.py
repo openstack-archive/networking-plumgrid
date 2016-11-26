@@ -13,7 +13,6 @@
 from networking_plumgrid.neutron.plugins.extensions import \
     physical_attachment_point as ext_pap
 from neutron.db import common_db_mixin
-from neutron.db import models_v2
 from neutron_lib.db import model_base
 from oslo_log import log as logging
 import sqlalchemy as sa
@@ -23,8 +22,8 @@ from sqlalchemy.orm import exc
 LOG = logging.getLogger(__name__)
 
 
-class PhysicalAttachmentPoint(model_base.BASEV2, models_v2.HasId,
-                              models_v2.HasTenant):
+class PhysicalAttachmentPoint(model_base.BASEV2, model_base.HasId,
+                              model_base.HasProject):
     """DB definition for PLUMgrid physical attachment point object"""
 
     __tablename__ = "pg_physical_attachment_points"
@@ -37,7 +36,7 @@ class PhysicalAttachmentPoint(model_base.BASEV2, models_v2.HasId,
     implicit = sa.Column(sa.Boolean)
 
 
-class Interface(model_base.BASEV2, models_v2.HasId):
+class Interface(model_base.BASEV2, model_base.HasId):
     """
     DB definition for interfaces object required by PLUMgrid
     Physical Attachment Points.
