@@ -17,6 +17,7 @@ from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
 from neutron.api.v2 import base
 from neutron import manager
+from neutron_lib.api import extensions as api_extensions
 
 PG_LINK = 'ext_link'
 PG_LINKS = 'ext-links'
@@ -84,7 +85,7 @@ RESOURCE_ATTRIBUTE_MAP = {
 }
 
 
-class Extlink(extensions.ExtensionDescriptor):
+class Extlink(api_extensions.ExtensionDescriptor):
 
     @classmethod
     def get_name(cls):

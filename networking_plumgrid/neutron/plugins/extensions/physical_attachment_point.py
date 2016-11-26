@@ -17,6 +17,7 @@ from networking_plumgrid._i18n import _
 from neutron.api import extensions
 from neutron.api.v2 import base
 from neutron import manager
+from neutron_lib.api import extensions as api_extensions
 from neutron_lib.api import validators as attr
 from neutron_lib import exceptions as nexceptions
 
@@ -176,7 +177,7 @@ RESOURCE_ATTRIBUTE_MAP = {
 }
 
 
-class Physical_attachment_point(extensions.ExtensionDescriptor):
+class Physical_attachment_point(api_extensions.ExtensionDescriptor):
 
     @classmethod
     def get_name(cls):

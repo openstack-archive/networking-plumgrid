@@ -18,6 +18,7 @@ from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
 from neutron.api.v2 import base
 from neutron import manager
+from neutron_lib.api import extensions as api_extensions
 from neutron_lib import exceptions as nexceptions
 
 PG_EPG = 'endpoint_group'
@@ -96,7 +97,7 @@ RESOURCE_ATTRIBUTE_MAP = {
 }
 
 
-class Endpointgroup(extensions.ExtensionDescriptor):
+class Endpointgroup(api_extensions.ExtensionDescriptor):
 
     @classmethod
     def get_name(cls):

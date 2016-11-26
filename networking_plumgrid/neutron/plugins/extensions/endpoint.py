@@ -19,6 +19,7 @@ from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
 from neutron.api.v2 import base
 from neutron import manager
+from neutron_lib.api import extensions as api_extensions
 from neutron_lib.api import validators
 from neutron_lib import exceptions as nexceptions
 import re
@@ -211,7 +212,7 @@ RESOURCE_ATTRIBUTE_MAP = {
 }
 
 
-class Endpoint(extensions.ExtensionDescriptor):
+class Endpoint(api_extensions.ExtensionDescriptor):
 
     @classmethod
     def get_name(cls):

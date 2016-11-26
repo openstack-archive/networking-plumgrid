@@ -16,6 +16,7 @@
 from neutron.api import extensions
 from neutron.api.v2 import base
 from neutron import manager
+from neutron_lib.api import extensions as api_extensions
 
 from networking_plumgrid.neutron.plugins.common import constants
 
@@ -40,7 +41,7 @@ RESOURCE_ATTRIBUTE_MAP = {
 }
 
 
-class L2gatewayconnection(extensions.ExtensionDescriptor):
+class L2gatewayconnection(api_extensions.ExtensionDescriptor):
 
     """API extension for Layer-2 Gateway  connection support."""
 

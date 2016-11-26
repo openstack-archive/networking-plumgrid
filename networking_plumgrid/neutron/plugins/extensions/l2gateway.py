@@ -15,6 +15,7 @@
 from neutron.api import extensions
 from neutron.api.v2 import base
 from neutron import manager
+from neutron_lib.api import extensions as api_extensions
 from neutron_lib.api import validators
 
 from networking_plumgrid.neutron.plugins.common import constants
@@ -48,7 +49,7 @@ validator_func = l2gw_validators.validate_gwdevice_list
 validators.validators['type:l2gwdevice_list'] = validator_func
 
 
-class L2gateway(extensions.ExtensionDescriptor):
+class L2gateway(api_extensions.ExtensionDescriptor):
 
     """API extension for Layer-2 Gateway support."""
 

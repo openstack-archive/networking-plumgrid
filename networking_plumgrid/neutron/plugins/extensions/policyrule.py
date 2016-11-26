@@ -18,6 +18,7 @@ from neutron.api import extensions
 from neutron.api.v2 import attributes as attr
 from neutron.api.v2 import base
 from neutron import manager
+from neutron_lib.api import extensions as api_extensions
 from neutron_lib.api import validators
 from neutron_lib import exceptions as nexceptions
 from random import randint
@@ -176,7 +177,7 @@ RESOURCE_ATTRIBUTE_MAP = {
 }
 
 
-class Policyrule(extensions.ExtensionDescriptor):
+class Policyrule(api_extensions.ExtensionDescriptor):
 
     @classmethod
     def get_name(cls):
