@@ -1060,6 +1060,9 @@ class NeutronPluginPLUMgridV2(agents_db.AgentDbMixin,
             # associated with it.
             sg_map = self._get_security_policy_tag_binding(context, sg_id)
 
+            # Delete any associated endpoint
+            pg_helper._recursive_delete_endpoints(self, context, sg_id)
+
             sec_db = super(NeutronPluginPLUMgridV2,
                            self).delete_security_group(context, sg_id)
             try:
