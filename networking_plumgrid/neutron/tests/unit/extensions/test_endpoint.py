@@ -745,6 +745,24 @@ class TestEndpoint(EndpointTestCase):
         self._consolidate_update_config(ep_update2, ep_update_ret2)
         self.assertEqual(ep_update2["endpoint"], ep_update_ret2)
 
+    def test_update_endpoint_remove_sg(self):
+        plugin = manager.NeutronManager.get_plugin()
+        admin_context = context.get_admin_context()
+
+        sg = self._fake_sg()
+        sg_ret = plugin.create_security_group(admin_context, sg)
+        ep = self._make_ep_dict(ip_mask='0.0.0.0/0',
+                                ep_groups=[{'id': sg_ret['id']}])
+        ep_ret = plugin.create_endpoint(admin_context, ep)
+
+        ep_update = self._make_ep_update_dict(remove_ep_groups=
+                                              [{"id": sg_ret['id']}])
+        ep_update_ret = plugin.update_endpoint(admin_context, ep_ret["id"],
+                                               ep_update)
+
+        self._consolidate_update_config(ep_update, ep_update_ret)
+        self.assertEqual(ep_update["endpoint"], ep_update_ret)
+
     def _make_epg_dict(self, name="test_name"):
         return {"endpoint_group": {
                    "tenant_id": "test_tenant",

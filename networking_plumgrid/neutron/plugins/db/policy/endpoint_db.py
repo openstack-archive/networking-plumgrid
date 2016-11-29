@@ -236,10 +236,16 @@ class EndpointMixin(common_db_mixin.CommonDbMixin):
             if 'remove_endpoint_groups' in ep:
                 self._check_epg(context, ep_id, ep["remove_endpoint_groups"])
                 for epg in ep["remove_endpoint_groups"]:
-                    query = self._model_query(context,
-                                              EndpointGroupMemberBinding)
-                    query.filter_by(endpoint_id=ep_db.id,
-                          endpoint_group_id=epg["id"]).delete()
+                    if self._check_ep_exists(context, epg["id"]):
+                        query = self._model_query(context,
+                                                  EndpointGroupMemberBinding)
+                        query.filter_by(endpoint_id=ep_db.id,
+                              endpoint_group_id=epg["id"]).delete()
+                    elif self._check_sec_grp_exists(context, epg["id"]):
+                        query = self._model_query(context,
+                                                  SecurityGroupEndpointBinding)
+                        query.filter_by(endpoint_id=ep_db.id,
+                                        security_group_id=epg["id"]).delete()
         return self._make_ep_dict(ep_db)
 
     def _check_epg(self, context, ep_id, endpoint_groups):
