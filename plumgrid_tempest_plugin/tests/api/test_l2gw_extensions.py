@@ -18,7 +18,7 @@ from neutron.tests.tempest import test
 from plumgrid_tempest_plugin import config
 from plumgrid_tempest_plugin.tests.api import base_l2gw
 import random
-from tempest_lib.common.utils import data_utils
+from tempest.lib.common.utils import data_utils
 
 CONF = config.CONF
 
