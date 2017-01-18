@@ -22,10 +22,10 @@ from oslo_utils import importutils
 from networking_plumgrid.neutron.plugins.extensions import portbindings
 from networking_plumgrid.neutron.plugins import plugin as plumgrid_plugin
 from neutron import context
-from neutron.extensions import providernet as provider
 from neutron import manager
 from neutron.tests.unit import _test_extension_portbindings as test_bindings
 from neutron.tests.unit.db import test_db_base_plugin_v2 as test_plugin
+from neutron_lib.api.definitions import provider_net as provider
 
 PLUM_DRIVER = ('networking_plumgrid.neutron.plugins.drivers.'
                'fake_plumlib.Plumlib')

@@ -72,10 +72,10 @@ from neutron.db import portbindings_db
 from neutron.db import quota_db  # noqa
 from neutron.db import securitygroups_db
 from neutron.extensions import portbindings
-from neutron.extensions import providernet as provider
 from neutron.extensions import securitygroup as sec_grp
 from neutron.plugins.common import constants as svc_constants
 from neutron.plugins.common import utils as svc_utils
+from neutron_lib.api.definitions import provider_net as provider
 from neutron_lib.api import validators
 from neutron_lib import constants
 

@@ -13,7 +13,7 @@
 #    under the License.
 
 from networking_plumgrid._i18n import _LI
-from neutron.extensions import providernet as provider
+from neutron_lib.api.definitions import provider_net as provider
 from oslo_log import log as logging
 
 LOG = logging.getLogger(__name__)
