@@ -14,7 +14,7 @@
 
 
 from neutron.tests.api import base
-from neutron.tests.tempest import test
+from neutron_tempest_plugin import test
 from plumgrid_tempest_plugin import config
 from plumgrid_tempest_plugin.tests.api import base_l2gw
 import random
