@@ -8,7 +8,7 @@ PLUMgrid Open Networking Suite drivers for Neutron
 * Documentation: http://docs.openstack.org/developer/networking-plumgrid
 * Source: http://git.openstack.org/cgit/openstack/networking-plumgrid
 * Bugs: http://bugs.launchpad.net/networking-plumgrid
-* PyPI package: https://pypi.python.org/pypi/networking-plumgrid
+* PyPI package: https://pypi.org/project/networking-plumgrid
 
 
 Config and Installation
